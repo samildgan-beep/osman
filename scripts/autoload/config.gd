@@ -84,6 +84,8 @@ const CAM_PINCH_FACTOR := 0.012
 const CAM_SMOOTH := 10.0
 const CAM_COLLISION_MARGIN := 0.22
 const CAM_TOP_CUT := 1.85            # üstten görünümde duvar kesme yüksekliği
+const CAM_INDOOR_CUT := 1.95         # bina içinde duvar kesme yüksekliği (ayaktan)
+const CAM_CEILING_SHOW := 2.95       # bu yüksekliğe kadarki tavanlar yarı saydam görünür
 
 # --- Puanlama ---
 const STAR3_DURABILITY := 90.0

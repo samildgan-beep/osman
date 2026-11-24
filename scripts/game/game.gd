@@ -54,6 +54,7 @@ func _ready() -> void:
 	level_id = int(level.id)
 	item_data = ItemDB.get_item(str(level.item))
 	RenderingServer.global_shader_parameter_set("cut_height", 100000.0)
+	RenderingServer.global_shader_parameter_set("ceil_cut_height", 100000.0)
 	_build_environment()
 	info = LevelBuilder.new().build(level, self)
 	_spawn_player()
@@ -187,6 +188,8 @@ func _physics_process(delta: float) -> void:
 	if phase == Phase.PLAYING:
 		_gather_keyboard()
 		_handle_ui_actions()
+	cam.indoor = _is_indoor(player.global_position)
+	_update_labels()
 	cam.orbit(input.take_cam_orbit())
 	cam.zoom(input.take_cam_zoom())
 	player.camera_yaw = cam.yaw
@@ -301,6 +304,19 @@ func _update_drop_hint() -> void:
 			touch.highlight("interact", on)
 		if on:
 			hud.hint("Hedefe geldin: BIRAK!", 2.5)
+
+
+## Kesit görünümünde kesitin üstünde kalan bina yazılarını gizle.
+func _update_labels() -> void:
+	var cut := cam.current_cut
+	for lb in info.labels:
+		if is_instance_valid(lb):
+			lb.visible = lb.global_position.y < cut - 0.1
+
+
+func _is_indoor(p: Vector3) -> bool:
+	var b: AABB = info.block_aabb
+	return p.z > 0.05 and p.x > b.position.x and p.x < b.end.x and p.z < b.end.z and p.y > -1.0
 
 
 func _reached(wp: Vector3) -> bool:
@@ -597,5 +613,6 @@ func _update_end(delta: float) -> void:
 
 func _exit_tree() -> void:
 	RenderingServer.global_shader_parameter_set("cut_height", 100000.0)
+	RenderingServer.global_shader_parameter_set("ceil_cut_height", 100000.0)
 	if get_tree() != null:
 		get_tree().paused = false

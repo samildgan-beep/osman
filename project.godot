@@ -67,3 +67,7 @@ cut_height={
 "type": "float",
 "value": 100000.0
 }
+ceil_cut_height={
+"type": "float",
+"value": 100000.0
+}

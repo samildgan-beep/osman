@@ -84,6 +84,7 @@ func _end_game() -> void:
 		_game.queue_free()
 	_game = null
 	RenderingServer.global_shader_parameter_set("cut_height", 100000.0)
+	RenderingServer.global_shader_parameter_set("ceil_cut_height", 100000.0)
 
 
 func _set_screen(c: Control) -> void:

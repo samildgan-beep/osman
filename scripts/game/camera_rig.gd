@@ -12,6 +12,8 @@ var pitch := deg_to_rad(Config.CAM_PITCH_DEFAULT)
 var dist := Config.CAM_DIST_DEFAULT
 var fov_target := 70.0
 var narrow_view := false
+var indoor := false          # bina içindeyken duvarlar baş hizasından kesilir (Game ayarlar)
+var current_cut := INF       # etkin kesit yüksekliği (kesit yoksa INF)
 
 var _cur_dist := Config.CAM_DIST_DEFAULT
 var _pivot := Vector3.ZERO
@@ -99,14 +101,20 @@ func _physics_process(delta: float) -> void:
 	if _pivot.distance_to(desired_pivot) > 4.0:
 		_pivot = desired_pivot
 
-	# Kesit (üst görünüm)
-	var cut := is_top_view()
-	var cut_h := target.global_position.y + Config.CAM_TOP_CUT
+	# Kesit: bina içinde veya üstten görünümde, oyuncunun başının üstündeki her şey gizlenir.
+	# Tavanlar ayrı (yarı saydam) çizilir; yalnızca bulunulan katınki görünür.
+	var top := is_top_view()
+	var cut := top or indoor
+	var feet := target.global_position.y
+	var cut_h := feet + (Config.CAM_TOP_CUT if top else Config.CAM_INDOOR_CUT)
 	if cut:
 		RenderingServer.global_shader_parameter_set("cut_height", cut_h)
+		RenderingServer.global_shader_parameter_set("ceil_cut_height", feet + Config.CAM_CEILING_SHOW)
 	elif _cut_active:
 		RenderingServer.global_shader_parameter_set("cut_height", 100000.0)
+		RenderingServer.global_shader_parameter_set("ceil_cut_height", 100000.0)
 	_cut_active = cut
+	current_cut = cut_h if cut else INF
 
 	var rot := Basis.from_euler(Vector3(pitch, yaw, 0.0))
 	var dir := rot * Vector3(0, 0, 1)
