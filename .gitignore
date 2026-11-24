@@ -1,0 +1,16 @@
+# Godot
+.godot/
+.import/
+*.translation
+export_credentials.cfg
+
+# Dışa aktarma çıktıları
+build/
+*.apk
+*.aab
+*.ipa
+android/
+
+# Sistem
+.DS_Store
+Thumbs.db
