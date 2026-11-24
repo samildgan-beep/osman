@@ -94,7 +94,7 @@ func can_interact(player_holding: bool) -> bool:
 func prompt_text(player_holding: bool) -> String:
 	if _closed:
 		return ""
-	return "Önce eşyayı bırak" if player_holding else "KAPIYI KAPAT"
+	return "Put it down first" if player_holding else "CLOSE"
 
 
 func interact() -> void:

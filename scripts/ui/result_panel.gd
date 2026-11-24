@@ -17,7 +17,7 @@ func setup(p_success: bool, p_data: Dictionary) -> void:
 
 
 func _ready() -> void:
-	build_frame("TESLİM EDİLDİ!" if success else "GÖREV BAŞARISIZ", Vector2(640, 0), 0.55)
+	build_frame("DELIVERED!" if success else "MISSION FAILED", Vector2(640, 0), 0.55)
 	if success:
 		_stars = StarRow.new(int(data.get("stars", 1)), 64)
 		_stars.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
@@ -31,27 +31,27 @@ func _ready() -> void:
 		grid.add_theme_constant_override("h_separation", 30)
 		grid.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 		body.add_child(grid)
-		_stat(grid, "Süre", DamageModel.format_time(float(data.get("time", 0.0))))
-		_stat(grid, "Hedef süre", DamageModel.format_time(float(data.get("par", 0.0))))
-		_stat(grid, "Eşya sağlamlığı", "%d%%" % int(round(float(data.get("durability", 0.0)))))
-		_stat(grid, "Çarpma sayısı", str(int(data.get("hits", 0))))
+		_stat(grid, "Time", DamageModel.format_time(float(data.get("time", 0.0))))
+		_stat(grid, "Target time", DamageModel.format_time(float(data.get("par", 0.0))))
+		_stat(grid, "Item condition", "%d%%" % int(round(float(data.get("durability", 0.0)))))
+		_stat(grid, "Bumps", str(int(data.get("hits", 0))))
 		if bool(data.get("perfect", false)):
-			var badge := UITheme.label("KUSURSUZ TAŞIYICI rozeti!", 28, UITheme.GOOD, HORIZONTAL_ALIGNMENT_CENTER)
+			var badge := UITheme.label("PERFECT MOVER badge!", 28, UITheme.GOOD, HORIZONTAL_ALIGNMENT_CENTER)
 			body.add_child(badge)
 		if bool(data.get("record", false)):
-			body.add_child(UITheme.label("Yeni rekor!", 24, UITheme.ACCENT, HORIZONTAL_ALIGNMENT_CENTER))
+			body.add_child(UITheme.label("New record!", 24, UITheme.ACCENT, HORIZONTAL_ALIGNMENT_CENTER))
 		var unlocked: Array = data.get("new_outfits", [])
 		for o in unlocked:
-			body.add_child(UITheme.label("Yeni kıyafet açıldı: %s" % str(o), 22, UITheme.ACCENT, HORIZONTAL_ALIGNMENT_CENTER))
+			body.add_child(UITheme.label("New outfit unlocked: %s" % str(o), 22, UITheme.ACCENT, HORIZONTAL_ALIGNMENT_CENTER))
 		if bool(data.get("has_next", false)):
-			add_button("SONRAKİ BÖLÜM", func(): next_level.emit())
+			add_button("NEXT LEVEL", func(): next_level.emit())
 		elif bool(data.get("last_level", false)):
-			body.add_child(UITheme.label("Tüm bölümleri bitirdin. Tebrikler, usta taşıyıcı!", 24, UITheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER))
+			body.add_child(UITheme.label("You finished every level. Congratulations, master mover!", 24, UITheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER))
 	else:
-		body.add_child(UITheme.label(str(data.get("reason", "Eşya kırıldı!")), 30, UITheme.BAD, HORIZONTAL_ALIGNMENT_CENTER))
+		body.add_child(UITheme.label(str(data.get("reason", "The item broke!")), 30, UITheme.BAD, HORIZONTAL_ALIGNMENT_CENTER))
 		body.add_child(UITheme.label(str(data.get("tip", "")), 22, UITheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER))
-	add_button("TEKRAR DENE", func(): retry.emit())
-	add_button("BÖLÜMLER", func(): to_levels.emit())
+	add_button("TRY AGAIN", func(): retry.emit())
+	add_button("LEVELS", func(): to_levels.emit())
 	pop_in()
 
 

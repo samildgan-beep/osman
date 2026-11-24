@@ -4,6 +4,7 @@ extends Node
 
 const LEVELS_PATH := "res://data/levels.json"
 const OBSTACLE_TYPES := ["cat", "lamp", "shoe_rack", "plant", "door", "boxes"]
+const GOAL_TYPES := ["door", "room", "spot"]
 const ANCHORS := ["hall", "flightA", "flightB", "mid", "landing", "corridor", "corridor2", "room", "street"]
 
 var _levels: Array = []
@@ -26,7 +27,7 @@ func reload() -> void:
 		if entry is Dictionary:
 			_levels.append(sanitize_level(entry, _levels.size() + 1))
 	if _levels.is_empty():
-		_levels.append(sanitize_level({"id": 1, "name": "Yedek Bölüm"}, 1))
+		_levels.append(sanitize_level({"id": 1, "name": "Backup Level"}, 1))
 	for e in errors:
 		push_warning("LevelDB: " + e)
 
@@ -48,7 +49,7 @@ func all_levels() -> Array:
 func sanitize_level(src: Dictionary, index: int) -> Dictionary:
 	var L := {}
 	L.id = index
-	L.name = str(src.get("name", "Bölüm %d" % index))
+	L.name = str(src.get("name", "Level %d" % index))
 	L.subtitle = str(src.get("subtitle", ""))
 	var item_id := str(src.get("item", "kutu"))
 	if not ItemDB.has_item(item_id):
@@ -56,6 +57,12 @@ func sanitize_level(src: Dictionary, index: int) -> Dictionary:
 		item_id = "kutu"
 	L.item = item_id
 	L.floors = clampi(_int(src.get("floors"), 1), 1, 6)
+	var goal := str(src.get("goal", "room"))
+	if not (goal in GOAL_TYPES):
+		errors.append("bölüm %d: geçersiz hedef %s" % [index, goal])
+		goal = "room"
+	L.goal = goal
+	L.theme = clampi(_int(src.get("theme"), (index - 1) % 6), 0, 5)
 	L.steps = clampi(_int(src.get("steps"), 8), 4, 12)
 	L.rise = clampf(_num(src.get("rise"), 0.175), 0.12, 0.2)
 	L.tread = clampf(_num(src.get("tread"), 0.29), 0.24, 0.36)

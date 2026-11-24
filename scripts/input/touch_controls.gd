@@ -24,19 +24,19 @@ var _left_handed := false
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_make_button("interact", "AL", "tap", 62.0)
-	_make_button("rest", "MOLA", "tap", 38.0)
-	_make_button("lift_up", "KALDIR", "hold", 38.0)
-	_make_button("lift_down", "İNDİR", "hold", 38.0)
-	_make_button("precise", "HASSAS", "hold", 40.0)
-	_make_button("mode", "YATIR", "toggle", 36.0)
-	_make_button("reset", "DÜZELT", "tap", 34.0)
-	_make_button("cam_back", "ARKA", "tap", 30.0)
-	_make_button("cam_top", "ÜST", "tap", 30.0)
-	_make_button("cam_side", "YAN", "tap", 30.0)
+	_make_button("interact", "GRAB", "tap", 62.0)
+	_make_button("rest", "REST", "tap", 38.0)
+	_make_button("lift_up", "LIFT", "hold", 38.0)
+	_make_button("lift_down", "LOWER", "hold", 38.0)
+	_make_button("precise", "FINE", "hold", 40.0)
+	_make_button("mode", "ROLL", "toggle", 36.0)
+	_make_button("reset", "RESET", "tap", 34.0)
+	_make_button("cam_back", "BACK", "tap", 30.0)
+	_make_button("cam_top", "TOP", "tap", 30.0)
+	_make_button("cam_side", "SIDE", "tap", 30.0)
 	_make_button("pause", "II", "tap", 30.0)
 	buttons.interact.accent = Color(0.35, 0.85, 0.45)
-	buttons.mode.sublabel = "3. eksen"
+	buttons.mode.sublabel = "3rd axis"
 	buttons.interact.tapped.connect(func(): state.press("interact"))
 	buttons.rest.tapped.connect(func(): state.press("rest"))
 	buttons.reset.tapped.connect(func(): state.press("reset_rotation"))
@@ -99,7 +99,7 @@ func set_holding(v: bool) -> void:
 
 func set_interact(text: String, enabled: bool) -> void:
 	var b: TouchButton = buttons.interact
-	b.set_label(text if text != "" else "AL")
+	b.set_label(text if text != "" else "GRAB")
 	b.set_enabled(enabled)
 
 

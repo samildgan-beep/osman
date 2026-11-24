@@ -8,6 +8,9 @@ signal damaged(amount: float, durability: float, face: String, hard: bool)
 signal destroyed
 signal proximity_changed(faces: Array)
 signal landed(on_floor: bool)
+## Her yüzey teması (çizik, toz, kopan parça efektleri için): nokta, yüzey normali,
+## eşyanın hızı, verilen hasar ve sert çarpma mı
+signal surface_contact(point: Vector3, normal: Vector3, velocity: Vector3, damage: float, hard: bool)
 
 enum State { FREE, HELD, LOWERING }
 
@@ -74,13 +77,37 @@ func _build_visual() -> void:
 	add_child(_visual)
 	for p in data.get("parts", []):
 		var mi := MeshInstance3D.new()
-		var bm := BoxMesh.new()
-		bm.size = p.size
-		mi.mesh = bm
+		var psize: Vector3 = p.size
+		match str(p.get("shape", "box")):
+			"cyl_z":
+				var cm := CylinderMesh.new()
+				cm.top_radius = psize.x * 0.5
+				cm.bottom_radius = psize.x * 0.5
+				cm.height = psize.z
+				cm.radial_segments = 24
+				mi.mesh = cm
+				mi.rotation = Vector3(PI * 0.5, 0, 0)
+			"sphere":
+				var sm := SphereMesh.new()
+				sm.radius = 0.5
+				sm.height = 1.0
+				mi.mesh = sm
+				mi.scale = psize
+			_:
+				var bm := BoxMesh.new()
+				bm.size = psize
+				mi.mesh = bm
 		mi.position = p.pos
 		var mat := StandardMaterial3D.new()
 		mat.albedo_color = p.color
-		mat.roughness = 0.55
+		mat.roughness = 0.45
+		var pc: Color = p.color
+		# Açık renkli, mavimsi ince parçalar (ekran, cam) parlak olsun
+		if psize.z < 0.01 or psize.y < 0.01:
+			mat.roughness = 0.12
+			mat.metallic = 0.2
+		if pc.v > 0.85 and pc.s < 0.1:
+			mat.roughness = 0.3
 		mi.material_override = mat
 		_visual.add_child(mi)
 		_parts.append(mi)
@@ -220,6 +247,8 @@ func _on_collision(col: KinematicCollision3D, vel: Vector3, delta: float, floor_
 	var dmg := _register_contact(impact, face, delta, is_obstacle)
 	if dmg >= 3.0:
 		_add_scratch(point, dmg)
+	if not is_obstacle and grace <= 0.0:
+		surface_contact.emit(point, nrm, vel, dmg, dmg >= 6.0)
 
 
 ## Temas kaydı ve hasar. Yeni temas tam hasar, süren temas sürtünme hasarı verir.
@@ -385,6 +414,7 @@ func _process_free(delta: float) -> void:
 			apply_damage(dmg, face, dmg >= 6.0, true)
 			if dmg >= 3.0:
 				_add_scratch(col.get_position(), dmg)
+			surface_contact.emit(col.get_position(), nrm, _fall_velocity, dmg, dmg >= 6.0)
 		if nrm.y > FLOOR_NORMAL_Y:
 			resting = true
 			_fall_velocity = Vector3.ZERO
@@ -452,6 +482,23 @@ func _overlaps(xf: Transform3D, shape: Shape3D) -> bool:
 ## Eşya şu an bir yere gömülü mü? (kurtarma için)
 func is_overlapping() -> bool:
 	return _overlaps(global_transform, _shape_small)
+
+
+## Parçalanma efekti için görünüm parçalarının dünya konumu, boyutu ve rengi.
+func get_debris_parts() -> Array:
+	var out: Array = []
+	for p in data.get("parts", []):
+		var psize: Vector3 = p.size
+		var ppos: Vector3 = p.pos
+		out.append({"pos": global_transform * ppos, "size": psize, "color": p.color, "basis": global_basis})
+	return out
+
+
+## Kırılınca görüntüyü gizle (parçalar efekt olarak saçılır).
+func hide_visual() -> void:
+	if _visual != null:
+		_visual.visible = false
+	_set_prox([])
 
 
 func get_weight() -> float:

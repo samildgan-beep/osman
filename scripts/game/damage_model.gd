@@ -4,8 +4,8 @@ extends RefCounted
 ## tests/run_tests.gd ile doğrudan test edilir.
 
 const FACE_NAMES := {
-	"front": "ön yüz", "back": "arka yüz", "left": "sol yan",
-	"right": "sağ yan", "top": "üst yüz", "bottom": "alt yüz",
+	"front": "front", "back": "back", "left": "left side",
+	"right": "right side", "top": "top", "bottom": "bottom",
 }
 
 

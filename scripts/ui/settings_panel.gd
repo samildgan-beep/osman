@@ -9,7 +9,7 @@ var _reset_stage := 0
 
 
 func _ready() -> void:
-	build_frame("AYARLAR", Vector2(760, 0))
+	build_frame("SETTINGS", Vector2(760, 0))
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(700, 430)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -19,25 +19,25 @@ func _ready() -> void:
 	list.add_theme_constant_override("separation", 12)
 	scroll.add_child(list)
 
-	_slider(list, "Efekt sesi", "sfx_volume", 0.0, 1.0)
-	_slider(list, "Müzik", "music_volume", 0.0, 1.0)
-	_slider(list, "Döndürme hassasiyeti", "sensitivity", 0.25, 3.0)
-	_slider(list, "Kamera hassasiyeti", "camera_sensitivity", 0.25, 3.0)
+	_slider(list, "Sound effects", "sfx_volume", 0.0, 1.0)
+	_slider(list, "Music", "music_volume", 0.0, 1.0)
+	_slider(list, "Rotate sensitivity", "sensitivity", 0.25, 3.0)
+	_slider(list, "Camera sensitivity", "camera_sensitivity", 0.25, 3.0)
 	_quality(list)
-	_toggle(list, "Titreşim", "vibration")
-	_toggle(list, "Dikey döndürmeyi ters çevir", "invert_pitch")
-	_toggle(list, "Yön okunu göster", "show_guide")
-	_toggle(list, "Solak modu (kontrolleri değiştir)", "left_handed")
+	_toggle(list, "Vibration", "vibration")
+	_toggle(list, "Invert vertical rotation", "invert_pitch")
+	_toggle(list, "Show guide arrow", "show_guide")
+	_toggle(list, "Left-handed mode (swap controls)", "left_handed")
 
-	var help := UITheme.label("Klavye: WASD yürü · J/L I/K U/O döndür · Q/E indir/kaldır · Shift hassas · Boşluk al/bırak · R mola · T düzelt · 1/2/3 kamera · Esc duraklat", 18, UITheme.MUTED)
+	var help := UITheme.label("Keyboard: WASD walk · J/L I/K U/O rotate · Q/E lower/lift · Shift fine · Space grab/drop · R rest · T reset · 1/2/3 camera · Esc pause", 18, UITheme.MUTED)
 	list.add_child(help)
 
-	_reset_btn = UITheme.button("İlerlemeyi sıfırla", 360, 60)
+	_reset_btn = UITheme.button("Reset progress", 360, 60)
 	_reset_btn.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	_reset_btn.pressed.connect(_on_reset)
 	list.add_child(_reset_btn)
 
-	add_button("KAPAT", func():
+	add_button("CLOSE", func():
 		GameState.save_game()
 		closed.emit()
 		queue_free())
@@ -92,11 +92,11 @@ func _toggle(list: VBoxContainer, text: String, key: String) -> void:
 
 
 func _quality(list: VBoxContainer) -> void:
-	var row := _row(list, "Grafik kalitesi")
+	var row := _row(list, "Graphics quality")
 	var o := OptionButton.new()
-	o.add_item("Düşük (pil dostu)", 0)
-	o.add_item("Orta", 1)
-	o.add_item("Yüksek", 2)
+	o.add_item("Low (battery saver)", 0)
+	o.add_item("Medium", 1)
+	o.add_item("High", 2)
 	o.selected = clampi(int(GameState.get_setting("quality")), 0, 2)
 	o.focus_mode = Control.FOCUS_NONE
 	o.custom_minimum_size = Vector2(300, 56)
@@ -107,8 +107,8 @@ func _quality(list: VBoxContainer) -> void:
 func _on_reset() -> void:
 	_reset_stage += 1
 	if _reset_stage == 1:
-		_reset_btn.text = "Emin misin? Tekrar bas"
+		_reset_btn.text = "Are you sure? Tap again"
 	else:
 		GameState.reset_to_defaults(true)
-		_reset_btn.text = "Sıfırlandı"
+		_reset_btn.text = "Progress reset"
 		_reset_btn.disabled = true

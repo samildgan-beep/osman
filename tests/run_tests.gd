@@ -76,7 +76,7 @@ func _test_damage_model() -> void:
 func _test_item_db() -> void:
 	section("Eşya verisi")
 	check(ItemDB.errors.is_empty(), "items.json hatasız olmalı: %s" % str(ItemDB.errors))
-	for id in ["kutu", "buyuk_kutu", "tv", "buyuk_tv", "sehpa", "koltuk", "gardirop", "buzdolabi"]:
+	for id in ["kutu", "buyuk_kutu", "tv", "buyuk_tv", "sehpa", "koltuk", "gardirop", "camasir", "buzdolabi"]:
 		check(ItemDB.has_item(id), "eşya var: " + id)
 	check(ItemDB.get_item("buzdolabi").carry == "back", "buzdolabı sırtta")
 	check(ItemDB.get_item("yok_boyle_bir_sey").id == "kutu", "bilinmeyen eşya koliye düşer")
@@ -90,7 +90,12 @@ func _test_item_db() -> void:
 func _test_level_db() -> void:
 	section("Bölüm verisi")
 	check(LevelDB.errors.is_empty(), "levels.json hatasız olmalı: %s" % str(LevelDB.errors))
-	check(LevelDB.count() == 15, "15 bölüm")
+	check(LevelDB.count() == 18, "18 bölüm")
+	var goals := {}
+	for L in LevelDB.all_levels():
+		goals[str(L.goal)] = true
+	check(goals.has("door") and goals.has("room") and goals.has("spot"), "üç hedef türü de kullanılıyor")
+	check(LevelDB.get_level(13).item == "camasir" and LevelDB.get_level(13).goal == "spot", "çamaşır makinesi yerleştirme bölümü")
 	for L in LevelDB.all_levels():
 		var id := int(L.id)
 		var item := ItemDB.get_item(str(L.item))
@@ -168,6 +173,14 @@ func _test_level_builds() -> void:
 		check(g.size.x > foot and g.size.z > foot, "bölüm %d: hedef alan eşyadan büyük" % int(L.id))
 		check(info.waypoints.size() >= 6, "bölüm %d: yol noktaları" % int(L.id))
 		check(absf(g.position.y - int(L.floors) * float(info.floor_height)) < 0.01, "bölüm %d: hedef doğru katta" % int(L.id))
+		check(info.has("npc_pos") and info.has("npc_yaw"), "bölüm %d: ev sahibi konumu" % int(L.id))
+		if str(L.goal) == "spot":
+			var facing: Vector3 = info.goal_facing
+			check(absf(facing.length() - 1.0) < 0.01 and absf(facing.y) < 0.01, "bölüm %d: yerleştirme yönü yatay" % int(L.id))
+			var sb: Basis = info.spot_basis
+			check((-sb.z).dot(facing) > 0.99, "bölüm %d: hayalet görüntü odaya bakıyor" % int(L.id))
+		var npc_p: Vector3 = info.npc_pos
+		check(not g.grow(0.2).has_point(npc_p + Vector3(0, 0.5, 0)), "bölüm %d: ev sahibi hedef alanın içinde değil" % int(L.id))
 		await get_tree().physics_frame
 		await get_tree().physics_frame
 		# Yol noktalarının üstünde zemin olmalı (ışınla kontrol)
@@ -209,6 +222,15 @@ func _test_gameplay_smoke() -> void:
 	check(p.is_on_floor(), "oyuncu zemine iniyor")
 	check(game.item.is_settled(), "eşya zemine oturuyor")
 	check(game.item.durability >= 99.0, "eşya başlangıçta hasarsız")
+	check(game.npc != null and is_instance_valid(game.npc), "ev sahibi oluşturuldu")
+	# Efektler: sert temas iz + parça üretmeli, parçalanma parça üretmeli
+	var marks_before := game.fx.get_child_count()
+	game.fx.on_contact(Vector3(0, 1, 0.01), Vector3(0, 0, 1), Vector3(1, 0, -2), 12.0, true, [Color.RED])
+	await get_tree().process_frame
+	check(game.fx.get_child_count() > marks_before + 3, "sert çarpma iz, toz ve parça üretiyor")
+	game.fx.shatter(game.item.get_debris_parts(), game.item.global_position, Vector3.ZERO)
+	await get_tree().physics_frame
+	check(game.fx.get_child_count() > marks_before + 8, "parçalanma efekti çalışıyor")
 	# Eşyanın yanına git ve al
 	var to_item := game.item.global_position - p.global_position
 	to_item.y = 0

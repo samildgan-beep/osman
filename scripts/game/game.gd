@@ -19,6 +19,8 @@ var cam: CameraRig
 var hud: HUD
 var touch: TouchControls
 var goal: GoalMarker
+var fx: FX
+var npc: Homeowner
 var phase := Phase.PLAYING
 var elapsed := 0.0
 var penalty := 0.0
@@ -43,6 +45,8 @@ var _end_data := {}
 var _ignore_pause_until := 0
 var _kb_move_active := false
 var _drop_hint_on := false
+var _orient_hint_cd := 0.0
+var _item_colors: Array = []
 
 
 func setup(p_level_id: int) -> void:
@@ -60,9 +64,16 @@ func _ready() -> void:
 	_spawn_player()
 	_spawn_item()
 	_spawn_camera()
+	fx = FX.new()
+	fx.name = "FX"
+	add_child(fx)
 	goal = GoalMarker.new()
-	goal.setup(info.goal_aabb)
+	if str(info.goal_type) == "spot":
+		goal.setup(info.goal_aabb, info.spot_size, info.spot_basis, "PLACE HERE")
+	else:
+		goal.setup(info.goal_aabb, Vector3.ZERO, Basis(), "DROP HERE")
 	add_child(goal)
+	_spawn_npc()
 	_build_ui()
 	_apply_quality()
 	GameState.settings_changed.connect(_apply_quality)
@@ -86,26 +97,40 @@ func _build_environment() -> void:
 	env.background_mode = Environment.BG_SKY
 	var sky := Sky.new()
 	var psm := ProceduralSkyMaterial.new()
-	psm.sky_top_color = Color("4f8fd6")
-	psm.sky_horizon_color = Color("bcd9ee")
-	psm.ground_horizon_color = Color("bcd9ee")
-	psm.ground_bottom_color = Color("6a7a5a")
-	psm.sun_angle_max = 30.0
+	psm.sky_top_color = Color("2f7fe0")
+	psm.sky_horizon_color = Color("a8d8f5")
+	psm.ground_horizon_color = Color("a8d8f5")
+	psm.ground_bottom_color = Color("5d7a4a")
+	psm.sun_angle_max = 25.0
+	psm.sky_energy_multiplier = 1.1
 	sky.sky_material = psm
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.85
-	env.ambient_light_sky_contribution = 0.8
+	env.ambient_light_energy = 0.95
+	env.ambient_light_sky_contribution = 0.75
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
-	env.tonemap_exposure = 1.05
-	env.glow_enabled = false
+	env.tonemap_exposure = 1.1
+	env.tonemap_white = 6.0
+	# Canlı renkler: hafif doygunluk ve kontrast artışı, yumuşak parlama
+	env.adjustment_enabled = true
+	env.adjustment_saturation = 1.2
+	env.adjustment_contrast = 1.06
+	env.adjustment_brightness = 1.02
+	env.glow_enabled = true
+	env.glow_intensity = 0.55
+	env.glow_bloom = 0.06
+	env.glow_hdr_threshold = 1.1
+	env.fog_enabled = true
+	env.fog_light_color = Color("cfe6f5")
+	env.fog_density = 0.0035
+	env.fog_sky_affect = 0.0
 	_env = WorldEnvironment.new()
 	_env.environment = env
 	add_child(_env)
 	_sun = DirectionalLight3D.new()
 	_sun.rotation_degrees = Vector3(-52, -38, 0)
-	_sun.light_energy = 1.15
-	_sun.light_color = Color(1.0, 0.97, 0.9)
+	_sun.light_energy = 1.3
+	_sun.light_color = Color(1.0, 0.94, 0.82)
 	_sun.directional_shadow_max_distance = 28.0
 	_sun.shadow_bias = 0.04
 	add_child(_sun)
@@ -124,8 +149,8 @@ func _spawn_player() -> void:
 	player.picked_up.connect(_on_holding_changed)
 	player.put_down.connect(_on_holding_changed)
 	player.exhausted.connect(func():
-		hud.center_message("Gücün tükendi!", 1.6, UITheme.BAD)
-		hud.hint("Eşyayı düşürdün. Dinlen, sonra tekrar AL.", 4.0))
+		hud.center_message("Out of stamina!", 1.6, UITheme.BAD)
+		hud.hint("You dropped it! Rest a moment, then GRAB it again.", 4.0))
 
 
 func _spawn_item() -> void:
@@ -138,6 +163,17 @@ func _spawn_item() -> void:
 	item.damaged.connect(_on_item_damaged)
 	item.destroyed.connect(_on_item_destroyed)
 	item.proximity_changed.connect(_on_proximity)
+	item.surface_contact.connect(func(pt: Vector3, nrm: Vector3, vel: Vector3, dmg: float, hard: bool):
+		fx.on_contact(pt, nrm, vel, dmg, hard, _item_colors))
+	for p in item_data.get("parts", []):
+		_item_colors.append(p.color)
+
+
+func _spawn_npc() -> void:
+	npc = Homeowner.new()
+	npc.name = "Homeowner"
+	npc.setup(info.npc_pos, float(info.npc_yaw), player, str(item_data.name), level_id * 31)
+	add_child(npc)
 
 
 func _spawn_camera() -> void:
@@ -159,7 +195,7 @@ func _build_ui() -> void:
 	touch.state = input
 	_ui_layer.add_child(touch)
 	touch.set_holding(false)
-	touch.set_interact("AL", false)
+	touch.set_interact("GRAB", false)
 	_overlay_layer = CanvasLayer.new()
 	_overlay_layer.layer = 5
 	_overlay_layer.process_mode = Node.PROCESS_MODE_ALWAYS
@@ -171,6 +207,9 @@ func _apply_quality() -> void:
 	var vp := get_viewport()
 	if _sun != null:
 		_sun.shadow_enabled = q >= 1
+	if _env != null and _env.environment != null:
+		_env.environment.glow_enabled = q >= 1
+		_env.environment.fog_enabled = q >= 1
 	if vp != null:
 		vp.scaling_3d_scale = 0.7 if q == 0 else (0.85 if q == 1 else 1.0)
 		vp.msaa_3d = Viewport.MSAA_2X if q >= 2 else Viewport.MSAA_DISABLED
@@ -276,7 +315,7 @@ func _update_guide() -> void:
 			hud.set_guide(0.0, "", false)
 			return
 		target = item.global_position
-		label = "Eşya"
+		label = "Item"
 	else:
 		var wps: Array = info.waypoints
 		for look in range(_waypoint_idx, mini(_waypoint_idx + 3, wps.size() - 1)):
@@ -291,10 +330,9 @@ func _update_guide() -> void:
 	var hd := Vector2(d.x, d.z).length()
 	if label == "":
 		label = "%d m" % int(round(hd))
-	if floors > 0:
-		label += " · %d kat yukarı" % floors
-	elif floors < 0:
-		label += " · %d kat aşağı" % -floors
+	if floors != 0:
+		var nf := absi(floors)
+		label += " · %d floor%s %s" % [nf, "" if nf == 1 else "s", "up" if floors > 0 else "down"]
 	hud.set_guide(ang, label, show_arrow)
 
 
@@ -306,7 +344,10 @@ func _update_drop_hint() -> void:
 		if _tut_step < 0 or _tut_step >= _tutorial.size() or str(_tutorial[_tut_step].hl) != "interact":
 			touch.highlight("interact", on)
 		if on:
-			hud.hint("Hedefe geldin: BIRAK!", 2.5)
+			if str(info.goal_type) == "spot":
+				hud.hint("Line it up, FRONT facing the room, then DROP!", 3.0)
+			else:
+				hud.hint("You made it: DROP it here!", 2.5)
 
 
 ## Kesit görünümünde kesitin üstünde kalan bina yazılarını gizle.
@@ -344,23 +385,46 @@ func _check_safety() -> void:
 	var kill_y := float(info.kill_y)
 	if player.global_position.y < kill_y:
 		player.teleport(player.get_last_safe())
-		hud.hint("Güvenli noktaya döndün.", 2.5)
+		hud.hint("Back to a safe spot.", 2.5)
 	if item.global_position.y < kill_y or item.global_position.length() > 120.0:
 		if player.is_holding():
 			player.carry.release(false)
 		var p := player.global_position + player.global_basis * Vector3(0, 0, -1.2)
 		item.place_on_ground(p)
 		item.grace = 1.0
-		hud.hint("Eşya geri getirildi.", 2.5)
+		hud.hint("The item was brought back.", 2.5)
 
 
 func _check_win(delta: float) -> void:
+	_orient_hint_cd = maxf(0.0, _orient_hint_cd - delta)
 	if item.is_settled() and goal.contains(item.global_position) and item.durability > 0.0:
+		if not _placement_ok():
+			_goal_hold = 0.0
+			if _orient_hint_cd <= 0.0:
+				_orient_hint_cd = 5.0
+				hud.hint("Almost! Stand it upright with the FRONT facing the room.", 3.5)
+				npc.hint_orientation()
+			return
 		_goal_hold += delta
 		if _goal_hold > 0.35:
 			_win()
 	else:
 		_goal_hold = 0.0
+
+
+## Yerleştirme bölümlerinde eşya dik durmalı ve ön yüzü odaya bakmalı.
+func _placement_ok() -> bool:
+	if str(info.goal_type) != "spot":
+		return true
+	var b := item.global_basis.orthonormalized()
+	if b.y.dot(Vector3.UP) < cos(deg_to_rad(22.0)):
+		return false
+	var front := -b.z
+	front.y = 0.0
+	if front.length() < 0.3:
+		return false
+	var facing: Vector3 = info.goal_facing
+	return front.normalized().dot(facing) > cos(deg_to_rad(40.0))
 
 
 # ================================================================ olaylar
@@ -374,7 +438,7 @@ func _on_holding_changed() -> void:
 	if holding:
 		_waypoint_idx = mini(_nearest_waypoint(), info.waypoints.size() - 1)
 		if back:
-			hud.hint("Sırtında taşıyorsun: görüş alanın daraldı.", 3.0)
+			hud.hint("Carrying on your back: your view is narrower.", 3.0)
 	else:
 		hud.show_proximity([])
 
@@ -386,6 +450,9 @@ func _on_item_damaged(amount: float, durability: float, face: String, hard: bool
 	if hard:
 		Haptics.heavy()
 		cam.shake(clampf(amount / 25.0, 0.3, 1.0))
+		if npc != null:
+			var d := npc.global_position - player.global_position
+			npc.react_damage(amount, Vector2(d.x, d.z).length() < 14.0 and absf(d.y) < 3.5)
 	elif amount >= 0.5:
 		Haptics.light()
 
@@ -393,7 +460,15 @@ func _on_item_damaged(amount: float, durability: float, face: String, hard: bool
 func _on_item_destroyed() -> void:
 	if phase != Phase.PLAYING:
 		return
-	_fail("%s kırıldı!" % str(item_data.name), "İpucu: yakınlık uyarısı (sarı kenar) görünce yavaşla ve açıyı değiştir.")
+	_fail("The %s broke!" % str(item_data.name).to_lower(), "Tip: when an edge glows yellow, slow down and change the angle.")
+	# Eşya parçalara ayrılır
+	fx.shatter(item.get_debris_parts(), item.global_position, Vector3.ZERO)
+	item.hide_visual()
+	item.collision_layer = 0
+	item.collision_mask = 0
+	item.set_physics_process(false)
+	if npc != null:
+		npc.sad()
 
 
 func _on_proximity(faces: Array) -> void:
@@ -407,12 +482,12 @@ func _on_proximity(faces: Array) -> void:
 
 func _setup_tutorial() -> void:
 	_tutorial = [
-		{"t": "Sol tarafta parmağını basılı tutup kaydır: joystick ile koliye doğru yürü.", "hl": "", "done": func() -> bool: return player._can_pick() or player.is_holding()},
-		{"t": "AL düğmesine basarak koliyi kaldır.", "hl": "interact", "done": func() -> bool: return player.is_holding()},
-		{"t": "Sağ tarafta tek parmağını kaydırarak koliyi döndür. YATIR düğmesi üçüncü ekseni açar.", "hl": "", "done": func() -> bool: return player.carry.rotated_total_deg > 60.0, "timeout": 12.0},
-		{"t": "KALDIR / İNDİR ile koliyi yükselt veya alçalt. HASSAS basılıyken döndürme yavaşlar.", "hl": "lift_up", "done": func() -> bool: return player.carry.lift_used, "timeout": 10.0},
-		{"t": "Üstteki yeşil oku takip et: binaya gir ve merdivenleri çık. Kenar sarı yanarsa çarpmak üzeresin!", "hl": "", "done": func() -> bool: return player.global_position.y > float(info.top_floor_y) - 0.4},
-		{"t": "Daireye gir. Yeşil HEDEF alanına gelince BIRAK.", "hl": "interact", "done": func() -> bool: return false},
+		{"t": "Touch and drag on the left side: use the joystick to walk to the box.", "hl": "", "done": func() -> bool: return player._can_pick() or player.is_holding()},
+		{"t": "Press GRAB to pick up the box.", "hl": "interact", "done": func() -> bool: return player.is_holding()},
+		{"t": "Swipe with one finger on the right side to rotate the box. ROLL unlocks the third axis.", "hl": "", "done": func() -> bool: return player.carry.rotated_total_deg > 60.0, "timeout": 12.0},
+		{"t": "Use LIFT / LOWER to raise or lower it. Hold FINE to rotate slowly.", "hl": "lift_up", "done": func() -> bool: return player.carry.lift_used, "timeout": 10.0},
+		{"t": "Follow the green arrow: enter the building and climb the stairs. A yellow edge means you're about to hit something!", "hl": "", "done": func() -> bool: return player.global_position.y > float(info.top_floor_y) - 0.4},
+		{"t": "The owner is waiting at the door. Step into the green zone and press DROP.", "hl": "interact", "done": func() -> bool: return false},
 	]
 	_tut_step = -1
 	_next_tutorial_step()
@@ -550,7 +625,7 @@ func rescue() -> void:
 	item.grace = 1.2
 	penalty += 15.0
 	cam.preset("back")
-	hud.hint("Kurtarıldın (+15 sn).", 2.5)
+	hud.hint("Rescued (+15 s).", 2.5)
 
 
 # ================================================================ bitiş
@@ -573,14 +648,39 @@ func _win() -> void:
 			new_outfits.append(o.name)
 	AudioManager.play("success", 0.0)
 	Haptics.vibrate(40)
-	hud.center_message("TESLİM EDİLDİ!", 1.6, UITheme.GOOD)
+	hud.center_message("DELIVERED!", 1.8, UITheme.GOOD)
+	_celebrate(perfect)
 	_end_success = true
 	_end_data = {
 		"stars": stars, "time": total, "par": float(level.par_time), "durability": item.durability,
 		"hits": item.hit_count, "perfect": perfect, "record": record, "new_outfits": new_outfits,
 		"has_next": level_id < LevelDB.count(), "last_level": level_id >= LevelDB.count(),
 	}
-	_end_timer = 1.4
+	_end_timer = 4.4
+
+
+## Teslim kutlaması: ev sahibi sevinir ve teşekkür eder, konfeti, taşıyıcı da sevinir,
+## kamera ikisini birlikte gösterir.
+func _celebrate(perfect: bool) -> void:
+	goal.active = false
+	if npc == null:
+		return
+	npc.celebrate(perfect)
+	player.celebrating = true
+	player.face_towards(npc.global_position)
+	fx.confetti(npc.global_position + Vector3(0, 2.0, 0))
+	var mid := (npc.global_position + player.global_position) * 0.5
+	fx.confetti(mid + Vector3(0, 2.4, 0), 60)
+	var d := player.global_position - npc.global_position
+	d.y = 0.0
+	if d.length() > 0.1:
+		# Kamera taşıyıcının arkasında, ev sahibine bakar; biraz yandan
+		cam.focus(atan2(d.x, d.z) + 0.45, -18.0, 4.2)
+	var tm := get_tree().create_timer(1.6, false)
+	tm.timeout.connect(func():
+		if is_instance_valid(fx) and is_instance_valid(npc):
+			fx.confetti(npc.global_position + Vector3(0, 2.2, 0), 70)
+			AudioManager.play("star", -4.0, 1.2))
 
 
 func _fail(reason: String, tip: String) -> void:
@@ -591,12 +691,13 @@ func _fail(reason: String, tip: String) -> void:
 	touch.release_all()
 	touch.visible = false
 	AudioManager.play("fail", 0.0)
+	AudioManager.play("crack", 0.0, 0.8)
 	Haptics.heavy()
 	cam.shake(1.0)
 	hud.center_message(reason, 1.6, UITheme.BAD)
 	_end_success = false
 	_end_data = {"reason": reason, "tip": tip}
-	_end_timer = 1.6
+	_end_timer = 2.8
 
 
 func _update_end(delta: float) -> void:

@@ -1,170 +1,203 @@
 {
-	"_aciklama": "Bölüm tanımları. Yeni bölüm eklemek için listeye yeni kayıt ekleyin (id sıralı olmalı). Ölçüler metre. floors = hedef kat. corridor.turn: none | left | right. Engeller: cat, lamp, shoe_rack, plant, door, boxes. Engel konumları (at): hall, flightA, flightB, mid, landing (floor ile), corridor, corridor2, room.",
+	"_aciklama": "Bölüm tanımları. goal: door (daire kapısına teslim), room (odaya taşı), spot (tam yerine, ön yüz odaya bakacak şekilde yerleştir). theme: 0-5 renk teması. Ölçüler metre. corridor.turn: none | left | right. Engeller: cat, lamp, shoe_rack, plant, door, boxes. at: hall, flightA, flightB, mid, landing (floor ile), corridor, corridor2, room.",
 	"levels": [
 		{
-			"id": 1, "name": "İlk Gün", "subtitle": "Koliyi birinci kattaki daireye taşı.",
-			"item": "kutu", "floors": 1,
+			"id": 1, "name": "First Day", "subtitle": "Bring the box up to the 1st floor door.",
+			"item": "kutu", "floors": 1, "goal": "door", "theme": 0,
 			"stair_width": 1.6, "steps": 8, "rise": 0.175, "tread": 0.3, "landing": 2.0, "gap": 0.4, "ceiling": 2.6,
 			"entrance": [1.8, 2.4], "apt_door": [1.4, 2.2],
 			"corridor": {"length": 2.5, "width": 1.8, "turn": "none", "turn_length": 0},
 			"room": {"width": 4.5, "depth": 4.5, "door": [1.4, 2.2]},
 			"obstacles": [],
-			"par_time": 75, "tutorial": true,
-			"tips": ["Sol alttaki joystick ile yürü.", "Koliye yaklaşıp AL düğmesine bas.", "Yeşil alana gelince BIRAK."]
+			"par_time": 60, "tutorial": true,
+			"tips": []
 		},
 		{
-			"id": 2, "name": "Mutfak Kolisi", "subtitle": "İçinde tabaklar var, sert çarpma!",
-			"item": "buyuk_kutu", "floors": 1,
-			"stair_width": 1.5, "steps": 8, "rise": 0.175, "tread": 0.3, "landing": 1.9, "gap": 0.35, "ceiling": 2.6,
+			"id": 2, "name": "Kitchen Box", "subtitle": "Plates inside. No hard knocks!",
+			"item": "buyuk_kutu", "floors": 1, "goal": "door", "theme": 1,
+			"stair_width": 1.4, "steps": 8, "rise": 0.175, "tread": 0.3, "landing": 1.9, "gap": 0.35, "ceiling": 2.6,
 			"entrance": [1.6, 2.3], "apt_door": [1.2, 2.1],
 			"corridor": {"length": 3.0, "width": 1.6, "turn": "none", "turn_length": 0},
 			"room": {"width": 4.0, "depth": 4.0, "door": [1.2, 2.1]},
 			"obstacles": [{"type": "lamp", "at": "hall"}, {"type": "plant", "at": "landing", "floor": 1, "side": 1}],
-			"par_time": 75,
-			"tips": ["Eşya bir yüzeye yaklaşınca o kenar sarı yanar.", "Yavaş yürümek için joystick'i az it."]
+			"par_time": 65,
+			"tips": ["When the box gets close to a wall, that edge glows yellow.", "Push the joystick gently to walk slowly."]
 		},
 		{
-			"id": 3, "name": "Ekran Hassas", "subtitle": "Televizyonun ekranını koru.",
-			"item": "tv", "floors": 1,
-			"stair_width": 1.4, "steps": 8, "rise": 0.175, "tread": 0.29, "landing": 1.8, "gap": 0.35, "ceiling": 2.6,
+			"id": 3, "name": "Handle With Care", "subtitle": "Carry the TV into the living room.",
+			"item": "tv", "floors": 1, "goal": "room", "theme": 2,
+			"stair_width": 1.3, "steps": 8, "rise": 0.175, "tread": 0.29, "landing": 1.8, "gap": 0.35, "ceiling": 2.6,
 			"entrance": [1.5, 2.3], "apt_door": [1.1, 2.1],
 			"corridor": {"length": 3.0, "width": 1.5, "turn": "left", "turn_length": 2.5},
 			"room": {"width": 4.0, "depth": 4.0, "door": [1.1, 2.1]},
 			"obstacles": [{"type": "shoe_rack", "at": "corridor", "side": 1}],
 			"par_time": 90,
-			"tips": ["Ekran (ön yüz) iki kat hasar alır.", "Sağ tarafta parmağını kaydırarak eşyayı döndür.", "Dönüşte ekranı duvardan uzak tut."]
+			"tips": ["The screen (front) takes double damage.", "Swipe on the right side to rotate the TV.", "Keep the screen away from the walls in the corridor."]
 		},
 		{
-			"id": 4, "name": "İkinci Kat", "subtitle": "Büyük ekran, korkuluklu dar merdiven.",
-			"item": "buyuk_tv", "floors": 2,
-			"stair_width": 1.25, "steps": 8, "rise": 0.175, "tread": 0.28, "landing": 1.6, "gap": 0.3, "ceiling": 2.5,
+			"id": 4, "name": "Second Floor", "subtitle": "Big screen, narrow stairs with railings.",
+			"item": "buyuk_tv", "floors": 2, "goal": "door", "theme": 3,
+			"stair_width": 1.15, "steps": 8, "rise": 0.175, "tread": 0.28, "landing": 1.6, "gap": 0.3, "ceiling": 2.5,
 			"entrance": [1.5, 2.3], "apt_door": [1.1, 2.1],
 			"corridor": {"length": 3.0, "width": 1.4, "turn": "none", "turn_length": 0},
 			"room": {"width": 4.0, "depth": 4.0, "door": [1.1, 2.1]},
 			"obstacles": [{"type": "cat", "at": "flightA", "floor": 1}],
-			"par_time": 130,
-			"tips": ["Merdivenlerde kedi dolaşıyor, çarpma!", "Kamera düğmeleriyle üstten bakabilirsin."]
+			"par_time": 120,
+			"tips": ["A cat wanders on the stairs. Don't hit it!", "Tilt the wide screen to fit narrow stairs.", "Use the TOP camera to see tight spots."]
 		},
 		{
-			"id": 5, "name": "Cam Sehpa", "subtitle": "Üst yüzü cam. Lambalara dikkat.",
-			"item": "sehpa", "floors": 2,
+			"id": 5, "name": "Glass Table", "subtitle": "Glass top. Mind the hanging lamps.",
+			"item": "sehpa", "floors": 2, "goal": "room", "theme": 4,
 			"stair_width": 1.2, "steps": 8, "rise": 0.175, "tread": 0.28, "landing": 1.6, "gap": 0.3, "ceiling": 2.5,
 			"entrance": [1.4, 2.3], "apt_door": [1.05, 2.1],
 			"corridor": {"length": 3.5, "width": 1.35, "turn": "none", "turn_length": 0},
 			"room": {"width": 4.0, "depth": 4.0, "door": [1.05, 2.1]},
 			"obstacles": [{"type": "lamp", "at": "landing", "floor": 1}, {"type": "plant", "at": "mid", "floor": 0, "side": -1}, {"type": "lamp", "at": "corridor"}],
 			"par_time": 130,
-			"tips": ["Cam üst yüzü çarpma: iki kat hasar.", "Kaldır/İndir düğmeleriyle alçak lambaların altından geç."]
+			"tips": ["The glass top takes double damage.", "Use LIFT / LOWER to pass under low lamps."]
 		},
 		{
-			"id": 6, "name": "Dev Ekran", "subtitle": "Dar merdiven, açık kalmış kapı, ayakkabılık.",
-			"item": "buyuk_tv", "floors": 2,
-			"stair_width": 1.12, "steps": 8, "rise": 0.175, "tread": 0.28, "landing": 1.5, "gap": 0.3, "ceiling": 2.5,
+			"id": 6, "name": "Giant Screen", "subtitle": "Very narrow stairs, an open door, a shoe rack.",
+			"item": "buyuk_tv", "floors": 2, "goal": "room", "theme": 5,
+			"stair_width": 1.05, "steps": 8, "rise": 0.175, "tread": 0.28, "landing": 1.5, "gap": 0.3, "ceiling": 2.5,
 			"entrance": [1.4, 2.3], "apt_door": [1.05, 2.1],
 			"corridor": {"length": 3.5, "width": 1.35, "turn": "right", "turn_length": 3.0},
 			"room": {"width": 4.0, "depth": 4.0, "door": [1.05, 2.1]},
 			"obstacles": [{"type": "cat", "at": "flightB", "floor": 0}, {"type": "door", "at": "corridor2", "side": 1}, {"type": "shoe_rack", "at": "corridor", "side": -1}],
 			"par_time": 160,
-			"tips": ["Geniş ekranı dar merdivende yan yatırmak işe yarar.", "Hassas mod: basılı tutunca döndürme yavaşlar."]
+			"tips": ["Hold FINE to rotate slowly.", "Put the TV down to close the open door."]
 		},
 		{
-			"id": 7, "name": "Koltuk Zamanı", "subtitle": "Dar kapıdan geçmek için doğru açıyı bul.",
-			"item": "koltuk", "floors": 1,
+			"id": 7, "name": "Sofa Time", "subtitle": "Deliver the sofa to the 1st floor door.",
+			"item": "koltuk", "floors": 1, "goal": "door", "theme": 0,
 			"stair_width": 1.5, "steps": 8, "rise": 0.175, "tread": 0.3, "landing": 2.1, "gap": 0.35, "ceiling": 2.6,
 			"entrance": [1.8, 2.4], "apt_door": [0.98, 2.1],
 			"corridor": {"length": 3.5, "width": 1.4, "turn": "none", "turn_length": 0},
 			"room": {"width": 4.5, "depth": 4.5, "door": [1.0, 2.1]},
 			"obstacles": [],
-			"par_time": 170,
-			"tips": ["Koltuk kapıdan dik geçmez: uzun tarafını kapıya doğru çevir.", "Döndürme modu düğmesiyle üçüncü eksende yan yatırabilirsin."]
+			"par_time": 140,
+			"tips": ["Turning on the landing needs space: lift the sofa or stand it up.", "ROLL mode tilts it on its side."]
 		},
 		{
-			"id": 8, "name": "Dar Kapı", "subtitle": "Kapı dar, koridor dönüyor.",
-			"item": "koltuk", "floors": 1,
+			"id": 8, "name": "Tight Door", "subtitle": "Narrow door, turning corridor. Sofa goes in the living room.",
+			"item": "koltuk", "floors": 1, "goal": "room", "theme": 1,
 			"stair_width": 1.45, "steps": 8, "rise": 0.175, "tread": 0.3, "landing": 2.1, "gap": 0.35, "ceiling": 2.6,
 			"entrance": [1.6, 2.4], "apt_door": [0.95, 2.1],
 			"corridor": {"length": 3.0, "width": 1.35, "turn": "left", "turn_length": 3.2},
 			"room": {"width": 4.5, "depth": 4.5, "door": [0.98, 2.1]},
 			"obstacles": [{"type": "lamp", "at": "corridor"}],
 			"par_time": 200,
-			"tips": ["Köşeyi dönerken koltuğu dikine kaldırmak yer açar.", "Takıldığında geri çekil ve açıyı değiştir."]
+			"tips": ["The sofa won't go through sideways: point the long side at the door.", "Stand the sofa upright to get around the corner."]
 		},
 		{
-			"id": 9, "name": "Köşe Kapmaca", "subtitle": "İki kat, dar koridor ve bir kedi.",
-			"item": "koltuk", "floors": 2,
+			"id": 9, "name": "Corner Trouble", "subtitle": "Two floors, a tight corridor and a cat.",
+			"item": "koltuk", "floors": 2, "goal": "room", "theme": 2,
 			"stair_width": 1.45, "steps": 8, "rise": 0.175, "tread": 0.3, "landing": 2.1, "gap": 0.35, "ceiling": 2.6,
 			"entrance": [1.6, 2.4], "apt_door": [0.95, 2.1],
 			"corridor": {"length": 3.0, "width": 1.3, "turn": "right", "turn_length": 3.2},
 			"room": {"width": 4.5, "depth": 4.5, "door": [0.95, 2.1]},
 			"obstacles": [{"type": "cat", "at": "flightA", "floor": 1}, {"type": "shoe_rack", "at": "corridor2", "side": 1}],
 			"par_time": 250,
-			"tips": ["Ağır koltukta dayanıklılık azalır: gerekince MOLA ver."]
+			"tips": ["The sofa is heavy: take a REST when your stamina is low."]
 		},
 		{
-			"id": 10, "name": "Gardırop", "subtitle": "Uzun dolap, alçak tavan.",
-			"item": "gardirop", "floors": 2,
-			"stair_width": 1.35, "steps": 8, "rise": 0.175, "tread": 0.3, "landing": 1.8, "gap": 0.35, "ceiling": 2.2,
+			"id": 10, "name": "Wardrobe", "subtitle": "Tall wardrobe, low ceiling. Deliver to the door.",
+			"item": "gardirop", "floors": 2, "goal": "door", "theme": 3,
+			"stair_width": 1.3, "steps": 8, "rise": 0.175, "tread": 0.3, "landing": 1.8, "gap": 0.35, "ceiling": 2.2,
 			"entrance": [1.6, 2.3], "apt_door": [1.1, 2.05],
 			"corridor": {"length": 3.0, "width": 1.5, "turn": "none", "turn_length": 0},
 			"room": {"width": 4.5, "depth": 4.5, "door": [1.1, 2.05]},
 			"obstacles": [],
-			"par_time": 230,
-			"tips": ["Gardırobu yatırarak merdivenin eğimine uydur.", "Aynalı ön kapaklar hassas."]
+			"par_time": 210,
+			"tips": ["Tilt the wardrobe to match the slope of the stairs.", "The mirror doors (front) are fragile."]
 		},
 		{
-			"id": 11, "name": "Alçak Tavan", "subtitle": "Tavan başının hemen üstünde.",
-			"item": "gardirop", "floors": 2,
+			"id": 11, "name": "Low Ceiling", "subtitle": "Put the wardrobe in its spot in the bedroom.",
+			"item": "gardirop", "floors": 2, "goal": "spot", "theme": 4,
 			"stair_width": 1.3, "steps": 8, "rise": 0.175, "tread": 0.3, "landing": 1.8, "gap": 0.35, "ceiling": 2.05,
 			"entrance": [1.5, 2.2], "apt_door": [1.05, 2.0],
 			"corridor": {"length": 3.0, "width": 1.5, "turn": "left", "turn_length": 3.0},
 			"room": {"width": 4.5, "depth": 4.5, "door": [1.05, 2.0]},
 			"obstacles": [{"type": "lamp", "at": "mid", "floor": 1}, {"type": "boxes", "at": "landing", "floor": 1, "side": -1}],
-			"par_time": 250,
-			"tips": ["İndir düğmesiyle eşyayı alçalt.", "Üstten görünüm dar yerleri görmeyi kolaylaştırır."]
+			"par_time": 260,
+			"tips": ["The ghost outline shows the exact spot.", "Mirrors must face the room."]
 		},
 		{
-			"id": 12, "name": "Dönemeç", "subtitle": "Üç kat, dönemeçli alçak merdiven.",
-			"item": "gardirop", "floors": 3,
-			"stair_width": 1.3, "steps": 8, "rise": 0.175, "tread": 0.29, "landing": 1.7, "gap": 0.3, "ceiling": 2.0,
+			"id": 12, "name": "Spiral Up", "subtitle": "Three floors of low, winding stairs.",
+			"item": "gardirop", "floors": 3, "goal": "spot", "theme": 5,
+			"stair_width": 1.25, "steps": 8, "rise": 0.175, "tread": 0.29, "landing": 1.7, "gap": 0.3, "ceiling": 2.0,
 			"entrance": [1.5, 2.2], "apt_door": [1.05, 2.0],
 			"corridor": {"length": 3.0, "width": 1.45, "turn": "right", "turn_length": 3.0},
 			"room": {"width": 4.5, "depth": 4.5, "door": [1.05, 2.0]},
 			"obstacles": [{"type": "cat", "at": "flightB", "floor": 1}, {"type": "lamp", "at": "landing", "floor": 2}, {"type": "plant", "at": "mid", "floor": 2, "side": 1}],
-			"par_time": 330,
-			"tips": ["Sahanlıklarda dönerken dolabı dik tutmak kolaylaştırır."]
+			"par_time": 340,
+			"tips": ["Keep the wardrobe upright when turning on landings."]
 		},
 		{
-			"id": 13, "name": "Soğuk Yük", "subtitle": "Buzdolabı sırtında. Dayanıklılığını yönet.",
-			"item": "buzdolabi", "floors": 2,
+			"id": 13, "name": "Laundry Day", "subtitle": "Install the washing machine in the laundry room.",
+			"item": "camasir", "floors": 1, "goal": "spot", "theme": 0,
+			"stair_width": 1.3, "steps": 8, "rise": 0.175, "tread": 0.29, "landing": 1.8, "gap": 0.35, "ceiling": 2.5,
+			"entrance": [1.5, 2.3], "apt_door": [1.0, 2.1],
+			"corridor": {"length": 3.0, "width": 1.4, "turn": "none", "turn_length": 0},
+			"room": {"width": 4.0, "depth": 4.0, "door": [1.0, 2.1]},
+			"obstacles": [],
+			"par_time": 170,
+			"tips": ["It's heavy: you'll get tired fast.", "Pick it up from the front so the door faces you, then back it into the slot.", "The glass door (front) is fragile."]
+		},
+		{
+			"id": 14, "name": "Spin Cycle", "subtitle": "Narrow stairs, two floors, one heavy washer.",
+			"item": "camasir", "floors": 2, "goal": "spot", "theme": 1,
+			"stair_width": 1.0, "steps": 8, "rise": 0.175, "tread": 0.28, "landing": 1.6, "gap": 0.3, "ceiling": 2.4,
+			"entrance": [1.4, 2.3], "apt_door": [0.95, 2.1],
+			"corridor": {"length": 3.0, "width": 1.3, "turn": "left", "turn_length": 3.0},
+			"room": {"width": 4.0, "depth": 4.0, "door": [0.95, 2.1]},
+			"obstacles": [{"type": "cat", "at": "flightA", "floor": 1}],
+			"par_time": 260,
+			"tips": ["Rest on the landings before you run out of stamina."]
+		},
+		{
+			"id": 15, "name": "Wash & Go", "subtitle": "Three floors. Lamps, boxes and an open door.",
+			"item": "camasir", "floors": 3, "goal": "spot", "theme": 2,
+			"stair_width": 1.1, "steps": 8, "rise": 0.175, "tread": 0.28, "landing": 1.6, "gap": 0.3, "ceiling": 2.3,
+			"entrance": [1.4, 2.3], "apt_door": [0.95, 2.1],
+			"corridor": {"length": 3.5, "width": 1.3, "turn": "right", "turn_length": 3.0},
+			"room": {"width": 4.0, "depth": 4.0, "door": [0.95, 2.1]},
+			"obstacles": [{"type": "lamp", "at": "landing", "floor": 1}, {"type": "boxes", "at": "landing", "floor": 2, "side": 1}, {"type": "door", "at": "corridor2", "side": -1}],
+			"par_time": 360,
+			"tips": ["Plan your rests: one on every landing."]
+		},
+		{
+			"id": 16, "name": "Cold Cargo", "subtitle": "Fridge on your back. Deliver it to the door.",
+			"item": "buzdolabi", "floors": 2, "goal": "door", "theme": 3,
 			"stair_width": 1.25, "steps": 8, "rise": 0.175, "tread": 0.29, "landing": 1.7, "gap": 0.3, "ceiling": 2.5,
 			"entrance": [1.5, 2.3], "apt_door": [1.0, 2.1],
 			"corridor": {"length": 3.0, "width": 1.4, "turn": "none", "turn_length": 0},
 			"room": {"width": 4.0, "depth": 4.0, "door": [1.0, 2.1]},
 			"obstacles": [],
-			"par_time": 230,
-			"tips": ["Dayanıklılık biterse buzdolabı düşer!", "MOLA düğmesiyle yere bırak, nefeslen, sonra tekrar al.", "Sırtta taşırken görüş alanın daralır."]
+			"par_time": 210,
+			"tips": ["If your stamina runs out, the fridge falls!", "REST puts it down so you can catch your breath.", "Carrying on your back narrows your view."]
 		},
 		{
-			"id": 14, "name": "Dar ve Dik", "subtitle": "Dik basamaklar, üç kat.",
-			"item": "buzdolabi", "floors": 3,
-			"stair_width": 1.15, "steps": 8, "rise": 0.185, "tread": 0.27, "landing": 1.55, "gap": 0.3, "ceiling": 2.4,
+			"id": 17, "name": "Steep & Narrow", "subtitle": "Steep steps, three floors. Fridge goes in the kitchen.",
+			"item": "buzdolabi", "floors": 3, "goal": "spot", "theme": 4,
+			"stair_width": 1.0, "steps": 8, "rise": 0.185, "tread": 0.27, "landing": 1.55, "gap": 0.3, "ceiling": 2.4,
 			"entrance": [1.4, 2.3], "apt_door": [0.95, 2.1],
 			"corridor": {"length": 3.0, "width": 1.3, "turn": "left", "turn_length": 3.0},
 			"room": {"width": 4.0, "depth": 4.0, "door": [0.95, 2.1]},
 			"obstacles": [{"type": "cat", "at": "flightA", "floor": 2}, {"type": "plant", "at": "landing", "floor": 1, "side": 1}],
-			"par_time": 330,
-			"tips": ["Merdivende dayanıklılık daha hızlı biter. Sahanlıkta mola ver."]
+			"par_time": 340,
+			"tips": ["Walk backwards into the kitchen slot so the fridge door faces the room."]
 		},
 		{
-			"id": 15, "name": "Son Durak", "subtitle": "Dördüncü kat. Gerçek bir taşıyıcı mısın?",
-			"item": "buzdolabi", "floors": 4,
-			"stair_width": 1.1, "steps": 8, "rise": 0.185, "tread": 0.27, "landing": 1.5, "gap": 0.3, "ceiling": 2.3,
+			"id": 18, "name": "Final Stop", "subtitle": "Fourth floor. Are you a true mover?",
+			"item": "buzdolabi", "floors": 4, "goal": "spot", "theme": 5,
+			"stair_width": 1.0, "steps": 8, "rise": 0.185, "tread": 0.27, "landing": 1.5, "gap": 0.3, "ceiling": 2.3,
 			"entrance": [1.4, 2.3], "apt_door": [0.92, 2.1],
 			"corridor": {"length": 3.5, "width": 1.3, "turn": "right", "turn_length": 3.0},
 			"room": {"width": 4.0, "depth": 4.0, "door": [0.92, 2.1]},
 			"obstacles": [{"type": "cat", "at": "flightB", "floor": 1}, {"type": "cat", "at": "flightA", "floor": 3}, {"type": "lamp", "at": "landing", "floor": 2}, {"type": "boxes", "at": "landing", "floor": 3, "side": 1}, {"type": "door", "at": "corridor2", "side": -1}, {"type": "shoe_rack", "at": "corridor", "side": 1}],
-			"par_time": 460,
-			"tips": ["Son bölüm! Her sahanlıkta mola vermeyi planla."]
+			"par_time": 480,
+			"tips": ["Last level! Plan a rest on every landing."]
 		}
 	]
 }

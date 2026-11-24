@@ -34,7 +34,7 @@ func reload() -> void:
 		_items[item.id] = item
 	if _items.is_empty():
 		# Veri tamamen bozuksa bile oyun oynanabilir kalsın.
-		var fallback := sanitize_item({"id": "kutu", "name": "Koli", "size": [0.55, 0.42, 0.42], "weight": 7})
+		var fallback := sanitize_item({"id": "kutu", "name": "Box", "size": [0.55, 0.42, 0.42], "weight": 7})
 		_items[fallback.id] = fallback
 	for e in errors:
 		push_warning("ItemDB: " + e)
@@ -82,8 +82,11 @@ func sanitize_item(src: Dictionary) -> Dictionary:
 			var psize := _vec3(p.get("size"), Vector3.ZERO)
 			if psize.x <= 0.0 or psize.y <= 0.0 or psize.z <= 0.0:
 				continue
+			var shape := str(p.get("shape", "box"))
+			if not (shape in ["box", "cyl_z", "sphere"]):
+				shape = "box"
 			parts.append({
-				"shape": "box",
+				"shape": shape,
 				"pos": _vec3(p.get("pos"), Vector3.ZERO),
 				"size": psize,
 				"color": _color(p.get("color"), Color(0.6, 0.5, 0.4)),

@@ -22,12 +22,12 @@ const DEFAULT_SETTINGS := {
 
 ## Kıyafetler: [id, ad, gereken yıldız, gövde rengi, pantolon rengi, kask/şapka rengi]
 const OUTFITS := [
-	{"id": "klasik", "name": "Klasik Tulum", "stars": 0, "body": Color(0.2, 0.45, 0.85), "legs": Color(0.18, 0.2, 0.28), "hat": Color(0.95, 0.75, 0.15)},
-	{"id": "turuncu", "name": "Turuncu Yelek", "stars": 6, "body": Color(1.0, 0.5, 0.1), "legs": Color(0.25, 0.25, 0.3), "hat": Color(0.95, 0.95, 0.95)},
-	{"id": "yesil", "name": "Orman Ekibi", "stars": 12, "body": Color(0.2, 0.6, 0.3), "legs": Color(0.3, 0.22, 0.15), "hat": Color(0.15, 0.35, 0.2)},
-	{"id": "kirmizi", "name": "Kırmızı Ekspres", "stars": 20, "body": Color(0.85, 0.15, 0.15), "legs": Color(0.1, 0.1, 0.12), "hat": Color(0.1, 0.1, 0.12)},
-	{"id": "mor", "name": "Gece Vardiyası", "stars": 30, "body": Color(0.4, 0.2, 0.65), "legs": Color(0.12, 0.1, 0.2), "hat": Color(0.85, 0.8, 1.0)},
-	{"id": "altin", "name": "Altın Taşıyıcı", "stars": 42, "body": Color(0.95, 0.75, 0.2), "legs": Color(0.45, 0.33, 0.1), "hat": Color(1.0, 0.9, 0.5)},
+	{"id": "klasik", "name": "Classic Overalls", "stars": 0, "body": Color(0.2, 0.45, 0.85), "legs": Color(0.18, 0.2, 0.28), "hat": Color(0.95, 0.75, 0.15)},
+	{"id": "turuncu", "name": "Orange Vest", "stars": 8, "body": Color(1.0, 0.5, 0.1), "legs": Color(0.25, 0.25, 0.3), "hat": Color(0.95, 0.95, 0.95)},
+	{"id": "yesil", "name": "Forest Crew", "stars": 16, "body": Color(0.2, 0.6, 0.3), "legs": Color(0.3, 0.22, 0.15), "hat": Color(0.15, 0.35, 0.2)},
+	{"id": "kirmizi", "name": "Red Express", "stars": 26, "body": Color(0.85, 0.15, 0.15), "legs": Color(0.1, 0.1, 0.12), "hat": Color(0.1, 0.1, 0.12)},
+	{"id": "mor", "name": "Night Shift", "stars": 38, "body": Color(0.4, 0.2, 0.65), "legs": Color(0.12, 0.1, 0.2), "hat": Color(0.85, 0.8, 1.0)},
+	{"id": "altin", "name": "Golden Mover", "stars": 50, "body": Color(0.95, 0.75, 0.2), "legs": Color(0.45, 0.33, 0.1), "hat": Color(1.0, 0.9, 0.5)},
 ]
 
 var settings: Dictionary = DEFAULT_SETTINGS.duplicate(true)
@@ -257,12 +257,12 @@ func save_game() -> bool:
 
 func load_game() -> void:
 	var data := _read_json(Config.SAVE_PATH)
-	_last_load_report = "ana kayıt"
+	_last_load_report = "main save"
 	if data.is_empty() or not _looks_valid(data):
 		data = _read_json(Config.SAVE_BACKUP_PATH)
-		_last_load_report = "yedek kayıt"
+		_last_load_report = "backup save"
 		if data.is_empty() or not _looks_valid(data):
-			_last_load_report = "varsayılan"
+			_last_load_report = "defaults"
 			reset_to_defaults(false)
 			return
 	from_dict(data)

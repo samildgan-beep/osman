@@ -1,7 +1,8 @@
-# Taşı Bakalım
+# Handle With Care
 
-Telefon için 3D, fizik tabanlı bir **eşya taşıma oyunu**. Televizyonu, koltuğu, gardırobu ve buzdolabını
-dar merdivenlerden, kapılardan ve koridorlardan **çarpmadan** daireye taşı.
+Telefon için 3D, fizik tabanlı bir **eşya taşıma oyunu**. Televizyonu, koltuğu, gardırobu, çamaşır makinesini
+ve buzdolabını dar merdivenlerden, kapılardan ve koridorlardan **çarpmadan** taşı; ev sahibi seni kapıda
+karşılasın, teşekkür etsin ve sevinsin. **Oyunun tüm yazıları ve konuşmaları İngilizcedir.**
 
 - Motor: **Godot 4.3+** (ücretsiz, üyelik gerekmez) · Dil: **GDScript**
 - Hedef: Android (iOS ve masaüstü de çalışır)
@@ -23,19 +24,30 @@ Masaüstünde fare ile dokunmatik taklit edilir (sol tık = parmak). Klavye kıs
 |---|---|---|
 | Sol tarafa dokunup kaydır (joystick) | WASD / oklar | Yürü (az itersen yavaş yürür) |
 | Sağ tarafta tek parmak kaydır | J/L, I/K | Eşyayı döndür (yatay: sağa/sola, dikey: öne/arkaya yatır) |
-| **YATIR** (aç/kapa) | U/O | Üçüncü eksen: eşyayı kendi etrafında yan yatır |
-| **KALDIR / İNDİR** (basılı tut) | E / Q | Eşyayı yükselt / alçalt |
-| **HASSAS** (basılı tut) | Shift | Döndürme yavaşlar, ince ayar |
-| **DÜZELT** | T | Eşyanın açısını sıfırla |
-| **AL / BIRAK** | Boşluk / F | Eşyayı al, yavaşça yere bırak, kapı kapat |
-| **MOLA** | R | Eşyayı bırak ve dinlen (dayanıklılık hızlı dolar) |
+| **ROLL** (aç/kapa) | U/O | Üçüncü eksen: eşyayı kendi etrafında yan yatır |
+| **LIFT / LOWER** (basılı tut) | E / Q | Eşyayı yükselt / alçalt |
+| **FINE** (basılı tut) | Shift | Döndürme yavaşlar, ince ayar |
+| **RESET** | T | Eşyanın açısını sıfırla |
+| **GRAB / DROP** | Boşluk / F | Eşyayı al, yavaşça yere bırak, kapı kapat (CLOSE) |
+| **REST** | R | Eşyayı bırak ve dinlen (dayanıklılık hızlı dolar) |
 | İki parmak kaydır / sıkıştır | Sağ tık sürükle, tekerlek | Kamera döndür / yakınlaştır |
-| **ARKA / ÜST / YAN** | 1 / 2 / 3 | Hazır kamera görünümleri (üstten görünümde duvarlar kesilir) |
+| **BACK / TOP / SIDE** | 1 / 2 / 3 | Hazır kamera görünümleri |
 | **II** | Esc / P | Duraklat |
 
 ## Oyunun özellikleri
 
-- **15 bölüm**, 5 eşya grubu: koli → TV → büyük TV/cam sehpa → koltuk → gardırop → buzdolabı (sırtta)
+- **18 bölüm**: koli → TV → büyük TV/cam sehpa → koltuk → gardırop → **çamaşır makinesi** → buzdolabı (sırtta)
+- **Üç hedef türü:** `door` (daire kapısına teslim et), `room` (eve girip odaya taşı),
+  `spot` (eşyayı tam yerine, iki dolabın arasına, ön yüzü odaya bakacak şekilde yerleştir — hayalet görüntü yol gösterir)
+- **Ev sahibi:** kapıda/odada bekler, yaklaşınca el sallar ("Hi! Over here, please!"), eşya çarpınca endişelenir
+  ("Careful!"), teslimde zıplar, döner, sevinir ve teşekkür eder ("Thank you so much! I'm so happy!") + konfeti
+- **Canlı görsellik:** kodla üretilen dokular (tuğla cephe, mermer basamak, halı yolluk, ahşap parke, fayans,
+  duvar kâğıdı), 6 renkli tema, balkonlar, çiçekli pencereler, tenteli dükkânlar, park etmiş arabalar, bulutlar,
+  parlama ve renk doygunluğu ayarı
+- **Detaylı merdiven:** tornalı korkuluk dikmeleri, başlık babaları, yuvarlak ahşap trabzan, pirinç halı çubukları,
+  duvar tutamakları ve dirsekleri, lambri, aplikler, sahanlık pencereleri ve tablolar
+- **Fizik detayları:** eşya duvara/korkuluğa sürtünce **yüzeyde kalıcı çizik** kalır; sert çarpmada duvarda
+  **çökme izi**, **toz bulutu**, **kopan sıva ve eşya parçaları**; eşya kırılınca **parçalara ayrılır**
 - **Hasar sistemi:** çarpma hızına göre hasar, sürtünme hasarı, **hassas yüzler** (TV ekranı, cam üst yüz, aynalı kapak, buzdolabı kapağı)
 - **Yakınlık uyarısı:** eşyanın bir yüzü duvara yaklaşınca o kenar **sarı** yanar
 - **Geri bildirim:** titreşim, ses, kırmızı ekran parlaması, kamera sarsıntısı, hasar yazıları, eşyada çizik izleri
@@ -57,7 +69,9 @@ project.godot              Proje ayarları (mobil işleyici, yatay ekran, autolo
 export_presets.cfg         Android dışa aktarma ayarı
 data/items.json            EŞYALAR  (boyut, ağırlık, hassas yüzler, görünüm parçaları)
 data/levels.json           BÖLÜMLER (kat sayısı, merdiven, tavan, kapılar, koridor, engeller)
-shaders/building.gdshader  Bina gölgelendiricisi (üstten görünüm kesiti)
+shaders/building.gdshader  Bina gölgelendiricisi: kodla doku (tuğla, mermer, ahşap, fayans...) + kesit görünümü
+shaders/ceiling.gdshader   Yarı saydam tavanlar
+shaders/mark.gdshader      Duvar çizikleri ve darbe izleri
 scenes/main.tscn           Başlangıç sahnesi
 scripts/
   autoload/config.gd       TÜM FİZİK VE DENGE AYARLARI TEK YERDE
@@ -75,7 +89,9 @@ scripts/
   game/carry_item.gd       Taşınan eşya: çarpışma, hasar, yakınlık uyarısı
   game/damage_model.gd     Hasar/puan/dayanıklılık formülleri (test edilir)
   game/camera_rig.gd       Kamera
-  game/cat.gd, swing_door.gd, goal_marker.gd  Engeller ve hedef
+  game/cat.gd, swing_door.gd, goal_marker.gd  Engeller ve hedef (hayalet yerleştirme görüntüsü)
+  game/homeowner.gd        Ev sahibi: karşılama, endişe, kutlama, teşekkür konuşmaları
+  game/effects.gd          Çizikler, darbe izleri, toz, kopan parçalar, parçalanma, konfeti
   input/                   Dokunmatik kontroller
   ui/                      Arayüz: HUD, menüler, ayarlar, sonuç ekranı
 tests/run_tests.tscn       Otomatik testler
@@ -91,7 +107,7 @@ Hatalı alanlar oyunu çökertmez; güvenli varsayılana döner ve konsola uyar�
 ### Yeni bölüm eklemek (kod değiştirmeden)
 `data/levels.json` listesine yeni kayıt ekle: `item`, `floors`, `stair_width`, `steps`, `rise`, `tread`,
 `landing`, `ceiling`, `entrance`, `apt_door`, `corridor` (`turn`: none/left/right), `room`, `obstacles`,
-`par_time`, `tips`. Bina bu değerlerden otomatik kurulur. Değerler oynanabilir aralıklara kırpılır.
+`goal` (door / room / spot), `theme` (0–5 renk teması), `par_time`, `tips`. Bina bu değerlerden otomatik kurulur. Değerler oynanabilir aralıklara kırpılır.
 
 ### Dengeyi ayarlamak
 Tüm hız, ağırlık, hasar, dayanıklılık, kamera ve puan eşikleri `scripts/autoload/config.gd` dosyasında.
@@ -100,7 +116,7 @@ Tüm hız, ağırlık, hasar, dayanıklılık, kamera ve puan eşikleri `scripts
 ```
 godot --headless --path . res://tests/run_tests.tscn
 ```
-Hasar formülleri, veri doğrulama, bozuk kayıt dosyaları, 15 bölümün kurulumu (her yol noktasında zemin ve
+Hasar formülleri, veri doğrulama, bozuk kayıt dosyaları, 18 bölümün kurulumu (her yol noktasında zemin ve
 oyuncuya yetecek boşluk var mı) ve kısa bir oynanış testi (eşya al, yürü, döndür, bırak) çalışır.
 Çıkış kodu 0 ise tüm testler geçmiştir. Testler kayıt dosyana dokunmaz.
 
@@ -111,7 +127,7 @@ oyuncuya yetecek boşluk var mı) ve kısa bir oynanış testi (eşya al, yürü
    yap; Godot **Editör Ayarları → Dışa Aktar → Android** kısmında yolları göster.
 3. Hata ayıklama anahtarı (debug keystore) Godot tarafından otomatik oluşturulur. Mağaza için kendi
    sürüm anahtarını oluştur ve **Proje → Dışa Aktar → Android → Keystore/Release** alanlarına gir.
-4. **Proje → Dışa Aktar → Android → Projeyi Dışa Aktar** → `build/TasiBakalim.apk`.
+4. **Proje → Dışa Aktar → Android → Projeyi Dışa Aktar** → `build/HandleWithCare.apk`.
 5. Telefona kur ve oyna. Titreşim izni ön ayarda açık.
 
 Google Play için AAB gerekir: ön ayarda **Gradle ile derle**yi aç ve dışa aktarma biçimini AAB seç.

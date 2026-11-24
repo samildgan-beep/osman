@@ -20,6 +20,7 @@ var moving := false
 var walking_backward := false
 var resting := false
 var frozen := false
+var celebrating := false
 var goal_check: Callable          # eşya hedefte mi? (Game sağlar)
 
 var _yaw := 0.0
@@ -210,11 +211,11 @@ func _update_interaction() -> void:
 	var text := ""
 	var enabled := false
 	if carry.is_holding():
-		text = "BIRAK"
+		text = "DROP"
 		enabled = true
 	else:
 		if _can_pick():
-			text = "AL"
+			text = "GRAB"
 			enabled = true
 		else:
 			var door := _nearest_door()
@@ -303,4 +304,14 @@ func _animate(delta: float) -> void:
 		"resting": resting and not holding,
 		"tired": stamina < Config.STAMINA_WARN,
 		"backward": walking_backward,
+		"cheer": celebrating,
 	})
+
+
+## Bir noktaya dön (kutlama vb.)
+func face_towards(p: Vector3) -> void:
+	var d := p - global_position
+	if Vector2(d.x, d.z).length() < 0.05:
+		return
+	_yaw = atan2(-d.x, -d.z)
+	global_basis = Basis(Vector3.UP, _yaw)

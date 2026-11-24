@@ -82,6 +82,11 @@ func _start_anim(y: float, p: float, d: float) -> void:
 	_anim_dist = d
 
 
+## Belirli bir açıya yumuşakça dön (kutlama sahnesi vb.)
+func focus(p_yaw: float, p_pitch_deg: float, p_dist: float) -> void:
+	_start_anim(p_yaw, deg_to_rad(p_pitch_deg), p_dist)
+
+
 func is_top_view() -> bool:
 	return pitch < deg_to_rad(-60.0)
 

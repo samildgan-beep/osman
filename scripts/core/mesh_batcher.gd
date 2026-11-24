@@ -5,6 +5,22 @@ extends RefCounted
 
 const MAX_VERTS_PER_MESH := 60000
 
+## Yüzey malzemesi kimlikleri (köşe renginin alfa kanalında taşınır, bina gölgelendiricisi okur)
+const M_PLASTER := 0
+const M_BRICK := 1
+const M_WOOD := 2
+const M_TILE := 3
+const M_MARBLE := 4
+const M_METAL := 5
+const M_WALLPAPER := 6
+const M_CARPET := 7
+const M_GLASS := 8
+const M_ASPHALT := 9
+const M_GRASS := 10
+const M_PAVING := 11
+const M_PAINT := 12
+const M_FABRIC := 13
+
 static var _unit_box: Array = []
 static var _unit_cyl: Array = []
 static var _unit_sphere: Array = []
@@ -48,31 +64,46 @@ static func _sphere_arrays() -> Array:
 
 
 ## Eksen hizalı kutu: merkez ve boyut.
-func add_box(center: Vector3, size: Vector3, color: Color) -> void:
-	add_box_xform(Transform3D(Basis(), center), size, color)
+func add_box(center: Vector3, size: Vector3, color: Color, mat: int = 0) -> void:
+	add_box_xform(Transform3D(Basis(), center), size, color, mat)
 
 
 ## Dönmüş kutu: transform (ölçeksiz) ve boyut.
-func add_box_xform(xform: Transform3D, size: Vector3, color: Color) -> void:
+func add_box_xform(xform: Transform3D, size: Vector3, color: Color, mat: int = 0) -> void:
 	if size.x <= 0.0 or size.y <= 0.0 or size.z <= 0.0:
 		return
-	_append(_box_arrays(), xform, size, color)
+	_append(_box_arrays(), xform, size, color, mat)
 
 
 ## Dikey silindir: tabanın değil merkezin konumu verilir.
-func add_cylinder(center: Vector3, radius: float, height: float, color: Color, basis: Basis = Basis()) -> void:
+func add_cylinder(center: Vector3, radius: float, height: float, color: Color, basis: Basis = Basis(), mat: int = 0) -> void:
 	if radius <= 0.0 or height <= 0.0:
 		return
-	_append(_cyl_arrays(), Transform3D(basis, center), Vector3(radius * 2.0, height, radius * 2.0), color)
+	_append(_cyl_arrays(), Transform3D(basis, center), Vector3(radius * 2.0, height, radius * 2.0), color, mat)
 
 
-func add_sphere(center: Vector3, radius: float, color: Color) -> void:
+## İki nokta arasında silindir (korkuluk, boru vb.)
+func add_cylinder_between(a: Vector3, b: Vector3, radius: float, color: Color, mat: int = 0) -> void:
+	var d := b - a
+	var length := d.length()
+	if length < 0.001:
+		return
+	var y := d / length
+	var x := y.cross(Vector3.FORWARD)
+	if x.length_squared() < 0.01:
+		x = y.cross(Vector3.RIGHT)
+	x = x.normalized()
+	var z := x.cross(y).normalized()
+	add_cylinder((a + b) * 0.5, radius, length, color, Basis(x, y, z), mat)
+
+
+func add_sphere(center: Vector3, radius: float, color: Color, mat: int = 0, squash: Vector3 = Vector3.ONE) -> void:
 	if radius <= 0.0:
 		return
-	_append(_sphere_arrays(), Transform3D(Basis(), center), Vector3.ONE * radius * 2.0, color)
+	_append(_sphere_arrays(), Transform3D(Basis(), center), Vector3.ONE * radius * 2.0 * squash, color, mat)
 
 
-func _append(arrays: Array, xform: Transform3D, scale: Vector3, color: Color) -> void:
+func _append(arrays: Array, xform: Transform3D, scale: Vector3, color: Color, mat: int = 0) -> void:
 	var src_v: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 	var src_n: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
 	var src_i: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
@@ -80,6 +111,7 @@ func _append(arrays: Array, xform: Transform3D, scale: Vector3, color: Color) ->
 		_flush()
 	var base := _verts.size()
 	var lin := color.srgb_to_linear()
+	lin.a = (float(clampi(mat, 0, 15)) + 0.5) / 16.0
 	var inv_scale := Vector3(1.0 / scale.x, 1.0 / scale.y, 1.0 / scale.z)
 	for i in src_v.size():
 		_verts.append(xform * (src_v[i] * scale))

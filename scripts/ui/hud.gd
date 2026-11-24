@@ -57,9 +57,9 @@ func _ready() -> void:
 	_timer = UITheme.label("0:00.0", 22, UITheme.TEXT)
 	_timer.autowrap_mode = TextServer.AUTOWRAP_OFF
 	top.add_child(_timer)
-	_dur_bar = StatBar.new("Eşya", Color("4cd07d"))
+	_dur_bar = StatBar.new("Item", Color("4cd07d"))
 	vb.add_child(_dur_bar)
-	_sta_bar = StatBar.new("Dayanıklılık", Color("4fa3ff"))
+	_sta_bar = StatBar.new("Stamina", Color("4fa3ff"))
 	vb.add_child(_sta_bar)
 
 	_arrow = GuideArrow.new()
@@ -125,7 +125,7 @@ func _make_vignette(edge: Color) -> TextureRect:
 
 func setup(level: Dictionary, item: Dictionary) -> void:
 	_title.text = "%d. %s" % [int(level.id), str(level.name)]
-	_dur_bar.title = "%s sağlamlığı" % str(item.name)
+	_dur_bar.title = "%s condition" % str(item.name)
 	_dur_bar.set_value(100.0)
 	_sta_bar.set_value(100.0)
 
@@ -159,7 +159,7 @@ func show_proximity(faces: Array) -> void:
 	var names: Array = []
 	for f in faces:
 		names.append(DamageModel.FACE_NAMES.get(f, f))
-	_prox_label.text = "Dikkat: " + ", ".join(names)
+	_prox_label.text = "Careful: " + ", ".join(names)
 
 
 func hint(text: String, duration: float = 4.5) -> void:

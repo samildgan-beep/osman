@@ -18,6 +18,9 @@ var _phase := 0.0
 var _lean := 0.0
 var _crouch := 0.0
 var _arm_pose := 0.0     # 0 serbest, 1 önde taşıma, 2 sırtta taşıma
+var _cap: MeshInstance3D
+var _brim: MeshInstance3D
+var _t := 0.0
 
 
 func _ready() -> void:
@@ -58,7 +61,10 @@ func _ready() -> void:
 	cap.position = Vector3(0, 0.27, 0)
 	cap.material_override = _mats.hat
 	_head.add_child(cap)
-	_box(_head, Vector3(0.24, 0.02, 0.12), Vector3(0, 0.235, -0.15), "hat")    # siper
+	_cap = cap
+	_brim = _box(_head, Vector3(0.24, 0.02, 0.12), Vector3(0, 0.235, -0.15), "hat")    # siper
+	# Gülümseme
+	_box(_head, Vector3(0.07, 0.015, 0.02), Vector3(0, 0.08, -0.135), "dark")
 
 	_arm_l = _limb(_torso, Vector3(-0.29, 0.56, 0), Vector3(0.11, 0.56, 0.11), "body")
 	_arm_r = _limb(_torso, Vector3(0.29, 0.56, 0), Vector3(0.11, 0.56, 0.11), "body")
@@ -104,6 +110,12 @@ func apply_outfit(o: Dictionary) -> void:
 	_mats.body.albedo_color = o.get("body", Color.BLUE)
 	_mats.legs.albedo_color = o.get("legs", Color.DARK_GRAY)
 	_mats.hat.albedo_color = o.get("hat", Color.YELLOW)
+	var hair := bool(o.get("hair", false))
+	if _brim != null:
+		_brim.visible = not hair
+	if _cap != null:
+		_cap.scale = Vector3(1.08, 1.7, 1.12) if hair else Vector3.ONE
+		_cap.position = Vector3(0, 0.25, 0.015) if hair else Vector3(0, 0.27, 0)
 
 
 ## st: {"speed", "holding", "back", "resting", "tired", "backward", "on_stairs"}
@@ -170,6 +182,29 @@ func update_anim(delta: float, st: Dictionary) -> void:
 	_arm_l.rotation.z = lerpf(0.08, -0.12, clampf(_arm_pose, 0.0, 1.0))
 	_arm_r.rotation.z = -_arm_l.rotation.z
 	_head.rotation.x = -0.25 if tired else (-0.12 if back and holding else 0.0)
+
+	# Duygu pozları (ev sahibi ve bölüm sonu): sevinç, el sallama, endişe, üzüntü
+	_t += delta
+	if bool(st.get("cheer", false)):
+		var w := sin(_t * 9.0)
+		_arm_l.rotation = Vector3(2.85 + w * 0.15, 0.0, -0.35)
+		_arm_r.rotation = Vector3(2.85 - w * 0.15, 0.0, 0.35)
+		_hips.position.y = 0.92 + absf(sin(_t * 7.0)) * 0.22
+		_leg_l.rotation.x = -absf(sin(_t * 7.0)) * 0.5
+		_leg_r.rotation.x = -absf(sin(_t * 7.0)) * 0.5
+		_head.rotation.x = 0.2
+		_torso.rotation.x = 0.05
+	elif bool(st.get("wave", false)):
+		_arm_r.rotation = Vector3(2.7, 0.0, 0.25 + sin(_t * 11.0) * 0.45)
+	elif bool(st.get("worried", false)):
+		_arm_l.rotation = Vector3(2.0, 0.0, 0.55)
+		_arm_r.rotation = Vector3(2.0, 0.0, -0.55)
+		_hips.position.y = 0.92 + absf(sin(_t * 14.0)) * 0.03
+	elif bool(st.get("sad", false)):
+		_arm_l.rotation = Vector3(2.6, 0.0, 0.75)
+		_arm_r.rotation = Vector3(2.6, 0.0, -0.75)
+		_head.rotation.x = -0.35
+		_torso.rotation.x = -0.2
 
 
 func set_head_visible(v: bool) -> void:

@@ -30,25 +30,25 @@ func _ready() -> void:
 	vb.alignment = BoxContainer.ALIGNMENT_CENTER
 	vb.add_theme_constant_override("separation", 14)
 	center.add_child(vb)
-	var title := UITheme.label("TAŞI BAKALIM", 92, UITheme.ACCENT, HORIZONTAL_ALIGNMENT_CENTER)
+	var title := UITheme.label("HANDLE WITH CARE", 84, UITheme.ACCENT, HORIZONTAL_ALIGNMENT_CENTER)
 	title.add_theme_constant_override("outline_size", 18)
 	title.add_theme_color_override("font_outline_color", Color("1d2230"))
 	vb.add_child(title)
-	vb.add_child(UITheme.label("Dar merdivenler. Hantal eşyalar. Sıfır çarpma.", 26, UITheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER))
+	vb.add_child(UITheme.label("Narrow stairs. Bulky furniture. Zero scratches.", 26, UITheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER))
 	_stars_label = UITheme.label("", 24, UITheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER)
 	vb.add_child(_stars_label)
 	var spacer := Control.new()
 	spacer.custom_minimum_size = Vector2(0, 10)
 	vb.add_child(spacer)
 	var next_id := _next_level()
-	var play_btn := _btn(vb, "OYNA  (Bölüm %d)" % next_id, func(): play.emit(_next_level()))
+	var play_btn := _btn(vb, "PLAY  (Level %d)" % next_id, func(): play.emit(_next_level()))
 	play_btn.add_theme_font_size_override("font_size", 34)
 	play_btn.custom_minimum_size = Vector2(460, 88)
-	_btn(vb, "BÖLÜMLER", func(): open_levels.emit())
-	_btn(vb, "KIYAFETLER", func(): open_wardrobe.emit())
-	_btn(vb, "AYARLAR", func(): open_settings.emit())
+	_btn(vb, "LEVELS", func(): open_levels.emit())
+	_btn(vb, "OUTFITS", func(): open_wardrobe.emit())
+	_btn(vb, "SETTINGS", func(): open_settings.emit())
 	if not (OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("web")):
-		_btn(vb, "ÇIKIŞ", func(): get_tree().quit())
+		_btn(vb, "QUIT", func(): get_tree().quit())
 	var ver := UITheme.label("v%s" % str(ProjectSettings.get_setting("application/config/version", "1.0")), 16, UITheme.MUTED)
 	HUD.place(ver, Control.PRESET_BOTTOM_LEFT, Rect2(16, -36, 200, 30))
 	add_child(ver)
@@ -67,7 +67,7 @@ func _btn(parent: Control, text: String, cb: Callable) -> Button:
 
 func _refresh() -> void:
 	if _stars_label != null:
-		_stars_label.text = "Yıldız: %d / %d" % [GameState.total_stars(), LevelDB.count() * 3]
+		_stars_label.text = "Stars: %d / %d" % [GameState.total_stars(), LevelDB.count() * 3]
 
 
 ## İlk 3 yıldızsız açık bölüm, yoksa en yüksek açık bölüm.

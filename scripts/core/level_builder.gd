@@ -1,7 +1,8 @@
 class_name LevelBuilder
 extends RefCounted
-## Bölüm verisinden 3D dünyayı kurar: sokak, kamyon, U dönüşlü merdiven boşluğu,
-## sahanlıklar, korkuluklar, tavanlar, daire koridoru, hedef oda ve engeller.
+## Bölüm verisinden 3D dünyayı kurar: canlı bir sokak, tuğla cepheli apartman,
+## mermer basamaklı ve halı yolluklu U dönüşlü merdiven, detaylı korkuluklar,
+## sahanlıklar, daire koridoru, hedef oda/kapı/yerleştirme yuvası ve engeller.
 ##
 ## Koordinatlar: +Y yukarı, sokak z < 0 tarafında, bina girişi z = 0'da.
 ## Merdiven boşluğu: sağ şerit (x > 0) A kolu +Z yönünde çıkar, ara sahanlıkta
@@ -11,44 +12,65 @@ const WT := 0.2        # duvar kalınlığı
 const SLAB := 0.2      # döşeme kalınlığı
 const RAIL_H := 1.0    # korkuluk yüksekliği
 
-const C_ASPHALT := Color("4a4d52")
-const C_ROAD_LINE := Color("e8e2c8")
-const C_SIDEWALK := Color("bdb6aa")
-const C_CURB := Color("8f8a82")
-const C_GRASS := Color("6fa35a")
-const C_FACADE := Color("dcc9a6")
-const C_FACADE_2 := Color("c98d64")
-const C_TRIM := Color("8a6a4e")
-const C_WALL := Color("efe6d6")
-const C_WALL_2 := Color("e3d6bf")
-const C_STEP := Color("cfc6b8")
-const C_NOSING := Color("9c9285")
-const C_LANDING := Color("bcb2a2")
-const C_UNDERSIDE := Color("e6dfd2")
-const C_CEILING := Color("f4f1ea")
-const C_RAIL := Color("3b3e44")
-const C_HANDRAIL := Color("7a4f2e")
-const C_WOOD_FLOOR := Color("b98a5a")
-const C_APT_WALL := Color("f3eee4")
-const C_DOOR := Color("8b5a3c")
-const C_DOOR_FRAME := Color("5e3d29")
-const C_TRUCK := Color("f2f2f2")
-const C_TRUCK_2 := Color("2f6db5")
+# Malzeme kimlikleri (MeshBatcher ile aynı)
+const MP := MeshBatcher.M_PLASTER
+const MBR := MeshBatcher.M_BRICK
+const MW := MeshBatcher.M_WOOD
+const MT := MeshBatcher.M_TILE
+const MM := MeshBatcher.M_MARBLE
+const MMET := MeshBatcher.M_METAL
+const MWP := MeshBatcher.M_WALLPAPER
+const MC := MeshBatcher.M_CARPET
+const MG := MeshBatcher.M_GLASS
+const MAS := MeshBatcher.M_ASPHALT
+const MGR := MeshBatcher.M_GRASS
+const MPV := MeshBatcher.M_PAVING
+const MPA := MeshBatcher.M_PAINT
+const MF := MeshBatcher.M_FABRIC
+
+## Renk temaları: her bölüm farklı, canlı bir apartman.
+const THEMES := [
+	{"facade": "d9694c", "trim": "fbf3e4", "wall": "f7ead2", "dado": "2f6f68", "carpet": "b5263b", "door": "7b3f22", "floor": "e2d6c0", "awning": "2a9d8f", "wallpaper": "f4dcc0", "iron": false},
+	{"facade": "f2c14e", "trim": "ffffff", "wall": "fff4dc", "dado": "2b5ea7", "carpet": "1f5fa8", "door": "2b5ea7", "floor": "e6e0d2", "awning": "e63946", "wallpaper": "dfeaf7", "iron": true},
+	{"facade": "7fb7be", "trim": "f6f6f0", "wall": "eef6f2", "dado": "c8553d", "carpet": "2e8b57", "door": "c8553d", "floor": "e5e0d5", "awning": "f4a261", "wallpaper": "e7f3e9", "iron": false},
+	{"facade": "e8a0bf", "trim": "fff8f2", "wall": "fbeff2", "dado": "6a4c93", "carpet": "6a4c93", "door": "4d3570", "floor": "eae4e9", "awning": "6a4c93", "wallpaper": "f3e3f0", "iron": true},
+	{"facade": "8fbf6a", "trim": "fdfbf2", "wall": "f6f3e6", "dado": "8a5a32", "carpet": "d1495b", "door": "8a5a32", "floor": "e9e1cf", "awning": "edae49", "wallpaper": "f2ead2", "iron": false},
+	{"facade": "6c8ebf", "trim": "fdfdfd", "wall": "eef2f8", "dado": "1d3557", "carpet": "e76f51", "door": "1d3557", "floor": "e3e6ea", "awning": "e9c46a", "wallpaper": "e3ebf5", "iron": true},
+]
+
+const C_ASPHALT := Color("3f4248")
+const C_ROAD_LINE := Color("f1ecd8")
+const C_SIDEWALK := Color("c9c1b3")
+const C_CURB := Color("a49e94")
+const C_GRASS := Color("6db35a")
+const C_MARBLE := Color("ece7de")
+const C_NOSING := Color("cfc6b6")
+const C_UNDERSIDE := Color("eee8dc")
+const C_CEILING := Color("f7f4ee")
+const C_WOOD := Color("8a5a32")
+const C_WOOD_LIGHT := Color("c08a55")
+const C_IRON := Color("26282d")
+const C_BRASS := Color("d6a93a")
+const C_WHITE_PAINT := Color("f7f5ef")
 const C_TIRE := Color("1e1f22")
 const C_TRUNK := Color("6b4a2f")
-const C_LEAVES := Color("4f8f45")
-const C_POT := Color("b5643c")
+const C_LEAVES := Color("4e9a43")
+const C_POT := Color("c46a3c")
+const C_GLASS := Color("9cc9e6")
+const FLOWER_COLORS := [Color("ff4d6d"), Color("ffd23f"), Color("f78c6b"), Color("c77dff"), Color("ffffff"), Color("ff8fab")]
 
 var L: Dictionary
+var T: Dictionary          # etkin tema (renkler)
 var root: Node3D
 var body: StaticBody3D
 var batch := MeshBatcher.new()
-var glass := MeshBatcher.new()
 var glow := MeshBatcher.new()
 var ceil_batch := MeshBatcher.new()   # tavanlar: kesit görünümünde yarı saydam
 var props := MeshBatcher.new()        # engeller: kesitten etkilenmez, hep görünür
+var sky_batch := MeshBatcher.new()    # bulutlar
 var info := {}
 var anchors := {}
+var rng := RandomNumberGenerator.new()
 
 # Türetilmiş ölçüler
 var F := 1
@@ -75,6 +97,12 @@ var apt := {}
 
 func build(level: Dictionary, parent: Node3D) -> Dictionary:
 	L = level
+	var theme_idx := clampi(int(L.get("theme", 0)), 0, THEMES.size() - 1)
+	T = {}
+	var th: Dictionary = THEMES[theme_idx]
+	for k in th:
+		T[k] = Color(th[k]) if th[k] is String else th[k]
+	rng.seed = 1000 + int(L.id) * 17
 	root = Node3D.new()
 	root.name = "Level"
 	parent.add_child(root)
@@ -98,14 +126,15 @@ func build(level: Dictionary, parent: Node3D) -> Dictionary:
 	_build_block()
 	batch.build(root, mat, "Block")
 	_build_waypoints()
-	glass.build(root, _glass_material(), "Glass", false)
 	glow.build(root, _glow_material(), "Glow", false)
 	ceil_batch.build(root, _ceiling_material(), "Ceiling", false)
 	props.build(root, _props_material(), "Props")
+	sky_batch.build(root, _cloud_material(), "Clouds", false)
 	info.anchors = anchors
 	info.floor_height = H
 	info.top_floor_y = F * H
 	info.kill_y = -6.0
+	info.ceiling = eff_ceil
 	return info
 
 
@@ -133,25 +162,25 @@ func _derive() -> void:
 
 # ================================================================ yardımcılar
 
-func solid(center: Vector3, size: Vector3, color: Color, collide: bool = true) -> void:
-	batch.add_box(center, size, color)
+func solid(center: Vector3, size: Vector3, color: Color, collide: bool = true, mat: int = MP) -> void:
+	batch.add_box(center, size, color, mat)
 	if collide:
 		_shape_box(Transform3D(Basis(), center), size)
 
 
-func solid_xf(xf: Transform3D, size: Vector3, color: Color, collide: bool = true) -> void:
-	batch.add_box_xform(xf, size, color)
+func solid_xf(xf: Transform3D, size: Vector3, color: Color, collide: bool = true, mat: int = MP) -> void:
+	batch.add_box_xform(xf, size, color, mat)
 	if collide:
 		_shape_box(xf, size)
 
 
-func box_mm(mn: Vector3, mx: Vector3, color: Color, collide: bool = true) -> void:
+func box_mm(mn: Vector3, mx: Vector3, color: Color, collide: bool = true, mat: int = MP) -> void:
 	var a := Vector3(minf(mn.x, mx.x), minf(mn.y, mx.y), minf(mn.z, mx.z))
 	var b := Vector3(maxf(mn.x, mx.x), maxf(mn.y, mx.y), maxf(mn.z, mx.z))
 	var size := b - a
 	if size.x < 0.001 or size.y < 0.001 or size.z < 0.001:
 		return
-	solid((a + b) * 0.5, size, color, collide)
+	solid((a + b) * 0.5, size, color, collide, mat)
 
 
 ## Tavan levhası: çarpışmalı, görseli tavan ağında.
@@ -201,11 +230,11 @@ func _shape_cyl(center: Vector3, radius: float, height: float) -> void:
 
 ## Duvar (eksen hizalı kutu), isteğe bağlı kapı/boşluk ile.
 ## hole: {"c": boşluk merkezi (duvar boyunca), "w": genişlik, "y0": alt, "y1": üst, "frame": bool}
-func wall(p_mn: Vector3, p_mx: Vector3, color: Color, hole: Dictionary = {}) -> void:
+func wall(p_mn: Vector3, p_mx: Vector3, color: Color, hole: Dictionary = {}, mat: int = MP) -> void:
 	var mn := Vector3(minf(p_mn.x, p_mx.x), minf(p_mn.y, p_mx.y), minf(p_mn.z, p_mx.z))
 	var mx := Vector3(maxf(p_mn.x, p_mx.x), maxf(p_mn.y, p_mx.y), maxf(p_mn.z, p_mx.z))
 	if hole.is_empty():
-		box_mm(mn, mx, color)
+		box_mm(mn, mx, color, true, mat)
 		return
 	var along_z := (mx.z - mn.z) >= (mx.x - mn.x)
 	var a0 := mn.z if along_z else mn.x
@@ -216,10 +245,10 @@ func wall(p_mn: Vector3, p_mx: Vector3, color: Color, hole: Dictionary = {}) -> 
 	var h1 := clampf(hc + hw * 0.5, a0, a1)
 	var hy0 := maxf(float(hole.get("y0", mn.y)), mn.y)
 	var hy1 := minf(float(hole.get("y1", mx.y)), mx.y)
-	box_mm(mn, _span(mx, h0, along_z), color)
-	box_mm(_span(mn, h1, along_z), mx, color)
-	box_mm(_span(mn, h0, along_z), _span(Vector3(mx.x, hy0, mx.z), h1, along_z), color)
-	box_mm(_span(Vector3(mn.x, hy1, mn.z), h0, along_z), _span(mx, h1, along_z), color)
+	box_mm(mn, _span(mx, h0, along_z), color, true, mat)
+	box_mm(_span(mn, h1, along_z), mx, color, true, mat)
+	box_mm(_span(mn, h0, along_z), _span(Vector3(mx.x, hy0, mx.z), h1, along_z), color, true, mat)
+	box_mm(_span(Vector3(mn.x, hy1, mn.z), h0, along_z), _span(mx, h1, along_z), color, true, mat)
 	if bool(hole.get("frame", true)) and hy1 < mx.y - 0.01:
 		_door_frame(mn, mx, along_z, h0, h1, hy0, hy1)
 
@@ -231,24 +260,25 @@ func _span(v: Vector3, value: float, along_z: bool) -> Vector3:
 
 
 func _door_frame(mn: Vector3, mx: Vector3, along_z: bool, h0: float, h1: float, y0: float, y1: float) -> void:
-	# Kasa: duvar kalınlığından biraz taşan ince çıtalar (sadece görsel).
-	var fw := 0.07
-	var pad := 0.03
+	# Kasa: duvar kalınlığından biraz taşan pervazlar (sadece görsel).
+	var fw := 0.08
+	var pad := 0.025
+	var col: Color = T.trim
 	if along_z:
 		var x0 := mn.x - pad
 		var x1 := mx.x + pad
-		box_mm(Vector3(x0, y0, h0 - fw), Vector3(x1, y1 + fw, h0), C_DOOR_FRAME, false)
-		box_mm(Vector3(x0, y0, h1), Vector3(x1, y1 + fw, h1 + fw), C_DOOR_FRAME, false)
-		box_mm(Vector3(x0, y1, h0 - fw), Vector3(x1, y1 + fw, h1 + fw), C_DOOR_FRAME, false)
+		box_mm(Vector3(x0, y0, h0 - fw), Vector3(x1, y1 + fw, h0), col, false, MPA)
+		box_mm(Vector3(x0, y0, h1), Vector3(x1, y1 + fw, h1 + fw), col, false, MPA)
+		box_mm(Vector3(x0, y1, h0 - fw), Vector3(x1, y1 + fw, h1 + fw), col, false, MPA)
 	else:
 		var z0_ := mn.z - pad
 		var z1_ := mx.z + pad
-		box_mm(Vector3(h0 - fw, y0, z0_), Vector3(h0, y1 + fw, z1_), C_DOOR_FRAME, false)
-		box_mm(Vector3(h1, y0, z0_), Vector3(h1 + fw, y1 + fw, z1_), C_DOOR_FRAME, false)
-		box_mm(Vector3(h0 - fw, y1, z0_), Vector3(h1 + fw, y1 + fw, z1_), C_DOOR_FRAME, false)
+		box_mm(Vector3(h0 - fw, y0, z0_), Vector3(h0, y1 + fw, z1_), col, false, MPA)
+		box_mm(Vector3(h1, y0, z0_), Vector3(h1 + fw, y1 + fw, z1_), col, false, MPA)
+		box_mm(Vector3(h0 - fw, y1, z0_), Vector3(h1 + fw, y1 + fw, z1_), col, false, MPA)
 
 
-func _label(text: String, pos: Vector3, yaw: float, size: int = 48, color: Color = Color(0.25, 0.2, 0.15), hide_in_cut: bool = true) -> void:
+func _label(text: String, pos: Vector3, yaw: float, size: int = 48, color: Color = Color(0.2, 0.16, 0.12), hide_in_cut: bool = true) -> Label3D:
 	var lb := Label3D.new()
 	lb.text = text
 	lb.font_size = size
@@ -261,9 +291,10 @@ func _label(text: String, pos: Vector3, yaw: float, size: int = 48, color: Color
 	root.add_child(lb)
 	if hide_in_cut:
 		info.labels.append(lb)
+	return lb
 
 
-func _add_light(pos: Vector3, energy: float = 1.2, light_range: float = 6.0, color: Color = Color(1.0, 0.93, 0.8)) -> void:
+func _add_light(pos: Vector3, energy: float = 1.2, light_range: float = 6.0, color: Color = Color(1.0, 0.9, 0.75)) -> void:
 	var l := OmniLight3D.new()
 	l.position = pos
 	l.light_energy = energy
@@ -274,16 +305,54 @@ func _add_light(pos: Vector3, energy: float = 1.2, light_range: float = 6.0, col
 	info.lights.append(l)
 
 
+func _flower_cluster(center: Vector3, width: float, count: int) -> void:
+	for i in count:
+		var p := center + Vector3(rng.randf_range(-width * 0.5, width * 0.5), rng.randf_range(0.0, 0.08), rng.randf_range(-0.08, 0.08))
+		batch.add_sphere(p, rng.randf_range(0.06, 0.1), C_LEAVES, MGR)
+		batch.add_sphere(p + Vector3(0, 0.07, 0), rng.randf_range(0.035, 0.055), FLOWER_COLORS[rng.randi() % FLOWER_COLORS.size()], MPA)
+
+
+func _tree(p: Vector3, scale: float) -> void:
+	batch.add_cylinder(p + Vector3(0, 1.1 * scale, 0), 0.14 * scale, 2.2 * scale, C_TRUNK, Basis(), MW)
+	var leaf := C_LEAVES.lerp(Color("8cc63f"), rng.randf())
+	batch.add_sphere(p + Vector3(0, 2.7 * scale, 0), 1.0 * scale, leaf, MGR)
+	batch.add_sphere(p + Vector3(0.5, 2.4, 0.3) * scale, 0.7 * scale, leaf.darkened(0.1), MGR)
+	batch.add_sphere(p + Vector3(-0.45, 2.5, -0.25) * scale, 0.65 * scale, leaf.lightened(0.08), MGR)
+	batch.add_sphere(p + Vector3(0, 3.35, 0) * scale, 0.6 * scale, leaf.lightened(0.12), MGR)
+	_shape_cyl(p + Vector3(0, 1.1 * scale, 0), 0.18 * scale, 2.2 * scale)
+
+
+func _car(p: Vector3, color: Color, yaw: float) -> void:
+	var b := Basis(Vector3.UP, yaw)
+	var xf := Transform3D(b, p)
+	solid_xf(xf * Transform3D(Basis(), Vector3(0, 0.55, 0)), Vector3(4.0, 0.65, 1.8), color, true, MPA)
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(-0.2, 1.12, 0)), Vector3(2.2, 0.55, 1.65), color.lightened(0.05), MPA)
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(-0.2, 1.13, 0)), Vector3(2.0, 0.45, 1.7), C_GLASS, MG)
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(2.0, 0.6, 0.6)), Vector3(0.04, 0.14, 0.3), Color("fff7cf"), MPA)
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(2.0, 0.6, -0.6)), Vector3(0.04, 0.14, 0.3), Color("fff7cf"), MPA)
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(-2.0, 0.65, 0.6)), Vector3(0.04, 0.12, 0.3), Color("d62828"), MPA)
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(-2.0, 0.65, -0.6)), Vector3(0.04, 0.12, 0.3), Color("d62828"), MPA)
+	for wx in [-1.3, 1.3]:
+		for wz in [-0.85, 0.85]:
+			var wp: Vector3 = xf * Vector3(wx, 0.34, wz)
+			batch.add_cylinder(wp, 0.34, 0.24, C_TIRE, b * Basis(Vector3.RIGHT, PI * 0.5))
+			batch.add_cylinder(wp + b * Vector3(0, 0, signf(wz) * 0.125), 0.18, 0.02, Color("c0c4c8"), b * Basis(Vector3.RIGHT, PI * 0.5), MMET)
+
+
 # ================================================================ sokak
 
 func _build_street() -> void:
 	# Zemin (çim + kaldırım + yol)
-	box_mm(Vector3(-40, -0.5, -40), Vector3(40, -0.09, 30), C_GRASS)
-	box_mm(Vector3(-14, -0.4, -4.0), Vector3(14, 0.0, -WT), C_SIDEWALK)
-	box_mm(Vector3(-14, -0.4, -13.5), Vector3(14, -0.06, -4.0), C_ASPHALT)
-	box_mm(Vector3(-14, -0.4, -4.15), Vector3(14, 0.0, -4.0), C_CURB)
+	box_mm(Vector3(-40, -0.5, -40), Vector3(40, -0.09, 30), C_GRASS, true, MGR)
+	box_mm(Vector3(-14, -0.4, -4.0), Vector3(14, 0.0, -WT), C_SIDEWALK, true, MPV)
+	box_mm(Vector3(-14, -0.4, -13.5), Vector3(14, -0.06, -4.0), C_ASPHALT, true, MAS)
+	box_mm(Vector3(-14, -0.4, -4.15), Vector3(14, 0.0, -4.0), C_CURB, true, MPV)
+	box_mm(Vector3(-14, -0.4, -13.65), Vector3(14, 0.0, -13.5), C_CURB, true, MPV)
 	for i in range(-6, 7):
-		batch.add_box(Vector3(i * 2.2, -0.055, -9.0), Vector3(1.1, 0.01, 0.12), C_ROAD_LINE)
+		batch.add_box(Vector3(i * 2.2, -0.055, -9.0), Vector3(1.1, 0.01, 0.12), C_ROAD_LINE, MPA)
+	# Yaya geçidi
+	for i in 7:
+		batch.add_box(Vector3(6.0, -0.054, -5.0 - i * 1.15), Vector3(2.2, 0.01, 0.55), C_ROAD_LINE, MPA)
 	# Kaldırım rampası (yoldan kaldırıma yumuşak geçiş, takılmasın)
 	var ramp_len := 0.6
 	var a := atan2(0.06, ramp_len)
@@ -294,41 +363,79 @@ func _build_street() -> void:
 	collider_mm(Vector3(-14.5, -1, -14), Vector3(-14, 6, 0))
 	collider_mm(Vector3(14, -1, -14), Vector3(14.5, 6, 0))
 	collider_mm(Vector3(-14.5, -1, -14.5), Vector3(14.5, 6, -14))
-	# Çit/çalı görseli
+	# Karşı kaldırımda çalılar ve çiçekler
 	for i in range(-13, 14, 2):
-		batch.add_box(Vector3(i, 0.35, -13.8), Vector3(1.8, 0.7, 0.4), C_LEAVES.darkened(0.15))
+		batch.add_sphere(Vector3(i, 0.35, -13.9), 0.55, C_LEAVES.darkened(0.12), MGR, Vector3(1.6, 1.0, 0.8))
+		_flower_cluster(Vector3(i + 0.4, 0.55, -13.75), 0.8, 3)
 
-	# Kamyon (taşınma kamyonu) — oyuncunun ve kameranın arkasında kalmasın diye solda
+	# Taşınma kamyonu — oyuncunun ve kameranın arkasında kalmasın diye solda
 	var tz := -8.6
 	var tx := -4.8
-	box_mm(Vector3(tx - 5.6, 0.55, tz - 1.2), Vector3(tx - 1.2, 3.1, tz + 1.2), C_TRUCK)        # kasa
-	box_mm(Vector3(tx - 1.2, 0.55, tz - 1.15), Vector3(tx + 0.6, 2.35, tz + 1.15), C_TRUCK_2)   # kabin
-	batch.add_box(Vector3(tx + 0.62, 1.8, tz), Vector3(0.04, 0.7, 2.0), Color("9fc4e0"))        # ön cam
-	batch.add_box(Vector3(tx - 3.4, 1.9, tz + 1.21), Vector3(3.6, 0.5, 0.02), C_TRUCK_2)       # şerit
+	box_mm(Vector3(tx - 5.6, 0.55, tz - 1.2), Vector3(tx - 1.2, 3.1, tz + 1.2), Color("fdfdfd"), true, MPA)
+	box_mm(Vector3(tx - 1.2, 0.55, tz - 1.15), Vector3(tx + 0.6, 2.35, tz + 1.15), Color("ff8c1a"), true, MPA)
+	batch.add_box(Vector3(tx + 0.62, 1.8, tz), Vector3(0.04, 0.7, 2.0), C_GLASS, MG)
+	batch.add_box(Vector3(tx - 3.4, 1.9, tz + 1.21), Vector3(4.2, 0.55, 0.02), Color("ff8c1a"), MPA)
+	batch.add_box(Vector3(tx - 3.4, 1.35, tz + 1.21), Vector3(4.2, 0.12, 0.02), Color("2b2d42"), MPA)
+	batch.add_box(Vector3(tx + 0.4, 2.15, tz), Vector3(0.3, 0.2, 2.1), Color("2b2d42"), MPA)
 	for wx in [-4.6, -2.0, -0.2]:
 		for wz in [tz - 1.1, tz + 1.1]:
 			batch.add_cylinder(Vector3(tx + wx, 0.45, wz), 0.45, 0.32, C_TIRE, Basis(Vector3.RIGHT, PI * 0.5))
-	# Kamyon rampası (görsel)
-	batch.add_box_xform(Transform3D(Basis(Vector3.FORWARD, -0.32), Vector3(tx - 6.4, 0.3, tz)), Vector3(1.7, 0.06, 1.4), Color("9aa0a6"))
-	_label("TAŞI BAKALIM NAKLİYAT", Vector3(tx - 3.4, 2.5, tz + 1.22), 0.0, 64, Color("2f6db5"))
+			batch.add_cylinder(Vector3(tx + wx, 0.45, wz + signf(wz - tz) * 0.17), 0.22, 0.02, Color("c0c4c8"), Basis(Vector3.RIGHT, PI * 0.5), MMET)
+	batch.add_box_xform(Transform3D(Basis(Vector3.FORWARD, -0.32), Vector3(tx - 6.4, 0.3, tz)), Vector3(1.7, 0.06, 1.4), Color("9aa0a6"), MMET)
+	_label("EASY MOVERS", Vector3(tx - 3.4, 2.5, tz + 1.23), 0.0, 96, Color("2b2d42"))
+	_label("We carry, you smile!", Vector3(tx - 3.4, 1.62, tz + 1.23), 0.0, 44, Color("2b2d42"))
 
-	# Ağaçlar ve sokak lambaları
+	# Park etmiş arabalar
+	var car_colors := [Color("e63946"), Color("2a9d8f"), Color("ffb703"), Color("4361ee"), Color("8338ec")]
+	_car(Vector3(9.0, -0.06, -6.0), car_colors[rng.randi() % car_colors.size()], 0.0)
+	_car(Vector3(-11.5, -0.06, -11.6), car_colors[rng.randi() % car_colors.size()], PI)
+	_car(Vector3(10.5, -0.06, -11.6), car_colors[rng.randi() % car_colors.size()], PI)
+
+	# Ağaçlar, lambalar, banklar, çiçeklikler
 	for p in [Vector3(-11, 0, -2.2), Vector3(11, 0, -2.2), Vector3(-7.5, 0, -2.2), Vector3(7.5, 0, -2.2)]:
-		batch.add_cylinder(p + Vector3(0, 1.1, 0), 0.14, 2.2, C_TRUNK)
-		batch.add_sphere(p + Vector3(0, 2.7, 0), 1.0, C_LEAVES)
-		_shape_cyl(p + Vector3(0, 1.1, 0), 0.18, 2.2)
-	for p in [Vector3(-4.0, 0, -3.6), Vector3(4.0, 0, -3.6)]:
-		batch.add_cylinder(p + Vector3(0, 1.8, 0), 0.06, 3.6, C_RAIL)
-		glow.add_sphere(p + Vector3(0, 3.65, 0), 0.18, Color("fff2c0"))
-		_shape_cyl(p + Vector3(0, 1.8, 0), 0.08, 3.6)
+		batch.add_cylinder(p + Vector3(0, 0.08, 0), 0.6, 0.16, Color("7a5a3a"), Basis(), MW)
+		_tree(p, rng.randf_range(0.9, 1.15))
+	for p in [Vector3(-4.0, 0, -3.6), Vector3(4.0, 0, -3.6), Vector3(12.5, 0, -3.6)]:
+		batch.add_cylinder(p + Vector3(0, 1.9, 0), 0.06, 3.8, C_IRON, Basis(), MMET)
+		batch.add_cylinder(p + Vector3(0, 0.2, 0), 0.12, 0.4, C_IRON, Basis(), MMET)
+		batch.add_box(p + Vector3(0, 3.85, 0.15), Vector3(0.1, 0.06, 0.4), C_IRON, MMET)
+		glow.add_sphere(p + Vector3(0, 3.7, 0.32), 0.15, Color("fff2c0"))
+		_shape_cyl(p + Vector3(0, 1.8, 0), 0.1, 3.6)
+	for p in [Vector3(-9.3, 0, -1.2), Vector3(9.3, 0, -1.2)]:
+		# Bank
+		box_mm(p + Vector3(-0.8, 0.42, -0.2), p + Vector3(0.8, 0.48, 0.2), C_WOOD_LIGHT, true, MW)
+		box_mm(p + Vector3(-0.8, 0.5, 0.14), p + Vector3(0.8, 0.85, 0.2), C_WOOD_LIGHT, false, MW)
+		for lx in [-0.7, 0.7]:
+			batch.add_box(p + Vector3(lx, 0.21, 0), Vector3(0.06, 0.42, 0.38), C_IRON, MMET)
+	for p in [Vector3(-2.6, 0, -0.9), Vector3(2.6, 0, -0.9)]:
+		# Giriş yanında çiçeklik (çarpışmalı)
+		box_mm(p + Vector3(-0.55, 0, -0.35), p + Vector3(0.55, 0.42, 0.35), Color("b5b0a5"), true, MPV)
+		batch.add_box(p + Vector3(0, 0.43, 0), Vector3(1.0, 0.04, 0.6), Color("5a3d28"), MGR)
+		_flower_cluster(p + Vector3(0, 0.5, 0), 0.9, 9)
+	# Yangın musluğu ve çöp kutusu
+	batch.add_cylinder(Vector3(5.5, 0.35, -3.7), 0.12, 0.7, Color("d62828"), Basis(), MPA)
+	batch.add_sphere(Vector3(5.5, 0.72, -3.7), 0.12, Color("d62828"), MPA)
+	_shape_cyl(Vector3(5.5, 0.4, -3.7), 0.15, 0.8)
+	batch.add_cylinder(Vector3(-5.4, 0.45, -3.7), 0.25, 0.9, Color("2a9d8f"), Basis(), MPA)
+	_shape_cyl(Vector3(-5.4, 0.45, -3.7), 0.27, 0.9)
 
-	# Arka plan binaları
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 7 + int(L.id)
+	# Arka plan binaları (renkli, pencereli)
 	for i in 9:
 		var bx := -24.0 + i * 6.0
-		var bh := rng.randf_range(6.0, 16.0)
-		batch.add_box(Vector3(bx, bh * 0.5, -22.0), Vector3(5.4, bh, 5.0), C_FACADE.lerp(C_FACADE_2, rng.randf()).darkened(0.1))
+		var bh := rng.randf_range(7.0, 17.0)
+		var bcol := Color(THEMES[(i + int(L.id)) % THEMES.size()].facade).lightened(0.1)
+		batch.add_box(Vector3(bx, bh * 0.5, -22.0), Vector3(5.4, bh, 5.0), bcol, MBR)
+		batch.add_box(Vector3(bx, bh + 0.15, -22.0), Vector3(5.7, 0.3, 5.3), Color("fdfbf5"), MPA)
+		var wy := 1.6
+		while wy < bh - 1.0:
+			for wx in [-1.6, 0.0, 1.6]:
+				batch.add_box(Vector3(bx + wx, wy, -19.49), Vector3(0.9, 1.1, 0.04), C_GLASS, MG)
+			wy += 2.8
+	# Bulutlar
+	for i in 8:
+		var cp := Vector3(rng.randf_range(-60, 60), rng.randf_range(28, 42), rng.randf_range(-70, 40))
+		for j in 4:
+			sky_batch.add_sphere(cp + Vector3(j * 3.0 - 4.5, rng.randf_range(-0.5, 1.2), rng.randf_range(-1.5, 1.5)), rng.randf_range(2.5, 4.2), Color.WHITE, 0, Vector3(1.4, 0.6, 1.0))
 
 	anchors["street"] = {"pos": Vector3(3, 0, -6), "along": Vector3.RIGHT, "side": Vector3.BACK, "width": 6.0, "length": 6.0, "ceil": 50.0}
 	info.player_spawn = Transform3D(Basis(Vector3.UP, PI), Vector3(-0.8, 0.05, -6.2))
@@ -338,12 +445,27 @@ func _build_street() -> void:
 # ================================================================ merdiven boşluğu
 
 func _build_stairwell() -> void:
-	# Giriş holü zemini
-	box_mm(Vector3(-X_out, -SLAB, -WT), Vector3(X_out, 0.0, z0), C_LANDING)
+	var floor_col: Color = T.floor
+	# Giriş holü zemini (fayans)
+	box_mm(Vector3(-X_out, -SLAB, -WT), Vector3(X_out, 0.0, z0), floor_col, true, MT)
 	# Zemin katta B kolunun altı ve ara sahanlığın altı dolu (merdiven altı)
-	box_mm(Vector3(-X_out, -SLAB, z0), Vector3(gap * 0.5, Hh, z0 + Lf), C_WALL_2)
-	box_mm(Vector3(-X_out, Hh, z0), Vector3(-gap * 0.5, H - 0.32, z0 + WT), C_WALL_2)
-	box_mm(Vector3(-X_out, -SLAB, z0 + Lf), Vector3(X_out, Hh, zb), C_LANDING)
+	box_mm(Vector3(-X_out, -SLAB, z0), Vector3(gap * 0.5, Hh, z0 + Lf), T.wall)
+	box_mm(Vector3(-X_out, Hh, z0), Vector3(-gap * 0.5, H - 0.32, z0 + WT), T.wall)
+	batch.add_box(Vector3((-X_out + gap * 0.5) * 0.5, 0.5, z0 - 0.008), Vector3(X_out + gap * 0.5, 1.0, 0.016), T.dado, MPA)
+	box_mm(Vector3(-X_out, -SLAB, z0 + Lf), Vector3(X_out, Hh, zb), floor_col, true, MT)
+	# Hol: posta kutuları, paspas, saksı
+	var mb_x := X_out - 0.02
+	for row in 2:
+		for col in 3:
+			batch.add_box(Vector3(mb_x, 1.25 + row * 0.26, 0.45 + col * 0.36), Vector3(0.03, 0.22, 0.32), Color("b08d57"), MMET)
+			batch.add_box(Vector3(mb_x - 0.02, 1.3 + row * 0.26, 0.45 + col * 0.36), Vector3(0.01, 0.03, 0.18), Color("3a2c1a"), MMET)
+	batch.add_box(Vector3(0, 0.006, 0.55), Vector3(1.2, 0.012, 0.7), Color("7a2e2e"), MC)
+	# Hol saksısı: yalnızca girişi daraltmayacak kadar yer varsa
+	if X_out - 0.6 > float(L.entrance.x) * 0.5 + 0.1:
+		props.add_cylinder(Vector3(-X_out + 0.3, 0.25, 0.3), 0.22, 0.5, C_POT)
+		props.add_sphere(Vector3(-X_out + 0.3, 0.85, 0.3), 0.35, C_LEAVES)
+		props.add_sphere(Vector3(-X_out + 0.25, 1.15, 0.32), 0.22, C_LEAVES.lightened(0.1))
+		_shape_cyl(Vector3(-X_out + 0.3, 0.55, 0.3), 0.25, 1.1)
 
 	for k in F:
 		var yk := k * H
@@ -351,13 +473,13 @@ func _build_stairwell() -> void:
 		_flight(Vector3(xA, yk, z0), 1.0, gap * 0.5, k)
 		# Ara sahanlık
 		if k > 0:
-			box_mm(Vector3(-X_out, yk + Hh - SLAB, z0 + Lf), Vector3(X_out, yk + Hh, zb), C_LANDING)
+			box_mm(Vector3(-X_out, yk + Hh - SLAB, z0 + Lf), Vector3(X_out, yk + Hh, zb), floor_col, true, MT)
 		collider_mm(Vector3(gap * 0.5, yk + Hh - SLAB, z0 + Lf - t * 0.5), Vector3(X_out, yk + Hh, z0 + Lf))
 		# B kolu (sol şerit, -Z)
 		_flight(Vector3(xB, yk + Hh, z0 + Lf), -1.0, -gap * 0.5, k)
 		# Kat sahanlığı (k+1)
 		var yl := (k + 1) * H
-		box_mm(Vector3(-X_out, yl - SLAB, -WT), Vector3(X_out, yl, z0), C_LANDING)
+		box_mm(Vector3(-X_out, yl - SLAB, -WT), Vector3(X_out, yl, z0), floor_col, true, MT)
 		collider_mm(Vector3(-X_out, yl - SLAB, z0), Vector3(-gap * 0.5, yl, z0 + t * 0.5))
 		# Boşluk korkulukları
 		_rail_straight(Vector3(-gap * 0.5, yk + Hh, z0 + Lf + 0.03), Vector3(gap * 0.5, yk + Hh, z0 + Lf + 0.03))
@@ -366,24 +488,46 @@ func _build_stairwell() -> void:
 		# Tavanlar
 		if slabs or k == F - 1:
 			ceiling_mm(Vector3(-X_out, yk + Hh + C, z0 + Lf), Vector3(X_out, yk + Hh + C + 0.1, zb))
-		# Arka duvarda pencere (ara sahanlık)
-		glass.add_box(Vector3(0, yk + Hh + 1.35, zb - 0.015), Vector3(1.2, 1.0, 0.02), Color("bfe3f5"))
-		batch.add_box(Vector3(0, yk + Hh + 0.83, zb - 0.06), Vector3(1.35, 0.06, 0.12), C_TRIM)
-		# Kat yazısı
-		_label("%d. KAT" % (k + 1), Vector3(0, yl + 1.75, 0.02), 0.0, 56)
-		_add_light(Vector3(0, yl + minf(C, H - 0.3) - 0.3, z0 * 0.5), 0.9, 5.5)
+		# Ara sahanlıkta pencere, tablolar ve lambri
+		var wy := yk + Hh
+		batch.add_box(Vector3(0, wy + 1.35, zb - 0.012), Vector3(1.1, 0.95, 0.02), C_GLASS, MG)
+		batch.add_box(Vector3(0, wy + 1.35, zb - 0.02), Vector3(0.05, 0.95, 0.03), T.trim, MPA)
+		batch.add_box(Vector3(0, wy + 1.35, zb - 0.02), Vector3(1.1, 0.05, 0.03), T.trim, MPA)
+		batch.add_box(Vector3(0, wy + 0.85, zb - 0.06), Vector3(1.3, 0.05, 0.12), T.trim, MPA)
+		batch.add_box(Vector3(0, wy + 1.85, zb - 0.03), Vector3(1.3, 0.08, 0.06), T.trim, MPA)
+		_flower_cluster(Vector3(0, wy + 0.9, zb - 0.08), 0.9, 6)
+		_picture(Vector3(-X_out + 0.45, wy + 1.4, zb - 0.02), 0.0)
+		_picture(Vector3(X_out - 0.45, wy + 1.4, zb - 0.02), 0.0)
+		_dado_z(zb - 0.01, -X_out, X_out, wy, -1.0)
+		_dado_x(-X_out + 0.01, z0 + Lf, zb, wy, 1.0)
+		_dado_x(X_out - 0.01, z0 + Lf, zb, wy, -1.0)
+		_sconce(Vector3(-X_out + 0.02, wy + 1.75, zb - 0.5), 1.0)
+		# Kat sahanlığı: lambri (kapısız ön duvarda), kat yazısı, aplikler, ışık
+		_dado_z(0.01, -X_out, X_out, yl, 1.0)
+		_label("FLOOR %d" % (k + 1), Vector3(0, yl + 1.62, 0.03), 0.0, 60, T.dado)
+		var sc_x := minf(0.95, X_out - 0.3)
+		_sconce(Vector3(-sc_x, yl + 1.7, 0.02), 0.0, true)
+		_sconce(Vector3(sc_x, yl + 1.7, 0.02), 0.0, true)
+		_add_light(Vector3(0, yl + minf(C, H - 0.3) - 0.3, z0 * 0.5), 1.0, 5.5)
 
 		# Ara katlardaki kapalı daire kapıları (dekor)
 		if k + 1 < F:
-			_deco_door(-1.0, yl, "D%d" % ((k + 1) * 2 + 1))
-			_deco_door(1.0, yl, "D%d" % ((k + 1) * 2 + 2))
+			_deco_door(-1.0, yl, "%d%s" % [k + 1, "A"])
+			_deco_door(1.0, yl, "%d%s" % [k + 1, "B"])
 
+	# Zemin kat lambrisi (giriş boşluğunun iki yanında)
+	var ewh := float(L.entrance.x) * 0.5 + 0.1
+	if X_out > ewh + 0.05:
+		_dado_z(0.01, -X_out, -ewh, 0.0, 1.0)
+		_dado_z(0.01, ewh, X_out, 0.0, 1.0)
+	_dado_x(X_out - 0.01, 0.0, z0, 0.0, -1.0)
+	_dado_x(-X_out + 0.01, 0.0, z0, 0.0, 1.0)
 	# Kat sahanlığı tavanları
 	for k in range(0, F + 1):
 		if slabs or k == F:
 			var yc := k * H + C
 			ceiling_mm(Vector3(-X_out, yc, -WT), Vector3(X_out, yc + 0.1, z0))
-	_add_light(Vector3(0, minf(C, H - 0.3) - 0.3, z0 * 0.5), 0.9, 5.5)
+	_add_light(Vector3(0, minf(C, H - 0.3) - 0.3, z0 * 0.5), 1.0, 5.5)
 
 	# Dış duvarlar
 	var apt_side := -1.0 if str(L.corridor.turn) != "right" else 1.0
@@ -391,27 +535,21 @@ func _build_stairwell() -> void:
 	var dh := float(L.apt_door.y)
 	var zc := z0 * 0.5
 	var door_hole := {"c": zc, "w": dw, "y0": F * H, "y1": F * H + dh}
-	# Kapı boşluğu yalnızca en üst katta; duvar iki parçada kurulur (alt katlar + üst kat bandı)
 	for side in [-1.0, 1.0]:
 		var x0 := side * X_out
 		var x1 := side * (X_out + WT)
 		if side == apt_side:
-			wall(Vector3(x0, -SLAB, -WT), Vector3(x1, F * H, zb + WT), C_WALL)
-			wall(Vector3(x0, F * H, -WT), Vector3(x1, top_y, zb + WT), C_WALL, door_hole)
+			wall(Vector3(x0, -SLAB, -WT), Vector3(x1, F * H, zb + WT), T.wall)
+			wall(Vector3(x0, F * H, -WT), Vector3(x1, top_y, zb + WT), T.wall, door_hole)
 		else:
-			wall(Vector3(x0, -SLAB, -WT), Vector3(x1, top_y, zb + WT), C_WALL)
-	wall(Vector3(-X_out - WT, -SLAB, zb), Vector3(X_out + WT, top_y, zb + WT), C_WALL)
+			wall(Vector3(x0, -SLAB, -WT), Vector3(x1, top_y, zb + WT), T.wall)
+	wall(Vector3(-X_out - WT, -SLAB, zb), Vector3(X_out + WT, top_y, zb + WT), T.wall)
 	var ew := float(L.entrance.x)
 	var eh := float(L.entrance.y)
-	wall(Vector3(-X_out - WT, -SLAB, -WT), Vector3(X_out + WT, top_y, 0.0), C_WALL, {"c": 0.0, "w": ew, "y0": 0.0, "y1": eh})
+	wall(Vector3(-X_out - WT, -SLAB, -WT), Vector3(X_out + WT, top_y, 0.0), T.wall, {"c": 0.0, "w": ew, "y0": 0.0, "y1": eh})
 	# Çatı
 	box_mm(Vector3(-X_out - WT, top_y - SLAB, -WT), Vector3(X_out + WT, top_y, zb + WT), C_CEILING)
-	# Duvar süpürgelikleri (görsel)
-	for k in range(0, F + 1):
-		var y := k * H
-		batch.add_box(Vector3(0, y + 0.05, 0.015), Vector3(X_out * 2.0, 0.1, 0.03), C_TRIM)
 
-	# Merdiven boşluğu iç sınırları (kesit görünümü ve hedef hesapları için)
 	info.stair_aabb = AABB(Vector3(-X_out, 0, 0), Vector3(X_out * 2.0, top_y, zb))
 	info.apt_side = apt_side
 
@@ -426,23 +564,68 @@ func _build_stairwell() -> void:
 		anchors["landing:%d" % k] = {"pos": Vector3(0, k * H, z0 * 0.5), "along": Vector3.RIGHT, "side": Vector3.BACK, "width": z0, "length": X_out * 2.0, "ceil": k * H + eff_ceil, "front_z": 0.0}
 
 
-## Tek merdiven kolu. start: ilk basamak hizasında şerit ortası (taban yüksekliği), dz: +1 / -1
+## Lambri (alt duvar paneli) + bel çıtası: z sabit duvar boyunca. face: duvarın baktığı yön (+1/-1 z)
+func _dado_z(z: float, x0: float, x1: float, y: float, face: float) -> void:
+	var w := absf(x1 - x0)
+	var cx := (x0 + x1) * 0.5
+	batch.add_box(Vector3(cx, y + 0.4, z + face * 0.006), Vector3(w, 0.8, 0.012), T.dado, MPA)
+	batch.add_box(Vector3(cx, y + 0.82, z + face * 0.018), Vector3(w, 0.05, 0.03), T.trim, MPA)
+	batch.add_box(Vector3(cx, y + 0.06, z + face * 0.02), Vector3(w, 0.12, 0.025), T.trim, MPA)
+
+
+## Lambri: x sabit duvar boyunca. face: duvarın baktığı yön (+1/-1 x)
+func _dado_x(x: float, z0_: float, z1_: float, y: float, face: float) -> void:
+	var w := absf(z1_ - z0_)
+	var cz := (z0_ + z1_) * 0.5
+	batch.add_box(Vector3(x + face * 0.006, y + 0.4, cz), Vector3(0.012, 0.8, w), T.dado, MPA)
+	batch.add_box(Vector3(x + face * 0.018, y + 0.82, cz), Vector3(0.03, 0.05, w), T.trim, MPA)
+	batch.add_box(Vector3(x + face * 0.02, y + 0.06, cz), Vector3(0.025, 0.12, w), T.trim, MPA)
+
+
+func _picture(p: Vector3, _yaw: float) -> void:
+	batch.add_box(p, Vector3(0.5, 0.4, 0.025), C_WOOD, MW)
+	var c1: Color = FLOWER_COLORS[rng.randi() % FLOWER_COLORS.size()]
+	batch.add_box(p + Vector3(0, 0.05, -0.014), Vector3(0.42, 0.2, 0.004), Color("87ceeb"), MPA)
+	batch.add_box(p + Vector3(0, -0.09, -0.014), Vector3(0.42, 0.12, 0.004), Color("6db35a"), MPA)
+	batch.add_sphere(p + Vector3(0.1, 0.08, -0.016), 0.04, c1, MPA)
+
+
+## Duvar apliği: yan duvarda (side ±1 → x duvarı) veya ön duvarda (front=true)
+func _sconce(p: Vector3, side: float, front: bool = false) -> void:
+	if front:
+		batch.add_box(p, Vector3(0.12, 0.16, 0.04), C_BRASS, MMET)
+		glow.add_sphere(p + Vector3(0, 0.08, 0.06), 0.06, Color("ffe8b0"))
+	else:
+		batch.add_box(p, Vector3(0.04, 0.16, 0.12), C_BRASS, MMET)
+		glow.add_sphere(p + Vector3(side * 0.06, 0.08, 0), 0.06, Color("ffe8b0"))
+
+
+## Tek merdiven kolu: mermer basamak, halı yolluk, pirinç çubuklar, tornalı dikmeler,
+## başlık babaları, ahşap trabzan, duvar tutamağı ve eğimli lambri.
+## start: ilk basamak hizasında şerit ortası (taban yüksekliği), dz: +1 / -1
 func _flight(start: Vector3, dz: float, rail_x: float, k: int) -> void:
 	var dir := Vector3(0, 0, dz)
-	# Basamaklar (görsel)
+	var runner_w := sw * 0.62
+	var carpet: Color = T.carpet
 	for i in n:
 		var top := (i + 1) * r
 		var hgt := r + 0.12
 		var c := start + dir * (i * t + t * 0.5) + Vector3.UP * (top - hgt * 0.5)
-		batch.add_box(c, Vector3(sw, hgt, t + 0.01), C_STEP)
-		# Basamak burnu şeridi
-		batch.add_box(start + dir * (i * t + 0.03) + Vector3.UP * (top - 0.01), Vector3(sw, 0.025, 0.05), C_NOSING)
+		batch.add_box(c, Vector3(sw, hgt, t + 0.01), C_MARBLE, MM)
+		# Basamak burnu (hafif taşan)
+		batch.add_box(start + dir * (i * t - 0.005) + Vector3.UP * (top - 0.018), Vector3(sw, 0.036, 0.05), C_NOSING, MM)
+		# Halı yolluk: basamak üstü + rıht
+		batch.add_box(start + dir * (i * t + t * 0.5) + Vector3.UP * (top + 0.006), Vector3(runner_w, 0.012, t + 0.02), carpet, MC)
+		batch.add_box(start + dir * (i * t - 0.012) + Vector3.UP * (top - r * 0.5), Vector3(runner_w, r, 0.012), carpet.darkened(0.08), MC)
+		# Pirinç halı çubuğu (rıht dibinde)
+		batch.add_cylinder_between(start + dir * ((i + 1) * t - 0.02) + Vector3(-runner_w * 0.5 - 0.03, top + 0.014, 0), start + dir * ((i + 1) * t - 0.02) + Vector3(runner_w * 0.5 + 0.03, top + 0.014, 0), 0.009, C_BRASS, MMET)
 	# Eğim hesapları
 	var ell := sqrt(Lf * Lf + Hh * Hh)
 	var a := atan2(Hh, Lf)
 	var u := (dir * Lf + Vector3.UP * Hh) / ell
 	var nrm := Vector3.UP * cos(a) - dir * sin(a)
 	var bas := Basis(nrm.cross(u), nrm, u)
+	var slope := Hh / Lf
 	# Alt yüz (görsel)
 	var under_c := start + dir * (Lf * 0.5) + Vector3.UP * (Hh * 0.5) - nrm * 0.2
 	batch.add_box_xform(Transform3D(bas, under_c), Vector3(sw, 0.16, ell), C_UNDERSIDE)
@@ -450,20 +633,54 @@ func _flight(start: Vector3, dz: float, rail_x: float, k: int) -> void:
 	var thick := 0.3
 	var mid := start + dir * ((Lf - t) * 0.5) + Vector3.UP * (Hh * 0.5)
 	_shape_box(Transform3D(bas, mid - nrm * (thick * 0.5)), Vector3(sw, thick, ell))
-	# İç korkuluk (boşluk tarafı)
-	var rail_start := Vector3(rail_x, start.y, start.z)
+
+	# --- İç korkuluk (boşluk tarafı)
+	var side_off := Vector3(signf(-rail_x) * 0.04, 0, 0)
+	var rail_start := Vector3(rail_x, start.y, start.z) + side_off
 	var rail_mid := rail_start + dir * (Lf * 0.5) + Vector3.UP * (Hh * 0.5)
-	var side_off := Vector3(signf(-rail_x) * 0.03, 0, 0)
-	_shape_box(Transform3D(bas, rail_mid + nrm * (RAIL_H * 0.5) + side_off), Vector3(0.06, RAIL_H, ell))
-	batch.add_box_xform(Transform3D(bas, rail_mid + nrm * (RAIL_H - 0.02) + side_off), Vector3(0.07, 0.06, ell), C_HANDRAIL)
-	batch.add_box_xform(Transform3D(bas, rail_mid + nrm * 0.12 + side_off), Vector3(0.04, 0.04, ell), C_RAIL)
+	_shape_box(Transform3D(bas, rail_mid + nrm * (RAIL_H * 0.5)), Vector3(0.06, RAIL_H, ell))
+	var iron := bool(T.iron)
+	var post_col := C_IRON if iron else C_WHITE_PAINT
+	var post_mat := MMET if iron else MPA
+	# Yan kiriş (basamak uçlarını kapatan eğik tahta)
+	batch.add_box_xform(Transform3D(bas, rail_mid - nrm * 0.02), Vector3(0.07, 0.34, ell + 0.05), T.trim, MPA)
+	# Trabzan: başlangıç ve bitiş yüksekliği
+	var hr0 := rail_start + Vector3.UP * RAIL_H
+	var hr1 := rail_start + dir * Lf + Vector3.UP * (Hh + RAIL_H)
+	batch.add_cylinder_between(hr0 - dir * 0.12 - Vector3.UP * 0.12 * slope, hr1 + dir * 0.12 + Vector3.UP * 0.12 * slope, 0.036, C_WOOD, MW)
+	# Alt ayak tabanı rayı
+	batch.add_cylinder_between(rail_start + Vector3.UP * (r + 0.1), rail_start + dir * Lf + Vector3.UP * (Hh + r + 0.1), 0.016, post_col, post_mat)
+	# Dikmeler: her basamakta iki tane (tornalı görünüm)
 	for i in n:
-		var p := rail_start + dir * (i * t + t * 0.5) + Vector3.UP * ((i + 1) * r) + side_off
-		batch.add_box(p + Vector3.UP * (RAIL_H * 0.45), Vector3(0.025, RAIL_H * 0.9, 0.025), C_RAIL)
-	# Dış duvar tarafında tutamak (görsel)
-	var wall_x := signf(start.x) * (X_out - 0.05)
-	var wr_mid := Vector3(wall_x, start.y, start.z) + dir * (Lf * 0.5) + Vector3.UP * (Hh * 0.5 + 0.9)
-	batch.add_box_xform(Transform3D(bas, wr_mid), Vector3(0.05, 0.05, ell), C_HANDRAIL)
+		for j in 2:
+			var s := i * t + t * (0.28 + j * 0.44)
+			var base_y := (i + 1) * r + 0.012
+			var bp := rail_start + dir * s + Vector3.UP * base_y
+			var top_h := RAIL_H + s * slope - base_y + 0.0
+			batch.add_cylinder(bp + Vector3.UP * (top_h * 0.5), 0.014, top_h, post_col, Basis(), post_mat)
+			batch.add_sphere(bp + Vector3.UP * (top_h * 0.32), 0.026, C_BRASS if iron else post_col, MMET if iron else post_mat)
+			batch.add_box(bp + Vector3.UP * 0.03, Vector3(0.04, 0.06, 0.04), post_col, post_mat)
+	# Başlık babaları (kolun alt ve üst ucunda)
+	for e in 2:
+		var pp := rail_start + dir * (Lf * e) + Vector3.UP * (Hh * e)
+		var ph := RAIL_H + 0.12
+		batch.add_box(pp + Vector3.UP * (ph * 0.5), Vector3(0.11, ph, 0.11), C_WOOD, MW)
+		batch.add_box(pp + Vector3.UP * (ph + 0.02), Vector3(0.14, 0.04, 0.14), C_WOOD.darkened(0.1), MW)
+		batch.add_sphere(pp + Vector3.UP * (ph + 0.09), 0.065, C_BRASS, MMET)
+
+	# --- Duvar tarafı: tutamak, tutamak dirsekleri, eğimli lambri
+	var wsign := signf(start.x)
+	var wall_x := wsign * (X_out - 0.07)
+	var w0 := Vector3(wall_x, start.y, start.z) + Vector3.UP * 0.92
+	var w1 := w0 + dir * Lf + Vector3.UP * Hh
+	batch.add_cylinder_between(w0, w1, 0.025, C_WOOD, MW)
+	for bi in 3:
+		var bp2 := w0.lerp(w1, 0.15 + bi * 0.35)
+		batch.add_cylinder_between(bp2, bp2 + Vector3(wsign * 0.07, 0, 0), 0.01, C_BRASS, MMET)
+	var dado_c := Vector3(wsign * (X_out - 0.006), start.y, start.z) + dir * (Lf * 0.5) + Vector3.UP * (Hh * 0.5 + 0.42)
+	batch.add_box_xform(Transform3D(Basis(Vector3.RIGHT, -dz * a), dado_c), Vector3(0.012, 0.8, ell), T.dado, MPA)
+	batch.add_box_xform(Transform3D(Basis(Vector3.RIGHT, -dz * a), dado_c + Vector3(-wsign * 0.012, 0.42, 0)), Vector3(0.03, 0.05, ell), T.trim, MPA)
+
 	# Kol tavanı (alçak tavan veya en üst kat)
 	if slabs or k == F - 1:
 		var cc := start + dir * (Lf * 0.5) + Vector3.UP * (Hh * 0.5 + C) + nrm * 0.05
@@ -480,21 +697,35 @@ func _rail_straight(p0: Vector3, p1: Vector3) -> void:
 	var along_x := absf(p1.x - p0.x) > absf(p1.z - p0.z)
 	var size := Vector3(length, RAIL_H, 0.06) if along_x else Vector3(0.06, RAIL_H, length)
 	_shape_box(Transform3D(Basis(), mid + Vector3.UP * (RAIL_H * 0.5)), size)
-	var hr := Vector3(length, 0.06, 0.07) if along_x else Vector3(0.07, 0.06, length)
-	batch.add_box(mid + Vector3.UP * (RAIL_H - 0.02), hr, C_HANDRAIL)
-	var count := maxi(2, int(length / 0.12))
+	var iron := bool(T.iron)
+	var post_col := C_IRON if iron else C_WHITE_PAINT
+	var post_mat := MMET if iron else MPA
+	batch.add_cylinder_between(p0 + Vector3.UP * RAIL_H, p1 + Vector3.UP * RAIL_H, 0.036, C_WOOD, MW)
+	batch.add_cylinder_between(p0 + Vector3.UP * 0.1, p1 + Vector3.UP * 0.1, 0.016, post_col, post_mat)
+	var count := maxi(2, int(length / 0.13))
 	for i in count + 1:
 		var p := p0.lerp(p1, float(i) / count)
-		batch.add_box(p + Vector3.UP * (RAIL_H * 0.45), Vector3(0.025, RAIL_H * 0.9, 0.025), C_RAIL)
+		batch.add_cylinder(p + Vector3.UP * (RAIL_H * 0.5), 0.014, RAIL_H, post_col, Basis(), post_mat)
+		batch.add_sphere(p + Vector3.UP * (RAIL_H * 0.32), 0.026, C_BRASS if iron else post_col, MMET if iron else post_mat)
+	for e in [p0, p1]:
+		batch.add_box(e + Vector3.UP * 0.56, Vector3(0.1, 1.12, 0.1), C_WOOD, MW)
+		batch.add_sphere(e + Vector3.UP * 1.17, 0.06, C_BRASS, MMET)
 
 
 func _deco_door(side: float, y: float, text: String) -> void:
 	var x := side * (X_out - 0.02)
 	var zc := z0 * 0.5
-	batch.add_box(Vector3(x, y + 1.02, zc), Vector3(0.04, 2.04, 0.92), C_DOOR)
-	batch.add_box(Vector3(x - side * 0.03, y + 1.0, zc + 0.33), Vector3(0.03, 0.04, 0.12), Color("d4af37"))
-	batch.add_box(Vector3(x, y + 1.06, zc), Vector3(0.05, 2.12, 1.06), C_DOOR_FRAME)
-	_label(text, Vector3(x - side * 0.035, y + 1.65, zc), -side * PI * 0.5, 40, Color("f2e6c8"))
+	var dcol: Color = T.door
+	batch.add_box(Vector3(x, y + 1.06, zc), Vector3(0.05, 2.14, 1.08), T.trim, MPA)
+	batch.add_box(Vector3(x - side * 0.01, y + 1.02, zc), Vector3(0.04, 2.04, 0.92), dcol, MW)
+	# Kapı panelleri
+	for pz in [-0.2, 0.2]:
+		batch.add_box(Vector3(x - side * 0.03, y + 1.45, zc + pz), Vector3(0.01, 0.7, 0.3), dcol.lightened(0.12), MW)
+		batch.add_box(Vector3(x - side * 0.03, y + 0.55, zc + pz), Vector3(0.01, 0.6, 0.3), dcol.lightened(0.12), MW)
+	batch.add_sphere(Vector3(x - side * 0.05, y + 1.0, zc + 0.36), 0.035, C_BRASS, MMET)
+	batch.add_box(Vector3(x - side * 0.035, y + 1.62, zc), Vector3(0.01, 0.1, 0.18), C_BRASS, MMET)
+	batch.add_box(Vector3(x - side * 0.4, y + 0.006, zc), Vector3(0.5, 0.012, 0.8), Color("6b4f3a"), MC)
+	_label(text, Vector3(x - side * 0.042, y + 1.62, zc), -side * PI * 0.5, 36, Color("3a2a10"))
 
 
 # ================================================================ daire (koridor + oda)
@@ -515,6 +746,9 @@ func _build_apartment() -> void:
 	var zc := z0 * 0.5
 	var xw := sx * (X_out + WT)   # merdiven duvarının dış yüzü
 	var x_end := xw + sx * cl     # koridorun uç noktası
+	var goal := str(L.goal)
+	var item := ItemDB.get_item(str(L.item))
+	var style := _room_style(str(L.item))
 
 	# Koridor 1: merdivenden dışarı doğru (x ekseni)
 	var c1 := _rect(minf(xw, x_end), maxf(xw, x_end), zc - cw * 0.5, zc + cw * 0.5)
@@ -523,41 +757,49 @@ func _build_apartment() -> void:
 	var walls1 := {"zn": {}, "zp": {}}
 	walls1[near1] = null
 	walls1[far1] = null
-	_room_box(c1, y, cc, walls1, C_WOOD_FLOOR.darkened(0.05))
-	# Eşik (merdiven duvarı kalınlığı)
-	box_mm(Vector3(sx * X_out, y - SLAB, zc - float(L.apt_door.x) * 0.5), Vector3(xw, y, zc + float(L.apt_door.x) * 0.5), C_WOOD_FLOOR.darkened(0.15))
+	_room_box(c1, y, cc, walls1, C_WOOD_LIGHT, MW)
+	# Eşik (merdiven duvarı kalınlığı) ve "Welcome" paspası
+	box_mm(Vector3(sx * X_out, y - SLAB, zc - float(L.apt_door.x) * 0.5), Vector3(xw, y, zc + float(L.apt_door.x) * 0.5), C_WOOD.darkened(0.1), true, MW)
+	batch.add_box(Vector3(sx * (X_out - 0.45), y + 0.007, zc), Vector3(0.55, 0.014, 0.85), Color("7a4a2a"), MC)
+	var mat_lb := _label("WELCOME", Vector3(sx * (X_out - 0.45), y + 0.016, zc), 0.0, 30, Color("f2d49b"), false)
+	mat_lb.rotation = Vector3(-PI * 0.5, -sx * PI * 0.5, 0.0)   # yere yatık, merdivenden okunur
+	# Açık daire kapısı (koridor içinde duvara yaslı)
+	var door_w := float(L.apt_door.x)
+	var dcol: Color = T.door
+	var dp := Vector3(xw + sx * (door_w * 0.5 + 0.02), y + 1.02, zc + cw * 0.5 - 0.03)
+	batch.add_box(dp, Vector3(door_w - 0.06, 2.04, 0.045), dcol, MW)
+	batch.add_sphere(dp + Vector3(sx * (door_w * 0.5 - 0.12), 0.0, -0.04), 0.035, C_BRASS, MMET)
 	anchors["corridor"] = {"pos": Vector3((xw + x_end) * 0.5, y, zc), "along": Vector3.RIGHT, "side": Vector3.BACK, "width": cw, "length": cl, "ceil": y + cc}
 	# Hedef dairenin tabelası kesit görünümünde de görünür kalır (yol gösterir).
-	_label("DAİRE %d" % (F * 2 + 1), Vector3(sx * (X_out - 0.02), y + float(L.apt_door.y) + 0.25, zc), -sx * PI * 0.5, 44, Color(0.25, 0.2, 0.15), false)
-	_add_light(Vector3((xw + x_end) * 0.5, y + cc - 0.3, zc), 0.8, 5.0)
-	# Duvar tablosu (dekor)
-	batch.add_box(Vector3((xw + x_end) * 0.5, y + 1.5, zc + cw * 0.5 - 0.02), Vector3(0.7, 0.5, 0.03), Color("4a6f8a"))
-	batch.add_box(Vector3((xw + x_end) * 0.5, y + 1.5, zc + cw * 0.5 - 0.01), Vector3(0.8, 0.6, 0.02), C_TRIM)
+	_label("APT %d" % (F * 10 + 1), Vector3(sx * (X_out - 0.02), y + float(L.apt_door.y) + 0.25, zc), -sx * PI * 0.5, 48, T.dado, false)
+	_add_light(Vector3((xw + x_end) * 0.5, y + cc - 0.3, zc), 0.9, 5.0)
+	# Koridor duvarında tablo ve askılık (dekor)
+	_picture(Vector3((xw + x_end) * 0.5, y + 1.45, zc + cw * 0.5 - 0.015), 0.0)
 
 	var room: Dictionary
 	var door_side: String
+	var far_side: String
 	if turn == "none":
 		var rz0 := maxf(zc - rw * 0.5, 0.2)
 		room = _rect(minf(x_end, x_end + sx * rd), maxf(x_end, x_end + sx * rd), rz0, rz0 + rw)
 		door_side = near1
+		far_side = far1
 		var walls_r := {"xn": {}, "xp": {}, "zn": {}, "zp": {}}
 		walls_r[door_side] = {"c": zc, "w": rdw, "y0": y, "y1": y + rdh}
-		_room_box(room, y, room_h, walls_r, C_WOOD_FLOOR)
+		_room_box(room, y, room_h, walls_r, _style_floor(style), _style_floor_mat(style), _style_wall(style), _style_wall_mat(style))
 		anchors["corridor2"] = anchors["corridor"]
 	else:
 		# Koridor 2: +Z yönüne döner
 		var c2x0 := x_end
 		var c2x1 := x_end + sx * cw
 		var c2 := _rect(minf(c2x0, c2x1), maxf(c2x0, c2x1), zc - cw * 0.5, zc + cw * 0.5 + tl)
-		var near2 := near1
-		var far2 := far1
 		var walls2 := {"zn": {}, "zp": null}
-		walls2[far2] = {}
-		walls2[near2] = {"c": zc, "w": cw, "y0": y, "y1": y + cc, "frame": false}
-		_room_box(c2, y, cc, walls2, C_WOOD_FLOOR.darkened(0.05))
-		var c2_center := Vector3((c2x0 + c2x1) * 0.5, y, (c2.z0 + c2.z1) * 0.5)
+		walls2[far1] = {}
+		walls2[near1] = {"c": zc, "w": cw, "y0": y, "y1": y + cc, "frame": false}
+		_room_box(c2, y, cc, walls2, C_WOOD_LIGHT, MW)
+		var c2_center := Vector3((c2x0 + c2x1) * 0.5, y, (float(c2.z0) + float(c2.z1)) * 0.5)
 		anchors["corridor2"] = {"pos": c2_center, "along": Vector3.BACK, "side": Vector3.RIGHT, "width": cw, "length": tl, "ceil": y + cc}
-		_add_light(c2_center + Vector3(0, cc - 0.3, 0), 0.8, 5.0)
+		_add_light(c2_center + Vector3(0, cc - 0.3, 0), 0.9, 5.0)
 		# Oda: koridor 2'nin ucunda
 		var xm := (c2x0 + c2x1) * 0.5
 		var rx0 := xm - rw * 0.5
@@ -572,37 +814,241 @@ func _build_apartment() -> void:
 			var d2 := limit - rx0
 			rx0 += d2
 			rx1 += d2
-		room = _rect(rx0, rx1, c2.z1, c2.z1 + rd)
+		room = _rect(rx0, rx1, float(c2.z1), float(c2.z1) + rd)
 		door_side = "zn"
-		_room_box(room, y, room_h, {"xn": {}, "xp": {}, "zp": {}, "zn": {"c": xm, "w": rdw, "y0": y, "y1": y + rdh}}, C_WOOD_FLOOR)
+		far_side = "zp"
+		_room_box(room, y, room_h, {"xn": {}, "xp": {}, "zp": {}, "zn": {"c": xm, "w": rdw, "y0": y, "y1": y + rdh}}, _style_floor(style), _style_floor_mat(style), _style_wall(style), _style_wall_mat(style))
 
-	# Oda içi
-	var rc := Vector3((room.x0 + room.x1) * 0.5, y, (room.z0 + room.z1) * 0.5)
-	anchors["room"] = {"pos": rc, "along": Vector3.RIGHT, "side": Vector3.BACK, "width": room.z1 - room.z0, "length": room.x1 - room.x0, "ceil": y + room_h}
-	_add_light(rc + Vector3(0, room_h - 0.4, 0), 1.3, 7.0)
-	# Halı (görsel)
-	batch.add_box(rc + Vector3(0, 0.006, 0), Vector3((room.x1 - room.x0) * 0.6, 0.012, (room.z1 - room.z0) * 0.6), Color("c95f4a"))
-	# Pencere (uzak duvar)
-	var far_wall_side := far1 if turn == "none" else "zp"
-	match far_wall_side:
+	var rx0f := float(room.x0)
+	var rx1f := float(room.x1)
+	var rz0f := float(room.z0)
+	var rz1f := float(room.z1)
+	var rc := Vector3((rx0f + rx1f) * 0.5, y, (rz0f + rz1f) * 0.5)
+	anchors["room"] = {"pos": rc, "along": Vector3.RIGHT, "side": Vector3.BACK, "width": rz1f - rz0f, "length": rx1f - rx0f, "ceil": y + room_h}
+	_add_light(rc + Vector3(0, room_h - 0.4, 0), 1.4, 7.0)
+	glow.add_sphere(rc + Vector3(0, room_h - 0.12, 0), 0.16, Color("fff1c8"))
+
+	# Uzak duvar: içe bakan normal ve duvar üstündeki merkez nokta
+	var inward := Vector3.ZERO
+	var far_center := rc
+	var along_wall := Vector3.ZERO
+	var half_span := 0.0
+	match far_side:
 		"xn":
-			glass.add_box(Vector3(room.x0 + 0.015, y + 1.5, rc.z), Vector3(0.02, 1.0, 1.4), Color("bfe3f5"))
+			inward = Vector3.RIGHT
+			far_center = Vector3(rx0f, y, rc.z)
+			along_wall = Vector3.BACK
+			half_span = (rz1f - rz0f) * 0.5
 		"xp":
-			glass.add_box(Vector3(room.x1 - 0.015, y + 1.5, rc.z), Vector3(0.02, 1.0, 1.4), Color("bfe3f5"))
-		"zp":
-			glass.add_box(Vector3(rc.x, y + 1.5, room.z1 - 0.015), Vector3(1.4, 1.0, 0.02), Color("bfe3f5"))
-	# Hedef bölge: oda iç alanı (kenarlardan pay bırakılır)
-	var margin := 0.45
-	var gmin := Vector3(room.x0 + margin, y, room.z0 + margin)
-	var gmax := Vector3(room.x1 - margin, y + 2.2, room.z1 - margin)
-	info.goal_aabb = AABB(gmin, gmax - gmin)
-	info.goal_center = (gmin + gmax) * 0.5
-	info.goal_center.y = y
+			inward = Vector3.LEFT
+			far_center = Vector3(rx1f, y, rc.z)
+			along_wall = Vector3.BACK
+			half_span = (rz1f - rz0f) * 0.5
+		_:
+			inward = Vector3.FORWARD
+			far_center = Vector3(rc.x, y, rz1f)
+			along_wall = Vector3.RIGHT
+			half_span = (rx1f - rx0f) * 0.5
+
+	# Pencere ve perdeler: normalde uzak duvarda; yerleştirme yuvalı odada yan duvarda
+	var room_depth := (rx1f - rx0f) if absf(inward.x) > 0.5 else (rz1f - rz0f)
+	var win_n := inward
+	var win_c := far_center + along_wall * (half_span * 0.55) + inward * 0.012 + Vector3.UP * 1.5
+	if goal == "spot":
+		win_n = -along_wall
+		win_c = far_center + inward * (room_depth * 0.5) + along_wall * (half_span - 0.012) + Vector3.UP * 1.5
+	var win_along := win_n.cross(Vector3.UP).normalized()
+	var win_size := Vector3(0.02, 1.0, 1.1) if absf(win_n.x) > 0.5 else Vector3(1.1, 1.0, 0.02)
+	batch.add_box(win_c, win_size, C_GLASS, MG)
+	batch.add_box(win_c + win_n * 0.03 + Vector3.UP * -0.52, Vector3(0.14, 0.05, 1.25) if absf(win_n.x) > 0.5 else Vector3(1.25, 0.05, 0.14), T.trim, MPA)
+	for sgn in [-1.0, 1.0]:
+		var cp := win_c + win_along * (0.68 * sgn) + win_n * 0.05 + Vector3.UP * (-0.15)
+		var cs := Vector3(0.06, 1.5, 0.3) if absf(win_n.x) > 0.5 else Vector3(0.3, 1.5, 0.06)
+		batch.add_box(cp, cs, T.awning, MF)
+	_furnish(style, room, y, room_h, inward, far_center, along_wall, half_span, door_side, goal)
+
+	# ---------------- Hedef bölge ve ev sahibi
+	info.style = style
+	info.goal_type = goal
 	info.apt_door_pos = Vector3(sx * X_out, y, zc)
 	info.corridor_end = Vector3((xw + x_end) * 0.5, y, zc) if turn == "none" else Vector3(anchors["corridor2"].pos)
 	info.room_door_pos = _door_world(room, door_side, y)
-	info.apt_aabb = AABB(Vector3(minf(room.x0, minf(xw, x_end)), y, minf(room.z0, zc - cw)), Vector3.ZERO).expand(Vector3(maxf(room.x1, maxf(xw, x_end)), y + room_h, maxf(room.z1, zc + cw)))
+	var isize: Vector3 = item.size
+	if goal == "door":
+		# Daire kapısının önündeki sahanlık
+		var xa := sx * X_out
+		var xb := sx * (X_out - minf(1.5, X_out * 2.0 - 0.2))
+		var zmin := maxf(0.05, zc - door_w * 0.5 - 0.4)
+		var zmax := minf(z0 - 0.05, zc + door_w * 0.5 + 0.4)
+		var gmin := Vector3(minf(xa, xb), y, zmin)
+		var gmax := Vector3(maxf(xa, xb), y + 2.2, zmax)
+		info.goal_aabb = AABB(gmin, gmax - gmin)
+		info.goal_center = Vector3((gmin.x + gmax.x) * 0.5, y, (gmin.z + gmax.z) * 0.5)
+		info.npc_pos = Vector3(xw + sx * 0.55, y, zc)
+		info.npc_yaw = atan2(sx, 0.0)   # merdivene (−sx yönüne) bakar
+	elif goal == "spot":
+		var spot := far_center + inward * (isize.z * 0.5 + 0.06)
+		var gsize := Vector3(isize.x + 0.24, 0.0, isize.z + 0.3)
+		var gmin: Vector3
+		var gmax: Vector3
+		if absf(inward.x) > 0.5:
+			gmin = Vector3(spot.x - gsize.z * 0.5, y, spot.z - gsize.x * 0.5)
+			gmax = Vector3(spot.x + gsize.z * 0.5, y + 2.4, spot.z + gsize.x * 0.5)
+		else:
+			gmin = Vector3(spot.x - gsize.x * 0.5, y, spot.z - gsize.z * 0.5)
+			gmax = Vector3(spot.x + gsize.x * 0.5, y + 2.4, spot.z + gsize.z * 0.5)
+		info.goal_aabb = AABB(gmin, gmax - gmin)
+		info.goal_center = Vector3(spot.x, y, spot.z)
+		info.goal_facing = inward
+		# Hayalet görüntü: eşyanın ön yüzü (-Z) odaya bakar
+		info.spot_basis = Basis.looking_at(inward, Vector3.UP)
+		info.spot_size = isize
+		_spot_niche(far_center, inward, along_wall, isize, y, style)
+		var npc := far_center + along_wall * (isize.x * 0.5 + 0.95) + inward * 1.1
+		info.npc_pos = npc
+		info.npc_yaw = atan2(-inward.x, -inward.z)   # odanın içine bakar
+	else:
+		var margin := 0.6
+		var gmin := Vector3(rx0f + margin, y, rz0f + margin)
+		var gmax := Vector3(rx1f - margin, y + 2.2, rz1f - margin)
+		info.goal_aabb = AABB(gmin, gmax - gmin)
+		info.goal_center = (gmin + gmax) * 0.5
+		info.goal_center.y = y
+		var npc2 := far_center + inward * 0.8 - along_wall * (half_span - 0.7)
+		info.npc_pos = npc2
+		info.npc_yaw = atan2(-inward.x, -inward.z)
+	info.apt_aabb = AABB(Vector3(minf(rx0f, minf(xw, x_end)), y, minf(rz0f, zc - cw)), Vector3.ZERO).expand(Vector3(maxf(rx1f, maxf(xw, x_end)), y + room_h, maxf(rz1f, zc + cw)))
 	apt = {"room": room, "y": y}
+
+
+func _room_style(item_id: String) -> String:
+	match item_id:
+		"camasir":
+			return "laundry"
+		"buzdolabi":
+			return "kitchen"
+		"gardirop":
+			return "bedroom"
+	return "living"
+
+
+func _style_floor(style: String) -> Color:
+	match style:
+		"laundry":
+			return Color("dfe7ea")
+		"kitchen":
+			return Color("e8e2d4")
+	return C_WOOD_LIGHT
+
+
+func _style_floor_mat(style: String) -> int:
+	return MT if style in ["laundry", "kitchen"] else MW
+
+
+func _style_wall(style: String) -> Color:
+	match style:
+		"laundry":
+			return Color("cfe8ef")
+		"kitchen":
+			return Color("fbf1dd")
+		"bedroom":
+			return Color("e9def3")
+	return T.wallpaper
+
+
+func _style_wall_mat(style: String) -> int:
+	return MT if style == "laundry" else MWP
+
+
+## Yerleştirme yuvası: eşyanın iki yanında dolap/tezgâh, ortası boş.
+func _spot_niche(far_center: Vector3, inward: Vector3, along: Vector3, isize: Vector3, y: float, style: String) -> void:
+	var gap_half := isize.x * 0.5 + 0.12
+	var depth := maxf(0.55, isize.z + 0.05)
+	var h := 0.9
+	var col := Color("f7f7f2")
+	var top_col := Color("4a4e57")
+	match style:
+		"bedroom":
+			col = Color("a8774f")
+			top_col = Color("8a5a32")
+			h = 0.75
+		"laundry":
+			col = Color("ffffff")
+			top_col = Color("9ab0bd")
+		"kitchen":
+			col = Color("3d7c98")
+			top_col = Color("dcd6cc")
+	for sgn in [-1.0, 1.0]:
+		var c := far_center + inward * (depth * 0.5) + along * (sgn * (gap_half + 0.3)) + Vector3.UP * (h * 0.5)
+		var size := Vector3(depth, h, 0.6) if absf(inward.x) > 0.5 else Vector3(0.6, h, depth)
+		solid(c, size, col, true, MPA)
+		var top_size := Vector3(depth + 0.03, 0.04, 0.62) if absf(inward.x) > 0.5 else Vector3(0.62, 0.04, depth + 0.03)
+		batch.add_box(c + Vector3.UP * (h * 0.5 + 0.02), top_size, top_col, MM)
+		# Kapak tutamağı
+		batch.add_box(c + inward * (depth * 0.5 + 0.01) + Vector3.UP * (h * 0.25), Vector3(0.02, 0.02, 0.14) if absf(inward.x) > 0.5 else Vector3(0.14, 0.02, 0.02), C_BRASS, MMET)
+		# Üst dolap (mutfak/çamaşır)
+		if style in ["kitchen", "laundry"]:
+			var uc := far_center + inward * 0.18 + along * (sgn * (gap_half + 0.3)) + Vector3.UP * 1.75
+			var us := Vector3(0.36, 0.6, 0.6) if absf(inward.x) > 0.5 else Vector3(0.6, 0.6, 0.36)
+			batch.add_box(uc, us, col, MPA)
+	# Yuva zemininde işaret çizgileri
+	var mark := far_center + inward * (isize.z * 0.5 + 0.06) + Vector3.UP * 0.008
+	var ms := Vector3(isize.z + 0.1, 0.004, isize.x + 0.1) if absf(inward.x) > 0.5 else Vector3(isize.x + 0.1, 0.004, isize.z + 0.1)
+	batch.add_box(mark, ms, Color("ffd23f"), MPA)
+	batch.add_box(mark + Vector3.UP * 0.002, ms - Vector3(0.06, 0, 0.06), _style_floor(style), _style_floor_mat(style))
+	# Duvarda boru ve priz (çamaşır makinesi/buzdolabı için)
+	if style in ["kitchen", "laundry"]:
+		batch.add_box(far_center + inward * 0.012 + Vector3.UP * 0.45, Vector3(0.02, 0.1, 0.07) if absf(inward.x) > 0.5 else Vector3(0.07, 0.1, 0.02), Color("ffffff"), MPA)
+		batch.add_cylinder_between(far_center + inward * 0.03 + along * 0.15 + Vector3.UP * 0.2, far_center + inward * 0.03 + along * 0.15 + Vector3.UP * 0.9, 0.02, Color("c0c4c8"), MMET)
+
+
+## Odayı stile göre döşer (eşyalar duvar kenarlarında, ortası boş kalır).
+func _furnish(style: String, room: Dictionary, y: float, room_h: float, inward: Vector3, far_center: Vector3, along: Vector3, half_span: float, door_side: String, goal: String) -> void:
+	var rx0 := float(room.x0)
+	var rx1 := float(room.x1)
+	var rz0 := float(room.z0)
+	var rz1 := float(room.z1)
+	var rc := Vector3((rx0 + rx1) * 0.5, y, (rz0 + rz1) * 0.5)
+	# Halı
+	var rug_col: Color = T.carpet if style == "living" else Color("e8c07d")
+	if style != "laundry":
+		batch.add_box(rc + Vector3(0, 0.006, 0), Vector3((rx1 - rx0) * 0.5, 0.012, (rz1 - rz0) * 0.5), rug_col, MC)
+	# Yan duvar boyunca kitaplık (uzak duvara yakın köşede)
+	var shelf_c := far_center + inward * 0.75 - along * (half_span - 0.2)
+	var shelf_size := Vector3(0.9, 1.6, 0.34) if absf(inward.x) > 0.5 else Vector3(0.34, 1.6, 0.9)
+	if style == "living" or style == "bedroom":
+		solid(shelf_c + Vector3.UP * 0.8, shelf_size, Color("8a5a32"), true, MW)
+		for sh in 4:
+			for bk in 5:
+				var bp := shelf_c + Vector3.UP * (0.25 + sh * 0.38) + inward * ((bk - 2) * 0.15) + along * 0.1
+				batch.add_box(bp, Vector3(0.08, 0.26, 0.2) if absf(inward.x) > 0.5 else Vector3(0.2, 0.26, 0.08), FLOWER_COLORS[(sh * 5 + bk) % FLOWER_COLORS.size()].darkened(0.15), MPA)
+	# Köşede saksı bitkisi
+	var plant_p := far_center + inward * 0.45 + along * (half_span - 0.45)
+	props.add_cylinder(plant_p + Vector3.UP * 0.22, 0.2, 0.44, C_POT)
+	props.add_sphere(plant_p + Vector3.UP * 0.75, 0.34, C_LEAVES)
+	props.add_sphere(plant_p + Vector3(0.1, 1.0, 0.05), 0.22, C_LEAVES.lightened(0.1))
+	_shape_cyl(plant_p + Vector3.UP * 0.55, 0.24, 1.1)
+	if goal != "spot":
+		# Yuvasız odalarda uzak duvar önüne alçak dolap (TV ünitesi vb.)
+		var unit_c := far_center + inward * 0.22 + Vector3.UP * 0.25
+		var unit_s := Vector3(0.4, 0.5, 1.4) if absf(inward.x) > 0.5 else Vector3(1.4, 0.5, 0.4)
+		solid(unit_c, unit_s, Color("5b3a29"), true, MW)
+		batch.add_sphere(unit_c + Vector3.UP * 0.35, 0.12, FLOWER_COLORS[0], MPA)
+	if style == "laundry":
+		# Çamaşır sepeti ve deterjan rafı
+		var basket := far_center + inward * 0.9 - along * (half_span - 0.35)
+		props.add_cylinder(basket + Vector3.UP * 0.25, 0.24, 0.5, Color("e9c46a"))
+		_shape_cyl(basket + Vector3.UP * 0.25, 0.26, 0.5)
+		for i in 4:
+			batch.add_box(far_center + inward * 0.12 - along * (half_span - 0.6 - i * 0.16) + Vector3.UP * 1.62, Vector3(0.12, 0.22, 0.12), FLOWER_COLORS[i], MPA)
+	if style == "kitchen":
+		batch.add_box(far_center + inward * 0.12 - along * (half_span - 0.6) + Vector3.UP * 1.5, Vector3(0.18, 0.18, 0.18) if absf(inward.x) > 0.5 else Vector3(0.18, 0.18, 0.18), Color("ffffff"), MPA)
+	if style == "bedroom":
+		# Yatak (yan duvara yaslı)
+		var bed_c := rc - inward * (absf(rz1 - rz0) * 0.0) + along * (half_span - 0.85) - inward * 0.6
+		var bed_s := Vector3(2.0, 0.45, 1.3) if absf(inward.x) > 0.5 else Vector3(1.3, 0.45, 2.0)
+		solid(bed_c + Vector3.UP * 0.225, bed_s, Color("f4f1ea"), true, MF)
+		batch.add_box(bed_c + Vector3.UP * 0.47, bed_s * Vector3(0.98, 0.1, 0.98), T.awning, MF)
 
 
 func _door_world(room: Dictionary, side: String, y: float) -> Vector3:
@@ -624,12 +1070,13 @@ func _rect(x0: float, x1: float, z0_: float, z1_: float) -> Dictionary:
 
 ## Dikdörtgen oda: zemin, tavan ve dört duvar (duvarlar dikdörtgenin dışına konur).
 ## walls[side]: null -> duvar yok, {} -> düz duvar, {"c","w","y0","y1"} -> boşluklu duvar
-func _room_box(rc: Dictionary, y: float, height: float, walls: Dictionary, floor_color: Color) -> void:
+func _room_box(rc: Dictionary, y: float, height: float, walls: Dictionary, floor_color: Color, floor_mat: int = MW, wall_color: Color = Color.WHITE, wall_mat: int = MWP) -> void:
 	var x0 := float(rc.x0)
 	var x1 := float(rc.x1)
 	var zz0 := float(rc.z0)
 	var zz1 := float(rc.z1)
-	box_mm(Vector3(x0 - WT, y - SLAB, zz0 - WT), Vector3(x1 + WT, y, zz1 + WT), floor_color)
+	var wc: Color = T.wallpaper if wall_color == Color.WHITE else wall_color
+	box_mm(Vector3(x0 - WT, y - SLAB, zz0 - WT), Vector3(x1 + WT, y, zz1 + WT), floor_color, true, floor_mat)
 	ceiling_mm(Vector3(x0 - WT, y + height, zz0 - WT), Vector3(x1 + WT, y + height + 0.15, zz1 + WT))
 	var yb := y - SLAB
 	var yt := y + height + 0.15
@@ -645,9 +1092,10 @@ func _room_box(rc: Dictionary, y: float, height: float, walls: Dictionary, floor
 		var w = walls[side]
 		if w == null:
 			continue
-		wall(defs[side][0], defs[side][1], C_APT_WALL, w)
-	# Süpürgelik
-	batch.add_box(Vector3((x0 + x1) * 0.5, y + 0.04, zz0 + 0.01), Vector3(x1 - x0, 0.08, 0.02), C_TRIM)
+		wall(defs[side][0], defs[side][1], wc, w, wall_mat)
+	# Süpürgelikler
+	batch.add_box(Vector3((x0 + x1) * 0.5, y + 0.05, zz0 + 0.012), Vector3(x1 - x0, 0.1, 0.024), T.trim, MPA)
+	batch.add_box(Vector3((x0 + x1) * 0.5, y + 0.05, zz1 - 0.012), Vector3(x1 - x0, 0.1, 0.024), T.trim, MPA)
 
 
 # ================================================================ dış bina kabuğu
@@ -659,33 +1107,85 @@ func _build_block() -> void:
 	var yt := top_y
 	var sx0 := -X_out - WT
 	var sx1 := X_out + WT
-	# Ön cephe (merdiven boşluğu dışında kalan kısımlar)
-	box_mm(Vector3(-bx, -SLAB, -WT), Vector3(sx0, yt, 0.0), C_FACADE)
-	box_mm(Vector3(sx1, -SLAB, -WT), Vector3(bx, yt, 0.0), C_FACADE)
+	var fac: Color = T.facade
+	var trim: Color = T.trim
+	# Ön cephe (merdiven boşluğu dışında kalan kısımlar) — tuğla
+	box_mm(Vector3(-bx, -SLAB, -WT), Vector3(sx0, yt, 0.0), fac, true, MBR)
+	box_mm(Vector3(sx1, -SLAB, -WT), Vector3(bx, yt, 0.0), fac, true, MBR)
+	# Merdiven boşluğu önü (giriş üstü) tuğla kaplama (yalnızca görsel, giriş açık kalır)
+	var eh := float(L.entrance.y)
+	var ew := float(L.entrance.x)
+	batch.add_box(Vector3(0, (eh + 0.4 + yt) * 0.5, -WT - 0.01), Vector3(sx1 * 2.0, yt - eh - 0.4, 0.02), fac.darkened(0.05), MBR)
+	for sgn in [-1.0, 1.0]:
+		var px := sgn * (ew * 0.5 + (sx1 - ew * 0.5) * 0.5)
+		batch.add_box(Vector3(px, eh * 0.5, -WT - 0.01), Vector3(maxf(0.05, sx1 - ew * 0.5), eh, 0.02), fac.darkened(0.05), MBR)
 	# Yan ve arka cephe, çatı
-	box_mm(Vector3(-bx - WT, -SLAB, -WT), Vector3(-bx, yt, bz), C_FACADE)
-	box_mm(Vector3(bx, -SLAB, -WT), Vector3(bx + WT, yt, bz), C_FACADE)
-	box_mm(Vector3(-bx - WT, -SLAB, bz), Vector3(bx + WT, yt, bz + WT), C_FACADE)
-	box_mm(Vector3(-bx - WT, yt, -WT - 0.3), Vector3(bx + WT, yt + 0.25, bz + WT), C_FACADE_2)
-	# Kat bantları ve pencereler (ön cephe)
+	box_mm(Vector3(-bx - WT, -SLAB, -WT), Vector3(-bx, yt, bz), fac, true, MBR)
+	box_mm(Vector3(bx, -SLAB, -WT), Vector3(bx + WT, yt, bz), fac, true, MBR)
+	box_mm(Vector3(-bx - WT, -SLAB, bz), Vector3(bx + WT, yt, bz + WT), fac, true, MBR)
+	box_mm(Vector3(-bx - WT - 0.2, yt, -WT - 0.35), Vector3(bx + WT + 0.2, yt + 0.3, bz + WT + 0.2), trim, true, MPA)
+	box_mm(Vector3(-bx - WT, yt + 0.3, -WT - 0.2), Vector3(bx + WT, yt + 0.75, -WT), fac.darkened(0.1), false, MBR)
+	# Kat bantları, pencereler, balkonlar, çiçeklikler
 	for k in range(0, F + 1):
 		var y := k * H
-		batch.add_box(Vector3(0, y + 0.02, -WT - 0.06), Vector3(bx * 2.0 + WT * 2.0, 0.14, 0.12), C_FACADE_2)
+		batch.add_box(Vector3(0, y + 0.02, -WT - 0.06), Vector3(bx * 2.0 + WT * 2.0, 0.16, 0.12), trim, MPA)
 		var wx := -bx + 1.6
+		var wi := 0
 		while wx < bx - 1.0:
 			if absf(wx) > X_out + WT + 0.9:
-				var wy := y + 1.0 if k > 0 else y + 0.9
-				var wh := 1.3 if k > 0 else 1.6
-				glass.add_box(Vector3(wx, wy + wh * 0.5, -WT - 0.015), Vector3(1.1, wh, 0.03), Color("a9cfe6"))
-				batch.add_box(Vector3(wx, wy - 0.05, -WT - 0.08), Vector3(1.3, 0.08, 0.16), C_TRIM)
+				if k == 0:
+					_shop_window(Vector3(wx, y, -WT), wi)
+				else:
+					_window(Vector3(wx, y + 1.0, -WT), (wi + k) % 3 == 0)
 			wx += 2.4
-	# Giriş saçağı ve yazı
-	box_mm(Vector3(-1.4, float(L.entrance.y) + 0.35, -1.3), Vector3(1.4, float(L.entrance.y) + 0.45, -WT), C_FACADE_2)
-	_label("APARTMAN NO: %d" % (10 + int(L.id)), Vector3(0, float(L.entrance.y) + 0.75, -WT - 0.03), PI, 52, Color("3a2a1c"))
-	glow.add_box(Vector3(0, float(L.entrance.y) + 0.3, -0.5), Vector3(0.3, 0.06, 0.3), Color("fff2c0"))
-	# Giriş paspası
-	batch.add_box(Vector3(0, 0.005, -0.6), Vector3(1.0, 0.01, 0.6), Color("5a4636"))
+			wi += 1
+	# Giriş: sütunlar, saçak, lamba, numara, basamak paspası
+	for sgn in [-1.0, 1.0]:
+		batch.add_box(Vector3(sgn * (ew * 0.5 + 0.18), eh * 0.5, -WT - 0.1), Vector3(0.22, eh, 0.2), trim, MPA)
+	box_mm(Vector3(-ew * 0.5 - 0.5, eh + 0.35, -1.4), Vector3(ew * 0.5 + 0.5, eh + 0.47, -WT), T.awning, true, MPA)
+	batch.add_box(Vector3(0, eh + 0.3, -1.38), Vector3(ew + 1.0, 0.12, 0.04), T.awning.darkened(0.15), MPA)
+	_label("No. %d" % (10 + int(L.id)), Vector3(0, eh + 0.15, -WT - 0.03), PI, 52, Color("ffffff"))
+	_label("SUNNY APARTMENTS", Vector3(0, eh + 0.8, -WT - 0.025), PI, 72, trim)
+	glow.add_sphere(Vector3(-ew * 0.5 - 0.35, eh - 0.1, -WT - 0.15), 0.09, Color("fff2c0"))
+	glow.add_sphere(Vector3(ew * 0.5 + 0.35, eh - 0.1, -WT - 0.15), 0.09, Color("fff2c0"))
+	batch.add_box(Vector3(0, 0.006, -0.6), Vector3(1.2, 0.012, 0.6), Color("5a4636"), MC)
 	info.block_aabb = AABB(Vector3(-bx, 0, 0), Vector3(bx * 2.0, yt, bz))
+
+
+func _window(p: Vector3, balcony: bool) -> void:
+	var trim: Color = T.trim
+	batch.add_box(p + Vector3(0, 0.65, -0.015), Vector3(1.05, 1.3, 0.03), C_GLASS, MG)
+	batch.add_box(p + Vector3(0, 0.65, -0.03), Vector3(1.2, 1.45, 0.02), trim, MPA)
+	batch.add_box(p + Vector3(0, 0.65, -0.045), Vector3(0.05, 1.3, 0.02), trim, MPA)
+	batch.add_box(p + Vector3(0, 0.85, -0.045), Vector3(1.05, 0.05, 0.02), trim, MPA)
+	# Panjurlar
+	for sgn in [-1.0, 1.0]:
+		batch.add_box(p + Vector3(sgn * 0.78, 0.65, -0.05), Vector3(0.32, 1.35, 0.04), T.awning, MW)
+	batch.add_box(p + Vector3(0, -0.05, -0.1), Vector3(1.35, 0.08, 0.2), trim, MPA)
+	if balcony:
+		# Balkon: döşeme + demir korkuluk + saksılar
+		batch.add_box(p + Vector3(0, -0.12, -0.55), Vector3(1.9, 0.12, 0.9), trim, MPA)
+		for i in 9:
+			var bx := -0.9 + i * 0.225
+			batch.add_cylinder(p + Vector3(bx, 0.35, -0.98), 0.012, 0.85, C_IRON, Basis(), MMET)
+		batch.add_box(p + Vector3(0, 0.78, -0.98), Vector3(1.9, 0.05, 0.05), C_IRON, MMET)
+		_flower_cluster(p + Vector3(0, 0.05, -0.75), 1.4, 7)
+	else:
+		# Pencere önü çiçekliği
+		batch.add_box(p + Vector3(0, 0.05, -0.2), Vector3(1.0, 0.16, 0.18), C_POT, MPA)
+		_flower_cluster(p + Vector3(0, 0.18, -0.2), 0.9, 6)
+
+
+func _shop_window(p: Vector3, idx: int) -> void:
+	var colors := [Color("e63946"), Color("2a9d8f"), Color("f4a261"), Color("457b9d")]
+	var col: Color = colors[idx % colors.size()]
+	batch.add_box(p + Vector3(0, 1.15, -0.015), Vector3(1.9, 1.7, 0.03), C_GLASS, MG)
+	batch.add_box(p + Vector3(0, 1.15, -0.03), Vector3(2.05, 1.85, 0.02), Color("2b2d42"), MPA)
+	batch.add_box(p + Vector3(0, 0.2, -0.05), Vector3(2.05, 0.4, 0.06), col.darkened(0.2), MPA)
+	# Çizgili tente
+	for i in 6:
+		var c: Color = col if i % 2 == 0 else Color("ffffff")
+		batch.add_box_xform(Transform3D(Basis(Vector3.RIGHT, -0.45), p + Vector3(-0.85 + i * 0.34, 2.25, -0.45)), Vector3(0.34, 0.03, 0.95), c, MF)
 
 
 # ================================================================ yol noktaları
@@ -701,10 +1201,13 @@ func _build_waypoints() -> void:
 		w.append(Vector3(xB, (k + 1) * H, z0 - 0.5))
 		if k + 1 < F:
 			w.append(Vector3(xA, (k + 1) * H, z0 - 0.4))
-	w.append(Vector3(info.apt_door_pos) + Vector3(float(info.apt_side) * 0.4, 0, 0))
-	w.append(info.corridor_end)
-	w.append(info.room_door_pos)
-	w.append(info.goal_center)
+	if str(info.goal_type) == "door":
+		w.append(info.goal_center)
+	else:
+		w.append(Vector3(info.apt_door_pos) + Vector3(float(info.apt_side) * 0.4, 0, 0))
+		w.append(info.corridor_end)
+		w.append(info.room_door_pos)
+		w.append(info.goal_center)
 	info.waypoints = w
 
 
@@ -735,7 +1238,7 @@ func _place_obstacles() -> void:
 			"door":
 				_obs_door(a, side)
 			"cat":
-				_obs_cat(a, str(o.at))
+				_obs_cat(a)
 
 
 ## Engelin konacağı köşe/kenar noktası.
@@ -759,8 +1262,9 @@ func _obs_lamp(a: Dictionary) -> void:
 		glow.add_box(Vector3(p.x, ceil_y - 0.02, p.z), Vector3(0.4, 0.03, 0.4), Color("fff2c0"))
 		return
 	var shade_c := Vector3(p.x, shade_bottom + 0.11, p.z)
-	props.add_cylinder(Vector3(p.x, (shade_c.y + ceil_y) * 0.5, p.z), 0.012, ceil_y - shade_c.y, C_RAIL)
-	props.add_cylinder(shade_c, 0.24, 0.22, Color("e0a040"))
+	props.add_cylinder(Vector3(p.x, (shade_c.y + ceil_y) * 0.5, p.z), 0.012, ceil_y - shade_c.y, C_IRON)
+	props.add_cylinder(shade_c, 0.24, 0.22, Color("f4a261"))
+	props.add_cylinder(shade_c + Vector3(0, -0.1, 0), 0.25, 0.02, Color("e76f51"))
 	glow.add_sphere(shade_c + Vector3(0, -0.08, 0), 0.07, Color("fff6d0"))
 	_shape_box(Transform3D(Basis(), shade_c), Vector3(0.46, 0.22, 0.46))
 
@@ -771,11 +1275,10 @@ func _obs_shoe_rack(a: Dictionary, side: int, at: String) -> void:
 	var along: Vector3 = a.along
 	var length := 0.9
 	var size := Vector3(length, 0.85, depth) if absf(along.x) > 0.5 else Vector3(depth, 0.85, length)
-	prop_box(p + Vector3.UP * 0.425, size, Color("7b5b3f"))
-	# Ayakkabılar (görsel)
+	prop_box(p + Vector3.UP * 0.425, size, Color("9c6b40"))
 	for i in 3:
 		var off := along * (-0.3 + i * 0.3)
-		props.add_box(p + off + Vector3.UP * 0.9, Vector3(0.12, 0.08, 0.26) if absf(along.x) > 0.5 else Vector3(0.26, 0.08, 0.12), [Color("2b2b2b"), Color("b33a3a"), Color("e5e5e5")][i])
+		props.add_box(p + off + Vector3.UP * 0.9, Vector3(0.12, 0.08, 0.26) if absf(along.x) > 0.5 else Vector3(0.26, 0.08, 0.12), [Color("2b2b2b"), Color("e63946"), Color("f1faee")][i])
 
 
 func _obs_plant(a: Dictionary, side: int, at: String) -> void:
@@ -783,14 +1286,16 @@ func _obs_plant(a: Dictionary, side: int, at: String) -> void:
 	props.add_cylinder(p + Vector3.UP * 0.22, 0.22, 0.44, C_POT)
 	props.add_sphere(p + Vector3.UP * 0.8, 0.38, C_LEAVES)
 	props.add_sphere(p + Vector3(0.12, 1.05, 0.05), 0.24, C_LEAVES.lightened(0.1))
+	props.add_sphere(p + Vector3(-0.1, 1.0, -0.08), 0.06, FLOWER_COLORS[0])
 	_shape_cyl(p + Vector3.UP * 0.6, 0.26, 1.2)
 
 
 func _obs_boxes(a: Dictionary, side: int, at: String) -> void:
 	var p := _edge_spot(a, side, at, 0.55)
-	prop_box(p + Vector3.UP * 0.25, Vector3(0.6, 0.5, 0.5), Color("b08259"))
-	prop_box(p + Vector3(0.03, 0.72, 0.02), Vector3(0.5, 0.44, 0.44), Color("a3774f"))
-	props.add_box(p + Vector3(0.03, 0.945, 0.02), Vector3(0.08, 0.005, 0.45), Color("d9c38c"))
+	prop_box(p + Vector3.UP * 0.25, Vector3(0.6, 0.5, 0.5), Color("c48a55"))
+	prop_box(p + Vector3(0.03, 0.72, 0.02), Vector3(0.5, 0.44, 0.44), Color("b97d4f"))
+	props.add_box(p + Vector3(0.03, 0.945, 0.02), Vector3(0.08, 0.005, 0.45), Color("e8d9a8"))
+	props.add_box(p + Vector3(0, 0.3, -0.252), Vector3(0.25, 0.12, 0.004), Color("e63946"))
 
 
 func _obs_door(a: Dictionary, side: int) -> void:
@@ -805,7 +1310,7 @@ func _obs_door(a: Dictionary, side: int) -> void:
 	info.obstacles.append(door)
 
 
-func _obs_cat(a: Dictionary, at: String) -> void:
+func _obs_cat(a: Dictionary) -> void:
 	var cat := Cat.new()
 	var pts: Array = []
 	if a.has("start"):
@@ -844,16 +1349,7 @@ func _ceiling_material() -> Material:
 func _props_material() -> Material:
 	var m := StandardMaterial3D.new()
 	m.vertex_color_use_as_albedo = true
-	m.roughness = 0.7
-	return m
-
-
-func _glass_material() -> Material:
-	# Cam da bina gölgelendiricisini kullanır: kesit görünümünde üst kat camları gizlenir.
-	var m := ShaderMaterial.new()
-	m.shader = load("res://shaders/building.gdshader")
-	m.set_shader_parameter("roughness_value", 0.12)
-	m.set_shader_parameter("grain_amount", 0.0)
+	m.roughness = 0.65
 	return m
 
 
@@ -862,4 +1358,12 @@ func _glow_material() -> Material:
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.vertex_color_use_as_albedo = true
 	m.albedo_color = Color(1.6, 1.5, 1.2)
+	return m
+
+
+func _cloud_material() -> Material:
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.vertex_color_use_as_albedo = true
+	m.albedo_color = Color(1.0, 1.0, 1.0)
 	return m

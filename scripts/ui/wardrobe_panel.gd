@@ -8,8 +8,8 @@ var _list: VBoxContainer
 
 
 func _ready() -> void:
-	build_frame("KIYAFETLER", Vector2(760, 0))
-	body.add_child(UITheme.label("Yıldızların: %d" % GameState.total_stars(), 24, UITheme.ACCENT, HORIZONTAL_ALIGNMENT_CENTER))
+	build_frame("OUTFITS", Vector2(760, 0))
+	body.add_child(UITheme.label("Your stars: %d" % GameState.total_stars(), 24, UITheme.ACCENT, HORIZONTAL_ALIGNMENT_CENTER))
 	var scroll := ScrollContainer.new()
 	scroll.custom_minimum_size = Vector2(700, 420)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -19,7 +19,7 @@ func _ready() -> void:
 	_list.add_theme_constant_override("separation", 10)
 	scroll.add_child(_list)
 	_refresh()
-	add_button("KAPAT", func():
+	add_button("CLOSE", func():
 		closed.emit()
 		queue_free())
 	pop_in()
@@ -37,9 +37,9 @@ func _refresh() -> void:
 		var vb := VBoxContainer.new()
 		vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		vb.add_child(UITheme.label(o.name, 26, UITheme.TEXT if unlocked else UITheme.MUTED))
-		vb.add_child(UITheme.label("Açık" if unlocked else "%d yıldız gerekli" % int(o.stars), 18, UITheme.GOOD if unlocked else UITheme.MUTED))
+		vb.add_child(UITheme.label("Unlocked" if unlocked else "Needs %d stars" % int(o.stars), 18, UITheme.GOOD if unlocked else UITheme.MUTED))
 		row.add_child(vb)
-		var b := UITheme.button("GİY" if GameState.outfit != o.id else "GİYİLİ", 160, 60)
+		var b := UITheme.button("WEAR" if GameState.outfit != o.id else "WEARING", 170, 60)
 		b.disabled = not unlocked or GameState.outfit == o.id
 		var oid: String = o.id
 		b.pressed.connect(func():
