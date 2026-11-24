@@ -908,13 +908,14 @@ func _build_apartment() -> void:
 		info.npc_pos = npc
 		info.npc_yaw = atan2(-inward.x, -inward.z)   # odanın içine bakar
 	else:
-		var margin := 0.6
+		var margin := 0.9
 		var gmin := Vector3(rx0f + margin, y, rz0f + margin)
 		var gmax := Vector3(rx1f - margin, y + 2.2, rz1f - margin)
 		info.goal_aabb = AABB(gmin, gmax - gmin)
 		info.goal_center = (gmin + gmax) * 0.5
 		info.goal_center.y = y
-		var npc2 := far_center + inward * 0.8 - along_wall * (half_span - 0.7)
+		# Ev sahibi uzak duvar önünde, kitaplık ile TV ünitesi arasında (teslim alanının dışında)
+		var npc2 := far_center + inward * 0.55 - along_wall * (half_span - 0.95)
 		info.npc_pos = npc2
 		info.npc_yaw = atan2(-inward.x, -inward.z)
 	info.apt_aabb = AABB(Vector3(minf(rx0f, minf(xw, x_end)), y, minf(rz0f, zc - cw)), Vector3.ZERO).expand(Vector3(maxf(rx1f, maxf(xw, x_end)), y + room_h, maxf(rz1f, zc + cw)))
