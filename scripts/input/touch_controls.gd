@@ -129,9 +129,9 @@ func _input(event: InputEvent) -> void:
 	if state == null or not is_visible_in_tree():
 		return
 	if event is InputEventScreenTouch:
-		_on_touch(event)
+		_on_touch(event as InputEventScreenTouch)
 	elif event is InputEventScreenDrag:
-		_on_drag(event)
+		_on_drag(event as InputEventScreenDrag)
 
 
 func _on_touch(e: InputEventScreenTouch) -> void:

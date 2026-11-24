@@ -245,19 +245,22 @@ func _handle_ui_actions() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if phase != Phase.PLAYING:
 		return
-	if event is InputEventMouseButton and event.pressed:
-		if event.button_index == MOUSE_BUTTON_WHEEL_UP:
+	var mb := event as InputEventMouseButton
+	if mb != null and mb.pressed:
+		if mb.button_index == MOUSE_BUTTON_WHEEL_UP:
 			input.cam_zoom += 0.08
-		elif event.button_index == MOUSE_BUTTON_WHEEL_DOWN:
+		elif mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:
 			input.cam_zoom -= 0.08
-	elif event is InputEventMouseMotion:
-		if event.button_mask & MOUSE_BUTTON_MASK_RIGHT:
+		return
+	var mm := event as InputEventMouseMotion
+	if mm != null:
+		if mm.button_mask & MOUSE_BUTTON_MASK_RIGHT:
 			if player.is_holding():
-				input.rotate_px += event.relative
+				input.rotate_px += mm.relative
 			else:
-				input.cam_orbit_px += event.relative
-		elif event.button_mask & MOUSE_BUTTON_MASK_MIDDLE:
-			input.cam_orbit_px += event.relative
+				input.cam_orbit_px += mm.relative
+		elif mm.button_mask & MOUSE_BUTTON_MASK_MIDDLE:
+			input.cam_orbit_px += mm.relative
 
 
 # ================================================================ yön oku ve kontrol noktaları

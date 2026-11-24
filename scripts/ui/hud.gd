@@ -94,7 +94,7 @@ func _ready() -> void:
 
 
 ## Kontrolü bir bağlantı noktasına (anchor) göre yerleştirir; r = bağlantıya göre ofset dikdörtgeni.
-static func place(c: Control, preset: int, r: Rect2) -> void:
+static func place(c: Control, preset: Control.LayoutPreset, r: Rect2) -> void:
 	c.set_anchors_preset(preset)
 	c.offset_left = r.position.x
 	c.offset_top = r.position.y
