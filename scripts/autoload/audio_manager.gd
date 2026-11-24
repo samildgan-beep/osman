@@ -90,30 +90,33 @@ func stop_music() -> void:
 # ---------------------------------------------------------------- Sentez
 
 func _build_sounds() -> void:
-	_streams["thud"] = _make(0.35, _thud)
-	_streams["bump"] = _make(0.18, _bump)
-	_streams["scrape"] = _make(0.25, _scrape)
-	_streams["crack"] = _make(0.45, _crack)
-	_streams["warn"] = _make(0.12, func(t): return _sine(t, 880.0) * _env(t, 0.005, 0.1) * 0.35)
-	_streams["click"] = _make(0.05, func(t): return _sine(t, 1400.0) * _env(t, 0.001, 0.045) * 0.4)
-	_streams["pickup"] = _make(0.22, func(t): return _sine(t, 300.0 + t * 900.0) * _env(t, 0.01, 0.2) * 0.45)
-	_streams["putdown"] = _make(0.25, func(t): return _sine(t, 500.0 - t * 800.0) * _env(t, 0.01, 0.22) * 0.45)
-	_streams["step"] = _make(0.07, func(t): return _noise() * _env(t, 0.002, 0.06) * 0.18)
-	_streams["meow"] = _make(0.6, _meow)
-	_streams["success"] = _make(1.2, _success)
-	_streams["fail"] = _make(1.0, _fail)
-	_streams["star"] = _make(0.4, func(t): return (_sine(t, 1320.0) + 0.5 * _sine(t, 1980.0)) * _env(t, 0.005, 0.38) * 0.3)
-	_streams["tired"] = _make(0.5, func(t): return _noise() * _env(t, 0.1, 0.35) * 0.25 * (0.6 + 0.4 * sin(t * 40.0)))
-	# Müzik uzun olduğu için açılışı geciktirmesin diye arka planda üretilir.
-	_music_task = WorkerThreadPool.add_task(_build_music_threaded, false, "music_synth")
+	# Sentez telefonda zaman alır: açılışı geciktirmesin diye arka plan iş parçacığında yapılır.
+	# Hazır olmayan ses sessizce atlanır.
+	_task = WorkerThreadPool.add_task(_build_all_threaded, false, "audio_synth")
 
 
-var _music_task := -1
+var _task := -1
 var _music_ready := false
 var _music_wanted := false
 
 
-func _build_music_threaded() -> void:
+func _build_all_threaded() -> void:
+	var sfx := {}
+	sfx["thud"] = _make(0.35, _thud)
+	sfx["bump"] = _make(0.18, _bump)
+	sfx["scrape"] = _make(0.25, _scrape)
+	sfx["crack"] = _make(0.45, _crack)
+	sfx["warn"] = _make(0.12, func(t): return _sine(t, 880.0) * _env(t, 0.005, 0.1) * 0.35)
+	sfx["click"] = _make(0.05, func(t): return _sine(t, 1400.0) * _env(t, 0.001, 0.045) * 0.4)
+	sfx["pickup"] = _make(0.22, func(t): return _sine(t, 300.0 + t * 900.0) * _env(t, 0.01, 0.2) * 0.45)
+	sfx["putdown"] = _make(0.25, func(t): return _sine(t, 500.0 - t * 800.0) * _env(t, 0.01, 0.22) * 0.45)
+	sfx["step"] = _make(0.07, func(t): return _noise() * _env(t, 0.002, 0.06) * 0.18)
+	sfx["meow"] = _make(0.6, _meow)
+	sfx["success"] = _make(1.2, _success)
+	sfx["fail"] = _make(1.0, _fail)
+	sfx["star"] = _make(0.4, func(t): return (_sine(t, 1320.0) + 0.5 * _sine(t, 1980.0)) * _env(t, 0.005, 0.38) * 0.3)
+	sfx["tired"] = _make(0.5, func(t): return _noise() * _env(t, 0.1, 0.35) * 0.25 * (0.6 + 0.4 * sin(t * 40.0)))
+	call_deferred("_on_sfx_built", sfx)
 	var music := _make(16.0, _music_fn)
 	music.loop_mode = AudioStreamWAV.LOOP_FORWARD
 	music.loop_begin = 0
@@ -121,20 +124,25 @@ func _build_music_threaded() -> void:
 	call_deferred("_on_music_built", music)
 
 
+func _on_sfx_built(sfx: Dictionary) -> void:
+	for k in sfx:
+		_streams[k] = sfx[k]
+
+
 func _on_music_built(music: AudioStreamWAV) -> void:
 	_streams["music"] = music
 	_music_ready = true
-	if _music_task != -1:
-		WorkerThreadPool.wait_for_task_completion(_music_task)
-		_music_task = -1
+	if _task != -1:
+		WorkerThreadPool.wait_for_task_completion(_task)
+		_task = -1
 	if _music_wanted:
 		play_music()
 
 
 func _exit_tree() -> void:
-	if _music_task != -1:
-		WorkerThreadPool.wait_for_task_completion(_music_task)
-		_music_task = -1
+	if _task != -1:
+		WorkerThreadPool.wait_for_task_completion(_task)
+		_task = -1
 
 
 func _make(duration: float, fn: Callable) -> AudioStreamWAV:

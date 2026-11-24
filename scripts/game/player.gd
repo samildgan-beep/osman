@@ -104,6 +104,8 @@ func _physics_process(delta: float) -> void:
 			velocity.x = 0.0
 			velocity.z = 0.0
 			carry.restore_lift(prev_state)
+			# Geri alınmış konuma göre yeniden ölç; yoksa bir sonraki karede geri alma atlanır.
+			lag = carry.current_lag()
 		carry.last_lag = lag
 		if lag > Config.ITEM_FORCE_DROP_LAG and not carry.in_grace():
 			carry.release(false)

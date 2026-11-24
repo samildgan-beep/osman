@@ -168,5 +168,12 @@ func follow(delta: float) -> Dictionary:
 	return res
 
 
+## Eşyanın şu anki hedefe uzaklığı.
+func current_lag() -> float:
+	if not is_holding():
+		return 0.0
+	return item.global_position.distance_to(target_transform().origin)
+
+
 func in_grace() -> bool:
 	return is_holding() and item.grace > 0.0
