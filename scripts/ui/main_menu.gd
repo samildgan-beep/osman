@@ -13,7 +13,7 @@ var _stars_label: Label
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	theme = UITheme.get_theme()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 42
@@ -24,17 +24,20 @@ func _ready() -> void:
 			"c": [Color("b5835a"), Color("8a5a3b"), Color("3f6e8c"), Color("e9edf0"), Color("24395e")][i % 5],
 		})
 	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
 	var vb := VBoxContainer.new()
 	vb.alignment = BoxContainer.ALIGNMENT_CENTER
-	vb.add_theme_constant_override("separation", 14)
+	vb.add_theme_constant_override("separation", 10)
 	center.add_child(vb)
-	var title := UITheme.label("HANDLE WITH CARE", 84, UITheme.ACCENT, HORIZONTAL_ALIGNMENT_CENTER)
+	var title := UITheme.label("HANDLE WITH CARE", 76, UITheme.ACCENT, HORIZONTAL_ALIGNMENT_CENTER)
+	title.autowrap_mode = TextServer.AUTOWRAP_OFF
 	title.add_theme_constant_override("outline_size", 18)
 	title.add_theme_color_override("font_outline_color", Color("1d2230"))
 	vb.add_child(title)
-	vb.add_child(UITheme.label("Narrow stairs. Bulky furniture. Zero scratches.", 26, UITheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER))
+	var sub := UITheme.label("Narrow stairs. Bulky furniture. Zero scratches.", 26, UITheme.TEXT, HORIZONTAL_ALIGNMENT_CENTER)
+	sub.autowrap_mode = TextServer.AUTOWRAP_OFF
+	vb.add_child(sub)
 	_stars_label = UITheme.label("", 24, UITheme.MUTED, HORIZONTAL_ALIGNMENT_CENTER)
 	vb.add_child(_stars_label)
 	var spacer := Control.new()

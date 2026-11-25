@@ -105,9 +105,11 @@ func _build_environment() -> void:
 	psm.sky_energy_multiplier = 1.1
 	sky.sky_material = psm
 	env.sky = sky
-	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.95
-	env.ambient_light_sky_contribution = 0.75
+	# Ortam ışığı nötr ve hafif sıcak: gökyüzü ışığı her şeyi maviye boyamasın
+	env.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	env.ambient_light_color = Color(0.93, 0.9, 0.86)
+	env.ambient_light_energy = 0.72
+	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.tonemap_exposure = 1.1
 	env.tonemap_white = 6.0
@@ -121,7 +123,7 @@ func _build_environment() -> void:
 	env.glow_bloom = 0.06
 	env.glow_hdr_threshold = 1.1
 	env.fog_enabled = true
-	env.fog_light_color = Color("cfe6f5")
+	env.fog_light_color = Color("e4ecf2")
 	env.fog_density = 0.0035
 	env.fog_sky_affect = 0.0
 	_env = WorldEnvironment.new()
@@ -310,6 +312,16 @@ func _update_free_look(delta: float) -> void:
 	input.lift = 0.0
 	input.key_rotate = Vector3.ZERO
 	input.rotate_px = Vector2.ZERO
+
+
+## Bölüm bitince eğitim ve ipuçlarını kapat.
+func _end_hints() -> void:
+	if _tut_step >= 0 and _tut_step < _tutorial.size():
+		touch.highlight(str(_tutorial[_tut_step].hl), false)
+	_tut_step = _tutorial.size()
+	_tips.clear()
+	hud.hint("")
+	hud.show_proximity([])
 
 
 func _exit_free_look() -> void:
@@ -702,6 +714,7 @@ func rescue() -> void:
 
 func _win() -> void:
 	_exit_free_look()
+	_end_hints()
 	phase = Phase.WON
 	player.frozen = true
 	touch.release_all()
@@ -748,14 +761,18 @@ func _celebrate(perfect: bool) -> void:
 		# Kamera taşıyıcının arkasında, ev sahibine bakar; biraz yandan
 		cam.focus(atan2(d.x, d.z) + 0.45, -18.0, 4.2)
 	var tm := get_tree().create_timer(1.6, false)
-	tm.timeout.connect(func():
-		if is_instance_valid(fx) and is_instance_valid(npc):
-			fx.confetti(npc.global_position + Vector3(0, 2.2, 0), 70)
-			AudioManager.play("star", -4.0, 1.2))
+	tm.timeout.connect(_second_confetti)
+
+
+func _second_confetti() -> void:
+	if is_instance_valid(fx) and is_instance_valid(npc):
+		fx.confetti(npc.global_position + Vector3(0, 2.2, 0), 70)
+		AudioManager.play("star", -4.0, 1.2)
 
 
 func _fail(reason: String, tip: String) -> void:
 	_exit_free_look()
+	_end_hints()
 	phase = Phase.FAILED
 	player.frozen = true
 	if player.is_holding():

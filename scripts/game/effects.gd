@@ -128,10 +128,11 @@ func dust(point: Vector3, normal: Vector3, damage: float) -> void:
 	p.gravity = Vector3(0, -1.2, 0)
 	p.damping_min = 1.5
 	p.damping_max = 2.5
-	p.scale_amount_min = 0.06
-	p.scale_amount_max = 0.16
+	# Boyut doğrudan ağda: ölçek çarpanı her işleyicide aynı davranmayabiliyor
+	p.scale_amount_min = 0.6
+	p.scale_amount_max = 1.5
 	var qm := QuadMesh.new()
-	qm.size = Vector2.ONE
+	qm.size = Vector2(0.11, 0.11)
 	var m := StandardMaterial3D.new()
 	m.billboard_mode = BaseMaterial3D.BILLBOARD_PARTICLES
 	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
@@ -165,10 +166,10 @@ func confetti(pos: Vector3, amount: int = 90) -> void:
 	p.damping_max = 1.6
 	p.angular_velocity_min = -540.0
 	p.angular_velocity_max = 540.0
-	p.scale_amount_min = 0.05
-	p.scale_amount_max = 0.09
+	p.scale_amount_min = 0.7
+	p.scale_amount_max = 1.3
 	var qm := QuadMesh.new()
-	qm.size = Vector2(1.0, 0.6)
+	qm.size = Vector2(0.07, 0.045)
 	var m := StandardMaterial3D.new()
 	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	m.vertex_color_use_as_albedo = true
@@ -191,9 +192,8 @@ func confetti(pos: Vector3, amount: int = 90) -> void:
 
 func _auto_free(n: Node, sec: float) -> void:
 	var tm := get_tree().create_timer(sec, false)
-	tm.timeout.connect(func():
-		if is_instance_valid(n):
-			n.queue_free())
+	# Doğrudan metoda bağla: nesne silinirse bağlantı kendiliğinden kopar
+	tm.timeout.connect(n.queue_free)
 
 
 # ================================================================ fizikli parçalar

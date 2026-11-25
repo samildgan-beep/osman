@@ -164,9 +164,7 @@ func celebrate(perfect: bool) -> void:
 	say("Thank you so much! I'm so happy!", 3.0)
 	var follow := "Not a single scratch! You're the best mover ever!" if perfect else _pick(["It looks perfect here!", "Wonderful job, thank you!", "I love it! Thank you!"])
 	var tm := get_tree().create_timer(3.0, false)
-	tm.timeout.connect(func():
-		if is_instance_valid(self):
-			say(follow, 3.0))
+	tm.timeout.connect(say.bind(follow, 3.0))
 
 
 func sad() -> void:

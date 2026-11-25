@@ -22,7 +22,7 @@ var _left_handed := false
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_make_button("interact", "GRAB", "tap", 62.0)
 	_make_button("rest", "REST", "tap", 38.0)
@@ -116,7 +116,15 @@ func highlight(id: String, on: bool) -> void:
 		buttons[id].queue_redraw()
 
 
+var _laid_size := Vector2.ZERO
+
+
 func _process(_delta: float) -> void:
+	# Boyut sonradan belli olur / ekran döner: düğmeleri yeniden yerleştir
+	if size != _laid_size and size.x > 0.0 and size.y > 0.0:
+		_laid_size = size
+		_layout()
+		queue_redraw()
 	if state == null:
 		return
 	# Basılı tutulan düğmeler

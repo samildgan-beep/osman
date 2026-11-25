@@ -67,7 +67,10 @@ func _set_star_anim(v: float) -> void:
 
 
 func _stat(grid: GridContainer, k: String, v: String) -> void:
-	grid.add_child(UITheme.label(k, 24, UITheme.MUTED))
+	var kl := UITheme.label(k, 24, UITheme.MUTED)
+	kl.autowrap_mode = TextServer.AUTOWRAP_OFF
+	grid.add_child(kl)
 	var l := UITheme.label(v, 24, UITheme.TEXT)
+	l.autowrap_mode = TextServer.AUTOWRAP_OFF
 	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	grid.add_child(l)

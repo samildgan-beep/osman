@@ -517,7 +517,7 @@ func _build_street() -> void:
 		var bx := -24.0 + i * 6.0
 		var bh := rng.randf_range(7.0, 17.0)
 		var bcol := Color(MODERN_THEMES[(i + int(L.id)) % MODERN_THEMES.size()].facade).lightened(0.1)
-		solid(Vector3(bx, bh * 0.5, -22.0), Vector3(5.4, bh, 5.0), bcol, true, MBR)
+		solid(Vector3(bx, bh * 0.5, -22.0), Vector3(5.4, bh, 5.0), bcol, true, MP)
 		batch.add_box(Vector3(bx, bh + 0.15, -22.0), Vector3(5.7, 0.3, 5.3), Color("fdfbf5"), MPA)
 		var wy := 1.6
 		while wy < bh - 1.0:
@@ -1136,7 +1136,11 @@ func _build_apartment() -> void:
 	info.goal_type = goal
 	info.apt_door_pos = Vector3(sx * X_out, y, zc)
 	info.corridor_end = Vector3((xw + x_end) * 0.5, y, zc) if turn == "none" else Vector3(anchors["corridor2"].pos)
-	info.room_door_pos = _door_world(room, door_side, y)
+	# Oda kapısının gerçek yeri (oda ortası değil): yol noktası ve yön oku için
+	if turn == "none":
+		info.room_door_pos = Vector3(x_end, y, zc)
+	else:
+		info.room_door_pos = Vector3((x_end + x_end + sx * cw) * 0.5, y, float(room.z0))
 	var isize: Vector3 = item.size
 	if goal == "door":
 		# Daire kapısının önündeki sahanlık

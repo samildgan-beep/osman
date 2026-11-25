@@ -151,6 +151,7 @@ func place_on_ground(bottom_center: Vector3, yaw: float = 0.0) -> void:
 	state = State.FREE
 	resting = false
 	_fall_velocity = Vector3.ZERO
+	grace = 0.5   # yere konarken oturma darbesi hasar vermesin
 
 
 func pick_up() -> void:
@@ -192,7 +193,6 @@ func follow(target: Transform3D, delta: float) -> Dictionary:
 	var result := {"lag": 0.0, "rot_blocked": false}
 	if state != State.HELD:
 		return result
-	grace = maxf(0.0, grace - delta)
 	# Eşya şu an bir şeyin içindeyse dönüş testlerini atla (kilitlenmeyi önler).
 	var stuck := _overlaps(global_transform, _shape_small)
 
@@ -328,6 +328,7 @@ func _add_scratch(world_point: Vector3, dmg: float) -> void:
 # ================================================================ serbest durum (yerde / düşüyor)
 
 func _physics_process(delta: float) -> void:
+	grace = maxf(0.0, grace - delta)
 	_update_flash(delta)
 	match state:
 		State.HELD:
@@ -408,7 +409,7 @@ func _process_free(delta: float) -> void:
 		var collider := col.get_collider()
 		if collider != null and collider.has_method("on_bumped"):
 			collider.call("on_bumped")
-		if impact > Config.IMPACT_THRESHOLD:
+		if impact > Config.IMPACT_THRESHOLD and grace <= 0.0:
 			var face := _face_at(col.get_position())
 			var dmg := DamageModel.impact_damage(impact, float(data.get("fragility", 1.0)), DamageModel.face_multiplier(data, face)) * Config.DROP_DAMAGE_MULT
 			apply_damage(dmg, face, dmg >= 6.0, true)

@@ -36,7 +36,7 @@ func _card(L: Dictionary) -> Control:
 	b.disabled = not unlocked
 	b.clip_contents = true
 	var vb := VBoxContainer.new()
-	vb.set_anchors_preset(Control.PRESET_FULL_RECT)
+	vb.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vb.alignment = BoxContainer.ALIGNMENT_CENTER
 	vb.add_theme_constant_override("separation", 2)

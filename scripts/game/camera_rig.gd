@@ -200,7 +200,9 @@ func _physics_process(delta: float) -> void:
 		camera.look_at(_pivot, Vector3.UP)
 	camera.fov = lerpf(camera.fov, 58.0 if narrow_view else fov_target, 1.0 - exp(-3.0 * delta))
 	if target.visual != null:
+		# Kamera karaktere çok yaklaşınca (dar yerler) görüşü kapatmasın
 		target.visual.set_head_visible(free_look or _cur_dist > 0.9)
+		target.visual.visible = free_look or _cur_dist > 0.6
 
 
 ## Pivottan kamera yönüne en fazla ne kadar gidilebilir (duvar çarpışması).

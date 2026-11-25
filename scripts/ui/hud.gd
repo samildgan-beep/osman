@@ -23,12 +23,12 @@ var _vignette_target := 0.0
 
 
 func _ready() -> void:
-	set_anchors_preset(Control.PRESET_FULL_RECT)
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	theme = UITheme.get_theme()
 
 	_flash = ColorRect.new()
-	_flash.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_flash.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_flash.color = Color(1, 0.1, 0.05, 0.0)
 	_flash.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_flash)
@@ -88,14 +88,14 @@ func _ready() -> void:
 	add_child(_center)
 
 	_popups = Control.new()
-	_popups.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_popups.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_popups.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_popups)
 
 
 ## Kontrolü bir bağlantı noktasına (anchor) göre yerleştirir; r = bağlantıya göre ofset dikdörtgeni.
 static func place(c: Control, preset: Control.LayoutPreset, r: Rect2) -> void:
-	c.set_anchors_preset(preset)
+	c.set_anchors_and_offsets_preset(preset)
 	c.offset_left = r.position.x
 	c.offset_top = r.position.y
 	c.offset_right = r.position.x + r.size.x
@@ -116,7 +116,7 @@ func _make_vignette(edge: Color) -> TextureRect:
 	gt.height = 256
 	var tr := TextureRect.new()
 	tr.texture = gt
-	tr.set_anchors_preset(Control.PRESET_FULL_RECT)
+	tr.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	tr.stretch_mode = TextureRect.STRETCH_SCALE
 	tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
