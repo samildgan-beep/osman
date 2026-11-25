@@ -21,7 +21,7 @@
 			"room": {"width": 4.0, "depth": 4.0, "door": [1.2, 2.1]},
 			"obstacles": [{"type": "lamp", "at": "hall"}, {"type": "plant", "at": "landing", "floor": 1, "side": 1}],
 			"par_time": 65,
-			"tips": ["When the box gets close to a wall, that edge glows yellow.", "Push the joystick gently to walk slowly."]
+			"tips": ["When the box gets close to a wall, that edge glows yellow.", "Push the joystick gently to walk or turn slowly."]
 		},
 		{
 			"id": 3, "name": "Handle With Care", "building": "turkish", "subtitle": "Carry the TV into the living room.",

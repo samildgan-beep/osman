@@ -564,7 +564,7 @@ func _on_proximity(faces: Array) -> void:
 
 func _setup_tutorial() -> void:
 	_tutorial = [
-		{"t": "Touch and drag on the left side: use the joystick to walk to the box.", "hl": "", "done": func() -> bool: return player._can_pick() or player.is_holding()},
+		{"t": "Joystick on the left: push up to walk, left/right to turn on the spot. Walk to the box.", "hl": "", "done": func() -> bool: return player._can_pick() or player.is_holding()},
 		{"t": "Press GRAB to pick up the box.", "hl": "interact", "done": func() -> bool: return player.is_holding()},
 		{"t": "Swipe with one finger on the right side to rotate the box. ROLL unlocks the third axis.", "hl": "", "done": func() -> bool: return player.carry.rotated_total_deg > 60.0, "timeout": 12.0},
 		{"t": "Use LIFT / LOWER to raise or lower it. Hold FINE to rotate slowly.", "hl": "lift_up", "done": func() -> bool: return player.carry.lift_used, "timeout": 10.0},

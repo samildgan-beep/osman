@@ -281,6 +281,23 @@ func _reach(arm: Node3D, target: Vector3) -> void:
 	arm.scale = Vector3(1.0, clampf(dist / ARM_LEN, 0.7, 1.45), 1.0)
 
 
+## Kamera çok yakınken karakteri yarı saydam yap (1 = tam opak).
+var _fade := 1.0
+func set_fade(a: float) -> void:
+	a = clampf(a, 0.0, 1.0)
+	if absf(a - _fade) < 0.02:
+		return
+	_fade = a
+	for k in _mats:
+		var m: StandardMaterial3D = _mats[k]
+		if a >= 0.99:
+			m.transparency = BaseMaterial3D.TRANSPARENCY_DISABLED
+			m.albedo_color.a = 1.0
+		else:
+			m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+			m.albedo_color.a = a
+
+
 func set_head_visible(v: bool) -> void:
 	if _head != null:
 		_head.visible = v

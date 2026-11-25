@@ -9,11 +9,46 @@ func _ready() -> void:
 	if args.size() > 0:
 		out = args[0]
 	DirAccess.make_dir_recursive_absolute(out)
-	await _menu_shots()
-	await _level_shots(1, "l1")
-	await _win_shots(1, "w1")
-	await _level_shots(16, "l16")
+	await _follow_shots(1, "f1")
+	await _follow_shots(14, "f14")
 	get_tree().quit()
+
+
+## Ana (takip) kamerayla gerçek oynanış: eşyayı al, merdivene yürü, çık, sahanlıkta dön.
+func _follow_shots(id: int, tag: String) -> void:
+	var game := Game.new()
+	game.setup(id)
+	add_child(game)
+	await _wait_sec(1.0)
+	await _snap(tag + "_start")
+	var p := game.player
+	var to_item := game.item.global_position - p.global_position
+	to_item.y = 0
+	p.teleport(game.item.global_position - to_item.normalized() * (1.0 + game.item.half.z) + Vector3(0, 0.05 - game.item.global_position.y, 0), atan2(-to_item.x, -to_item.z))
+	await _wait_sec(0.3)
+	game.input.press("interact")
+	await _wait_sec(1.2)
+	await _snap(tag + "_holding")
+	var wps: Array = game.info.waypoints
+	_tp(game, wps[1] + Vector3(0, 0.05, -0.8), PI)
+	await _wait_sec(1.5)
+	await _snap(tag + "_stair_bottom")
+	for i in 120:
+		game.input.move = Vector2(0, 0.8)
+		await get_tree().physics_frame
+	game.input.move = Vector2.ZERO
+	await _wait_sec(0.8)
+	await _snap(tag + "_climbing")
+	_tp(game, wps[2] + Vector3(0, 0.05, 0), PI)
+	await _wait_sec(1.0)
+	for i in 50:
+		game.input.move = Vector2(0.9, 0.0)
+		await get_tree().physics_frame
+	game.input.move = Vector2.ZERO
+	await _wait_sec(0.8)
+	await _snap(tag + "_landing_turn")
+	game.queue_free()
+	await _wait(5)
 
 
 func _menu_shots() -> void:
@@ -106,3 +141,12 @@ func _level_shots(id: int, tag: String) -> void:
 	await _snap(tag + "_landing")
 	game.queue_free()
 	await _wait(5)
+
+
+## Oyuncuyu eşyasıyla birlikte ışınla (eşya geride kalıp düşmesin).
+func _tp(game: Game, pos: Vector3, yaw: float) -> void:
+	game.player.teleport(pos, yaw)
+	if game.player.is_holding():
+		game.player.carry.hold_basis = Basis()
+		game.item.global_transform = game.player.carry.target_transform()
+		game.item.grace = 1.0

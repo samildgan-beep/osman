@@ -32,6 +32,7 @@ var _prompt := ""
 var _prompt_enabled := false
 var _tired_sound_cd := 0.0
 var _speed_now := 0.0
+var _turn_input := 0.0
 
 
 func _ready() -> void:
@@ -123,13 +124,24 @@ func _physics_process(delta: float) -> void:
 
 
 func _locomotion(delta: float) -> void:
+	# Karaktere bağlı kontrol: joystick yukarı/aşağı ileri-geri yürür,
+	# sağ/sol karakteri olduğu yerde kontrollü bir hızla döndürür (kamera arkasından takip eder).
 	var mv := input.move.limit_length(1.0)
-	var fwd := Vector3(-sin(camera_yaw), 0.0, -cos(camera_yaw))
-	var right := Vector3(cos(camera_yaw), 0.0, -sin(camera_yaw))
-	var wish := right * mv.x + fwd * mv.y
-	var mag := minf(1.0, wish.length())
-	var dir := wish.normalized() if mag > 0.05 else Vector3.ZERO
 	var holding := carry.is_holding()
+	_turn_input = 0.0
+	if absf(mv.x) > 0.08:
+		var rate := Config.TURN_RATE_CARRY if holding else Config.TURN_RATE
+		if input.precise:
+			rate *= 0.35
+		# Joystick ucunda daha hızlı, az itince yavaş (ince ayar)
+		var amt := signf(mv.x) * pow(absf(mv.x), 1.6)
+		_yaw = wrapf(_yaw - amt * rate * delta, -PI, PI)
+		global_basis = Basis(Vector3.UP, _yaw)
+		_turn_input = absf(amt)
+		resting = false
+	var fwd_axis := Vector3(-sin(_yaw), 0.0, -cos(_yaw))
+	var mag := absf(mv.y) if absf(mv.y) > 0.08 else 0.0
+	var dir := fwd_axis * signf(mv.y) if mag > 0.0 else Vector3.ZERO
 	on_stairs = is_on_floor() and get_floor_normal().y < 0.97
 
 	var speed := Config.WALK_SPEED
@@ -144,18 +156,12 @@ func _locomotion(delta: float) -> void:
 	walking_backward = false
 	if dir != Vector3.ZERO:
 		resting = false
-		var target_yaw := atan2(-dir.x, -dir.z)
-		var diff := wrapf(target_yaw - _yaw, -PI, PI)
-		if holding and absf(diff) > deg_to_rad(110.0):
-			# Eşyayla geri geri yürü (dönmeden).
+		if mv.y < 0.0:
+			# Geri geri yürü (dönmeden)
 			walking_backward = true
-			speed *= 0.7
-		else:
-			var ts := Config.CARRY_TURN_SPEED if holding else Config.TURN_SPEED
-			_yaw = wrapf(_yaw + clampf(diff, -ts * delta, ts * delta), -PI, PI)
-			if holding:
-				speed *= lerpf(1.0, 0.3, clampf(absf(diff) / (PI * 0.5), 0.0, 1.0))
-		global_basis = Basis(Vector3.UP, _yaw)
+			speed *= 0.6
+		# Dönerken yürüyüş biraz yavaşlar (eşyayla daha çok)
+		speed *= lerpf(1.0, 0.55 if holding else 0.8, clampf(_turn_input, 0.0, 1.0))
 
 	var target_vel := dir * speed * mag
 	var hv := Vector3(velocity.x, 0.0, velocity.z)
@@ -309,7 +315,7 @@ func _animate(delta: float) -> void:
 	else:
 		visual.set_grips(Vector3.ZERO, Vector3.ZERO, false)
 	visual.update_anim(delta, {
-		"speed": _speed_now if not frozen else 0.0,
+		"speed": maxf(_speed_now, _turn_input * 0.9) if not frozen else 0.0,
 		"holding": holding,
 		"back": holding and level_item != null and level_item.is_back_carry(),
 		"resting": resting and not holding,

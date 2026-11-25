@@ -29,7 +29,7 @@ func _ready() -> void:
 	_toggle(list, "Show guide arrow", "show_guide")
 	_toggle(list, "Left-handed mode (swap controls)", "left_handed")
 
-	var help := UITheme.label("Keyboard: WASD walk · J/L I/K U/O rotate · Q/E lower/lift · Shift fine · Space grab/drop · R rest · T reset · 1/2/3 camera · Esc pause", 18, UITheme.MUTED)
+	var help := UITheme.label("Keyboard: W/S walk · A/D turn · J/L I/K U/O rotate · Q/E lower/lift · Shift fine · Space grab/drop · R rest · T reset · 1/2/3 camera · Esc pause", 18, UITheme.MUTED)
 	list.add_child(help)
 
 	_reset_btn = UITheme.button("Reset progress", 360, 60)

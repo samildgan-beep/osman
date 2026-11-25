@@ -22,7 +22,8 @@ Masaüstünde fare ile dokunmatik taklit edilir (sol tık = parmak). Klavye kıs
 
 | Telefon | Klavye | Ne yapar |
 |---|---|---|
-| Sol tarafa dokunup kaydır (joystick) | WASD / oklar | Yürü (az itersen yavaş yürür) |
+| Joystick yukarı / aşağı | W / S | İleri / geri yürü (az itersen yavaş) |
+| Joystick sağ / sol | A / D | Karakteri olduğu yerde kontrollü döndür (FINE basılıyken daha yavaş) |
 | Sağ tarafta tek parmak kaydır | J/L, I/K | Eşyayı döndür (yatay: sağa/sola, dikey: öne/arkaya yatır) |
 | **ROLL** (aç/kapa) | U/O | Üçüncü eksen: eşyayı kendi etrafında yan yatır |
 | **LIFT / LOWER** (basılı tut) | E / Q | Eşyayı yükselt / alçalt |
@@ -30,7 +31,7 @@ Masaüstünde fare ile dokunmatik taklit edilir (sol tık = parmak). Klavye kıs
 | **RESET** | T | Eşyanın açısını sıfırla |
 | **GRAB / DROP** | Boşluk / F | Eşyayı al, yavaşça yere bırak, kapı kapat (CLOSE) |
 | **REST** | R | Eşyayı bırak ve dinlen (dayanıklılık hızlı dolar) |
-| İki parmak kaydır / sıkıştır | Sağ tık sürükle, tekerlek | Kamera döndür / yakınlaştır |
+| İki parmak kaydır / sıkıştır | Sağ tık sürükle, tekerlek | Kamerayı geçici çevir / yakınlaştır (ana kamera karakterin arkasına geri döner) |
 | **BACK / TOP / SIDE** | 1 / 2 / 3 | Hazır kamera görünümleri |
 | **LOOK** (aç/kapa) | V / C | Serbest kamera: karakter durur; joystick/WASD kamerayı sahnede gezdirir, kaydırınca her yöne (yukarı/aşağı dahil) bakar, iki parmak yukarı/aşağı veya LIFT/LOWER (E/Q) yükseltir |
 | **II** | Esc / P | Duraklat |
