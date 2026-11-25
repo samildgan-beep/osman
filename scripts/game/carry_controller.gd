@@ -168,6 +168,31 @@ func follow(delta: float) -> Dictionary:
 	return res
 
 
+## Ellerin eşyayı tuttuğu iki nokta (dünya koordinatı): [sol, sağ].
+## Dar eşya yanlardan, geniş eşya (koltuk, TV) yakın kenarının altından, sırttaki eşya
+## omuz üstünden kavranır. Eşyanın gerçek konumu kullanılır: eller eşyayla birlikte hareket eder.
+func grip_points() -> Array:
+	var c := item.global_position
+	var pb := player.global_basis.orthonormalized()
+	var right := pb.x
+	var fwd := -pb.z
+	var ext := DamageModel.rotated_half_extents((pb.inverse() * item.global_basis).orthonormalized(), item.half)
+	if item.is_back_carry():
+		# Sırttaki eşya oyuncunun arkasında: yakın yüz oyuncuya (ileri) bakar
+		var near := c + fwd * ext.z
+		var y := player.global_position.y + 1.55
+		var p := Vector3(near.x, y, near.z)
+		return [p - right * 0.2, p + right * 0.2]
+	var w := ext.x
+	if w <= 0.34:
+		# Yanlardan kavra (oyuncuya biraz yakın)
+		var mid := c - fwd * (ext.z * 0.25)
+		return [mid - right * (w + 0.015), mid + right * (w + 0.015)]
+	# Geniş eşya: yakın kenarın altından tut
+	var base := c - fwd * (ext.z - 0.05) - Vector3.UP * (ext.y * 0.7)
+	return [base - right * 0.28, base + right * 0.28]
+
+
 ## Eşyanın şu anki hedefe uzaklığı.
 func current_lag() -> float:
 	if not is_holding():

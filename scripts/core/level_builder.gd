@@ -359,6 +359,64 @@ func _car(p: Vector3, color: Color, yaw: float) -> void:
 			batch.add_cylinder(wp + b * Vector3(0, 0, signf(wz) * 0.125), 0.18, 0.02, Color("c0c4c8"), b * Basis(Vector3.RIGHT, PI * 0.5), MMET)
 
 
+## Kurye motosikleti (scooter): kırmızı gövde, teslimat kutusu, kask, yanan far.
+## Yerel eksenler: +X ileri (motorun burnu), +Z yan. Yan ayağa hafif yaslanmış durur.
+func _motorbike(p: Vector3, yaw: float) -> void:
+	var b := Basis(Vector3.UP, yaw) * Basis(Vector3.RIGHT, 0.09)
+	var xf := Transform3D(b, p)
+	var red := Color("d62828")
+	var dark := Color("1e1f22")
+	var metal := Color("c0c4c8")
+	var axle := b * Basis(Vector3.RIGHT, PI * 0.5)
+	# Tekerlekler (lastik + jant + göbek)
+	for wx: float in [-0.65, 0.7]:
+		var wc: Vector3 = xf * Vector3(wx, 0.3, 0.0)
+		batch.add_cylinder(wc, 0.3, 0.12, dark, axle)
+		batch.add_cylinder(wc, 0.19, 0.13, metal, axle, MMET)
+		batch.add_cylinder(wc, 0.06, 0.15, Color("555a60"), axle, MMET)
+	# Gövde, ayak basma yeri, arka kaporta, ön kalkan
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(0.0, 0.34, 0.0)), Vector3(0.95, 0.1, 0.32), dark, MPA)
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(-0.42, 0.6, 0.0)), Vector3(0.75, 0.38, 0.38), red, MPA)
+	batch.add_box_xform(xf * Transform3D(Basis(Vector3.FORWARD, 0.25), Vector3(0.46, 0.68, 0.0)), Vector3(0.12, 0.62, 0.42), red, MPA)
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(0.62, 0.42, 0.0)), Vector3(0.28, 0.12, 0.2), red, MPA)
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(-0.42, 0.62, 0.195)), Vector3(0.6, 0.06, 0.01), Color("ffffff"), MPA)
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(-0.42, 0.62, -0.195)), Vector3(0.6, 0.06, 0.01), Color("ffffff"), MPA)
+	# Sele
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(-0.35, 0.83, 0.0)), Vector3(0.62, 0.1, 0.3), dark, MF)
+	# Ön çatal, gidon, elcikler, aynalar
+	for side: float in [-0.07, 0.07]:
+		batch.add_cylinder_between(xf * Vector3(0.7, 0.3, side), xf * Vector3(0.54, 1.02, side), 0.022, metal, MMET)
+	batch.add_cylinder_between(xf * Vector3(0.52, 1.1, -0.36), xf * Vector3(0.52, 1.1, 0.36), 0.018, dark, MMET)
+	for side: float in [-0.36, 0.36]:
+		batch.add_cylinder_between(xf * Vector3(0.52, 1.1, side), xf * Vector3(0.52, 1.1, side * 1.25), 0.026, dark, MF)
+		batch.add_cylinder_between(xf * Vector3(0.52, 1.1, side * 0.8), xf * Vector3(0.48, 1.32, side * 0.95), 0.008, dark, MMET)
+		batch.add_box_xform(xf * Transform3D(Basis(), Vector3(0.48, 1.34, side * 0.95)), Vector3(0.02, 0.07, 0.1), metal, MMET)
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(0.55, 1.04, 0.0)), Vector3(0.16, 0.12, 0.26), red, MPA)
+	glow.add_sphere(xf * Vector3(0.64, 1.0, 0.0), 0.07, Color("fff6d0"))
+	glow.add_box(xf * Vector3(-0.8, 0.72, 0.0), Vector3(0.03, 0.05, 0.14), Color("ff3b30"))
+	# Egzoz
+	batch.add_cylinder_between(xf * Vector3(-0.25, 0.3, 0.2), xf * Vector3(-0.85, 0.42, 0.2), 0.04, metal, MMET)
+	# Yan ayak (motosiklet +Z tarafına yaslandığı için ayak o tarafta)
+	batch.add_cylinder_between(xf * Vector3(-0.05, 0.3, 0.16), Vector3(p.x, 0.0, p.z) + Basis(Vector3.UP, yaw) * Vector3(-0.15, 0.0, 0.36), 0.015, metal, MMET)
+	# Teslimat kutusu (arka): turuncu, beyaz şerit, logo
+	var box_c: Vector3 = xf * Vector3(-0.72, 1.12, 0.0)
+	batch.add_box_xform(Transform3D(b, box_c), Vector3(0.46, 0.44, 0.46), Color("ff8c1a"), MPA)
+	batch.add_box_xform(Transform3D(b, box_c + b * Vector3(0, 0.12, 0)), Vector3(0.47, 0.05, 0.47), Color("ffffff"), MPA)
+	batch.add_box_xform(Transform3D(b, box_c + b * Vector3(0, 0.235, 0)), Vector3(0.48, 0.03, 0.48), Color("2b2d42"), MPA)
+	var lb_side := _label("EXPRESS", box_c + b * Vector3(0.0, -0.05, -0.236), yaw + PI, 34, Color("ffffff"), false)
+	lb_side.rotation.z = -0.09
+	var lb_side2 := _label("DELIVERY", box_c + b * Vector3(0.0, -0.13, -0.236), yaw + PI, 26, Color("2b2d42"), false)
+	lb_side2.rotation.z = -0.09
+	_label("EXPRESS", box_c + b * Vector3(-0.236, -0.05, 0.0), yaw - PI * 0.5, 34, Color("ffffff"), false)
+	# Selede kask
+	var hc: Vector3 = xf * Vector3(-0.22, 1.0, 0.0)
+	batch.add_sphere(hc, 0.16, Color("f4f4f4"), MPA, Vector3(1.0, 0.85, 0.95))
+	batch.add_box_xform(Transform3D(b, hc + b * Vector3(0.1, -0.02, 0.0)), Vector3(0.06, 0.12, 0.24), Color("2b2d42"), MG)
+	batch.add_sphere(hc + b * Vector3(0.0, 0.04, 0.0), 0.162, Color("d62828"), MPA, Vector3(0.35, 0.7, 1.0))
+	# Çarpışma: motosikletin içinden geçilmesin (eşya çarparsa hasar alır)
+	_shape_box(Transform3D(Basis(Vector3.UP, yaw), p + Vector3(0, 0.65, 0)), Vector3(1.95, 1.3, 0.55))
+
+
 # ================================================================ sokak
 
 func _build_street() -> void:
@@ -416,6 +474,9 @@ func _build_street() -> void:
 	batch.add_box_xform(Transform3D(Basis(Vector3.FORWARD, -0.32), Vector3(tx - 6.4, 0.3, tz)), Vector3(1.7, 0.06, 1.4), Color("9aa0a6"), MMET)
 	_label("EASY MOVERS", Vector3(tx - 3.4, 2.5, tz + 1.23), 0.0, 96, Color("2b2d42"))
 	_label("We carry, you smile!", Vector3(tx - 3.4, 1.62, tz + 1.23), 0.0, 44, Color("2b2d42"))
+
+	# Kurye motosikleti: giriş kapısının yanında (motor kuryesiyiz!)
+	_motorbike(Vector3(-2.45, 0.0, -2.75), 0.0)
 
 	# Park etmiş arabalar
 	var car_colors := [Color("e63946"), Color("2a9d8f"), Color("ffb703"), Color("4361ee"), Color("8338ec")]

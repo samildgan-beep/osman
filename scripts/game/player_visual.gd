@@ -23,6 +23,11 @@ var _brim: MeshInstance3D
 var _t := 0.0
 var _fatigue := 0.0
 var crushed := false
+# Eşya tutma noktaları (dünya koordinatı). Etkinse eller bu noktalara uzanır.
+var _grip_l := Vector3.ZERO
+var _grip_r := Vector3.ZERO
+var _grip_on := false
+const ARM_LEN := 0.6          # omuzdan el merkezine
 
 
 func _ready() -> void:
@@ -148,7 +153,7 @@ func update_anim(delta: float, st: Dictionary) -> void:
 	if back and holding:
 		lean_target = -0.38
 	elif holding:
-		lean_target = 0.08
+		lean_target = -0.06
 	if tired:
 		lean_target -= 0.12
 	if holding:
@@ -189,6 +194,14 @@ func update_anim(delta: float, st: Dictionary) -> void:
 	_arm_r.rotation.x = arm_r
 	_arm_l.rotation.z = lerpf(0.08, -0.12, clampf(_arm_pose, 0.0, 1.0))
 	_arm_r.rotation.z = -_arm_l.rotation.z
+	_arm_l.rotation.y = 0.0
+	_arm_r.rotation.y = 0.0
+	_arm_l.scale = Vector3.ONE
+	_arm_r.scale = Vector3.ONE
+	# Eşya elde: eller eşyanın tutma noktalarına uzanır (kaldır/indir ile kollar da kalkar/iner)
+	if _grip_on and holding and not resting:
+		_reach(_arm_l, _grip_l)
+		_reach(_arm_r, _grip_r)
 	_head.rotation.x = -0.25 if tired else (-0.12 if back and holding else 0.0)
 
 	# Duygu pozları (ev sahibi ve bölüm sonu): sevinç, el sallama, endişe, üzüntü
@@ -246,6 +259,26 @@ func play_crushed() -> void:
 	tw.tween_property(self, "rotation:x", PI * 0.5, 0.28).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.tween_property(self, "position:y", 0.14, 0.28)
 	tw.chain().tween_property(self, "scale", Vector3(1.3, 1.0, 0.32), 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+
+## Eşyanın tutma noktalarını ver (Player her karede çağırır). active=false: normal kol animasyonu.
+func set_grips(left: Vector3, right: Vector3, active: bool) -> void:
+	_grip_l = left
+	_grip_r = right
+	_grip_on = active
+
+
+## Kolu (omuz eklemi) dünyadaki bir noktaya doğrultur; erişemiyorsa kol biraz uzar,
+## çok yakınsa kısalır (çizgi film tarzı), böylece el her zaman eşyaya değer.
+func _reach(arm: Node3D, target: Vector3) -> void:
+	var local := _torso.global_transform.affine_inverse() * target
+	var d := local - arm.position
+	var dist := d.length()
+	if dist < 0.05:
+		return
+	var u := d / dist
+	arm.quaternion = Quaternion(Vector3.DOWN, u)
+	arm.scale = Vector3(1.0, clampf(dist / ARM_LEN, 0.7, 1.45), 1.0)
 
 
 func set_head_visible(v: bool) -> void:

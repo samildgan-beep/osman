@@ -303,6 +303,11 @@ func _animate(delta: float) -> void:
 	if visual == null:
 		return
 	var holding := carry.is_holding()
+	if holding:
+		var g: Array = carry.grip_points()
+		visual.set_grips(g[0], g[1], true)
+	else:
+		visual.set_grips(Vector3.ZERO, Vector3.ZERO, false)
 	visual.update_anim(delta, {
 		"speed": _speed_now if not frozen else 0.0,
 		"holding": holding,

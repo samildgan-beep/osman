@@ -37,8 +37,8 @@ const STAMINA_WARN := 25.0
 const CRUSH_WEIGHT := 40.0            # bu kilodan ağır eşyada güç biterse taşıyıcı altında ezilir
 
 # --- Eşya tutma ---
-const HOLD_GAP := 0.32               # karakter gövdesi ile eşya arası boşluk
-const HOLD_HEIGHT := 0.95            # varsayılan eşya merkezi yüksekliği (ayaktan)
+const HOLD_GAP := 0.1                # karakter gövdesi ile eşya arası boşluk (eller eşyaya değsin)
+const HOLD_HEIGHT := 1.0             # varsayılan eşya merkezi yüksekliği (ayaktan)
 const LIFT_MIN := -0.55
 const LIFT_MAX := 0.85
 const LIFT_SPEED := 0.75             # m/s
