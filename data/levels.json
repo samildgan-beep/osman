@@ -1,5 +1,5 @@
 {
-	"_aciklama": "Bölüm tanımları. building: turkish (eski Türk apartmanı, HİCRET APARTMANI) | modern (renkli tuğla apartman) | factory (16–20: dev eşyalar fabrikası; factory = {length, width, height, gate: [genişlik, yükseklik], decor: tub|pedestal|gift|desk|kitchen}). goal: door (daire kapısına teslim), room (odaya taşı), spot (tam yerine, ön yüz odaya bakacak şekilde yerleştir; 6. bölümden itibaren tüm bölümler spot: eve girip eşyayı yerine koymak gerekir). theme: 0-5 renk teması. Ölçüler metre. corridor.turn: none | left | right. Engeller: cat, lamp, shoe_rack, plant, door, boxes. at: hall, flightA, flightB, mid, landing (floor ile), corridor, corridor2, room.",
+	"_aciklama": "Bölüm tanımları. building: turkish (eski Türk apartmanı, HİCRET APARTMANI) | modern (renkli tuğla apartman) | factory (16–20: dev eşyalar fabrikası; factory = {length, width, height, gate: [genişlik, yükseklik], decor: tub|pedestal|gift|desk|kitchen, maze: fabrika malzemelerinden labirent sırası sayısı 0–6; salon boyu eşyaya göre otomatik uzar}). goal: door (daire kapısına teslim), room (odaya taşı), spot (tam yerine, ön yüz odaya bakacak şekilde yerleştir; 6. bölümden itibaren tüm bölümler spot: eve girip eşyayı yerine koymak gerekir). theme: 0-5 renk teması. Ölçüler metre. corridor.turn: none | left | right. Engeller: cat, lamp, shoe_rack, plant, door, boxes. at: hall, flightA, flightB, mid, landing (floor ile), corridor, corridor2, room.",
 	"levels": [
 		{
 			"id": 1, "name": "First Day", "building": "turkish", "subtitle": "Bring the box up to the 1st floor door.",
@@ -169,41 +169,41 @@
 		{
 			"id": 16, "name": "Rubber Ducky", "building": "factory", "subtitle": "Welcome to the Giant Goods Factory. This duck is five times your height!",
 			"item": "dev_ordek", "floors": 1, "goal": "spot", "theme": 0,
-			"factory": {"length": 50, "width": 26, "height": 14, "gate": [8.0, 11.0], "decor": "tub"},
+			"factory": {"length": 50, "width": 30, "height": 14, "gate": [8.0, 11.0], "decor": "tub", "maze": 2},
 			"obstacles": [],
-			"par_time": 150,
+			"par_time": 200,
 			"tips": ["You are tiny. The duck is not.", "Use TOP or 1P to see around giant objects.", "Drop it in the giant bathtub, beak facing forward."]
 		},
 		{
 			"id": 17, "name": "Bolt From the Blue", "building": "factory", "subtitle": "Seven times your height. Lay it down to fit through the gate.",
 			"item": "dev_civata", "floors": 1, "goal": "spot", "theme": 1,
-			"factory": {"length": 55, "width": 28, "height": 16, "gate": [7.0, 8.0], "decor": "pedestal"},
+			"factory": {"length": 55, "width": 32, "height": 16, "gate": [7.0, 8.0], "decor": "pedestal", "maze": 3},
 			"obstacles": [],
-			"par_time": 190,
+			"par_time": 260,
 			"tips": ["The gate is lower than the bolt: swipe up/down to tip it over.", "Stand it back up on the display stand."]
 		},
 		{
 			"id": 18, "name": "Teddy XXL", "building": "factory", "subtitle": "A huggable giant. Turn it sideways to squeeze through the gate.",
 			"item": "dev_ayi", "floors": 1, "goal": "spot", "theme": 2,
-			"factory": {"length": 55, "width": 30, "height": 16, "gate": [7.0, 15.0], "decor": "gift"},
+			"factory": {"length": 55, "width": 34, "height": 16, "gate": [7.0, 15.0], "decor": "gift", "maze": 3},
 			"obstacles": [],
-			"par_time": 190,
+			"par_time": 260,
 			"tips": ["The bear is wider than the gate: rotate it a quarter turn.", "Teddy goes into the giant gift box, face first."]
 		},
 		{
 			"id": 19, "name": "Mega Pencil", "building": "factory", "subtitle": "Ten times your height. Mind the ceiling!",
 			"item": "dev_kalem", "floors": 1, "goal": "spot", "theme": 3,
-			"factory": {"length": 70, "width": 30, "height": 22, "gate": [6.0, 9.0], "decor": "desk"},
+			"factory": {"length": 70, "width": 34, "height": 22, "gate": [6.0, 9.0], "decor": "desk", "maze": 4},
 			"obstacles": [],
-			"par_time": 240,
+			"par_time": 330,
 			"tips": ["Lay the pencil down to pass the gate, then stand it up again.", "The sharp tip (top) is fragile."]
 		},
 		{
 			"id": 20, "name": "Fridge of Doom", "building": "factory", "subtitle": "The final boss: a fridge ten times your height.",
 			"item": "dev_buzdolabi", "floors": 1, "goal": "spot", "theme": 4,
-			"factory": {"length": 70, "width": 34, "height": 22, "gate": [10.0, 13.0], "decor": "kitchen"},
+			"factory": {"length": 70, "width": 38, "height": 22, "gate": [10.0, 13.0], "decor": "kitchen", "maze": 3},
 			"obstacles": [],
-			"par_time": 300,
+			"par_time": 420,
 			"tips": ["It's heavy: if your stamina runs out, it falls on you!", "Tip it over to pass the gate, rest, then stand it up in the giant kitchen."]
 		}
 	]

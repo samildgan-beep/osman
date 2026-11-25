@@ -59,6 +59,7 @@ const PICKUP_RANGE := 1.9
 const BACK_ROT_LIMIT_DEG := 28.0     # sırtta taşırken izin verilen yatırma
 const ITEM_FOLLOW_MAX_LAG := 0.22    # eşya bu kadar geride kalırsa karakter ilerleyemez
 const ITEM_FORCE_DROP_LAG := 1.3     # takılma çok büyürse eşya bırakılır
+const ITEM_MAX_TIP_SPEED := 3.0      # m/s: eşya çevrilirken ucunun en yüksek hızı (dev eşyalar yavaş döner)
 const ROTATION_SUBSTEP_DEG := 6.0    # büyük dönüşler küçük adımlarla denenir
 const ITEM_GRAVITY := 9.8
 const ITEM_MAX_FALL_SPEED := 9.0

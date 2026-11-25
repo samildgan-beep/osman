@@ -9,6 +9,8 @@ func _ready() -> void:
 	if args.size() > 0:
 		out = args[0]
 	DirAccess.make_dir_recursive_absolute(out)
+	await _menu_shots()
+	await _follow_shots(1, "f1")
 	for fid in [16, 17, 18, 19, 20]:
 		await _factory_shots(fid, "fa%d" % fid)
 	get_tree().quit()
@@ -188,11 +190,22 @@ func _factory_shots(id: int, tag: String) -> void:
 	add_child(cam)
 	var f: Dictionary = game.info.factory
 	var D: float = f.length
-	cam.global_position = Vector3(float(f.width) * 0.45, float(f.height) * 0.85, D * 0.12)
-	cam.look_at(Vector3(0, 2.0, D * 0.55))
+	cam.global_position = Vector3(float(f.width) * 0.42, float(f.height) * 0.8, 1.5)
+	cam.look_at(Vector3(-2.0, 1.0, D * 0.28))
 	cam.make_current()
 	await _wait_sec(0.4)
 	await _snap(tag + "_overview")
+	# Kuş bakışı harita: çatı ve duvar üstleri kesilir, labirent görünür
+	cam.global_position = Vector3(0, D * 0.36, D * 0.5)
+	cam.look_at(Vector3(0, 0, D * 0.5), Vector3.LEFT)   # salonun boyu ekranda yatay
+	cam.fov = 70.0
+	RenderingServer.global_shader_parameter_set("cut_height", 7.0)
+	RenderingServer.global_shader_parameter_set("ceil_cut_height", -10.0)
+	await _wait_sec(0.4)
+	await _snap(tag + "_map")
+	RenderingServer.global_shader_parameter_set("cut_height", 100000.0)
+	RenderingServer.global_shader_parameter_set("ceil_cut_height", 100000.0)
+	cam.fov = 60.0
 	var g: Vector3 = game.info.goal_center
 	cam.global_position = g + Vector3(6.0, float(f.height) * 0.5, -float(game.info.spot_size.z) - 12.0)
 	cam.look_at(g + Vector3(0, 3.0, 0))

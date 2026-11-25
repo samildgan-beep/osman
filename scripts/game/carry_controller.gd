@@ -11,6 +11,8 @@ var slope_comp := 0.0
 var last_lag := 0.0
 var rotated_total_deg := 0.0
 var lift_used := false
+var _pending_rot := Vector3.ZERO   # dev eşyada henüz uygulanmamış çevirme (yaw, pitch, roll derece)
+const GIANT_HALF_DIAG := 1.5
 var fine_mult := 1.0     # Player ayarlar: evin içinde eşya çevirme daha hassas
 
 
@@ -33,12 +35,14 @@ func grab(it: CarryItem) -> void:
 	lift = 0.0
 	slope_comp = 0.0
 	last_lag = 0.0
+	_pending_rot = Vector3.ZERO
 	it.pick_up()
 
 
 func release(gentle: bool, velocity: Vector3 = Vector3.ZERO) -> void:
 	if item == null or not is_instance_valid(item):
 		return
+	_pending_rot = Vector3.ZERO
 	if gentle:
 		item.put_down()
 	else:
@@ -73,6 +77,7 @@ func save_state() -> Dictionary:
 
 
 func restore_rotation(st: Dictionary) -> void:
+	_pending_rot = Vector3.ZERO   # takılan dönüş birikmesin (oyuncunun dönüşünü kilitlemesin)
 	hold_basis = st.basis
 
 
@@ -87,6 +92,7 @@ func apply_input(input: InputState, delta: float) -> void:
 		return
 	if input.consume("reset_rotation"):
 		hold_basis = Basis()
+		_pending_rot = Vector3.ZERO
 		AudioManager.play("click", -6.0)
 	var sens := float(GameState.get_setting("sensitivity"))
 	var mult := (Config.PRECISE_MULT if input.precise else 1.0) * fine_mult
@@ -106,6 +112,17 @@ func apply_input(input: InputState, delta: float) -> void:
 	roll += input.key_rotate.z * k
 	if bool(GameState.get_setting("invert_pitch")):
 		pitch = -pitch
+	# Dev eşya yavaş döner: ucunun hızı ITEM_MAX_TIP_SPEED'i geçmez (yoksa eşya geride kalıp düşer).
+	# Kaydırmanın fazlası atılmaz, sonraki karelerde tamamlanır. Normal eşyalar etkilenmez.
+	if is_giant():
+		_pending_rot += Vector3(yaw, pitch, roll)
+		var lim := max_rotation_deg(delta)
+		var total := absf(_pending_rot.x) + absf(_pending_rot.y) + absf(_pending_rot.z)
+		var f := minf(1.0, lim / maxf(total, 0.0001))
+		yaw = _pending_rot.x * f
+		pitch = _pending_rot.y * f
+		roll = _pending_rot.z * f
+		_pending_rot -= Vector3(yaw, pitch, roll)
 	var before := hold_basis
 	if yaw != 0.0:
 		hold_basis = Basis(Vector3.UP, deg_to_rad(-yaw)) * hold_basis
@@ -120,6 +137,18 @@ func apply_input(input: InputState, delta: float) -> void:
 	if input.lift != 0.0:
 		lift_used = true
 		lift = clampf(lift + input.lift * Config.LIFT_SPEED * (0.4 if input.precise else 1.0) * delta, Config.LIFT_MIN, Config.LIFT_MAX)
+
+
+## Dev eşya mı (fabrika bölümleri): çevirme hızı sınırlanır.
+func is_giant() -> bool:
+	return item != null and item.half.length() > GIANT_HALF_DIAG
+
+
+## Bu karede eşyanın en fazla kaç derece dönebileceği (boyuna göre).
+func max_rotation_deg(delta: float) -> float:
+	if item == null:
+		return 360.0
+	return rad_to_deg(Config.ITEM_MAX_TIP_SPEED * delta / maxf(0.3, item.half.length()))
 
 
 func _local_hold() -> Dictionary:

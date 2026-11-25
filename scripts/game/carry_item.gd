@@ -425,8 +425,14 @@ func _update_proximity() -> void:
 	var faces: Array = []
 	var inv := global_transform.affine_inverse()
 	var big_half := half + Vector3.ONE * Config.PROXIMITY_MARGIN
+	# Dev eşya yere çok yakın tutulur: alt yüzün altındaki temas (zemin) uyarı sayılmaz.
+	# (Normal eşyalarda alt uyarısı kalır: merdivende basamaklara yaklaşma önemli.)
+	var giant := half.length() > 1.5
 	for i in range(0, pts.size(), 2):
-		var f := DamageModel.face_from_local(inv * pts[i], big_half)
+		var lp: Vector3 = inv * pts[i]
+		if giant and lp.y < -half.y + 0.02:
+			continue
+		var f := DamageModel.face_from_local(lp, big_half)
 		if not faces.has(f):
 			faces.append(f)
 	_set_prox(faces)

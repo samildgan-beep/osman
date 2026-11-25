@@ -1,9 +1,12 @@
 class_name FactoryBuilder
 extends RefCounted
 ## Absürt fabrika bölümleri (16–20): adam tek başına, kendi boyunun 5–10 katı dev eşyaları
-## kocaman bir fabrika salonunda taşır. Salonun ortasındaki kapıdan geçmek için eşya
-## yatırılır ya da çevrilir; hedef, salonun sonundaki dev dekorun (küvet, hediye kutusu,
-## mutfak...) içindeki işaretli yerdir.
+## kocaman bir fabrika salonunda taşır. Salon, fabrika malzemelerinden (konteyner yığınları,
+## palet rafları, makineler, dev borular, çelik bobinler) duvarlarla labirente dönüşür:
+## her sıra bir duvardan uzanır, açıklıklar sırayla sağda/solda kalır (zikzak). Ortadaki
+## kapıdan geçmek için eşya yatırılır ya da çevrilir; hedef, salonun sonundaki dev dekorun
+## (küvet, hediye kutusu, mutfak...) içindeki işaretli yerdir.
+## Açıklık genişliği ve sıra aralığı eşyanın ölçüsünden hesaplanır: her bölüm çözülebilir.
 ## Koordinatlar: salon x ∈ [-W/2, W/2], z ∈ [0, D], zemin y = 0. Oyuncu +Z yönüne ilerler.
 
 const MBR := MeshBatcher.M_BRICK
@@ -33,8 +36,17 @@ var H := 14.0
 var gate := Vector2(8, 11)
 var decor := "pedestal"
 var isize := Vector3.ONE
-var clear_half := 6.0      # orta yol: engeller bu genişliğin dışında kalır
 var spot_z := 40.0
+var gz := 25.0             # ortadaki kapının z konumu
+var gate_clear := 12.0     # kapının iki yanında engelsiz bölge (eşyayı yatırıp kaldırmak için)
+var spacing := 14.0        # labirent sıraları arası
+var opening := 11.0        # her sıradaki geçiş açıklığı
+var start_front := 16.0
+var barriers: Array = []   # {z, side, x0, x1, open_x, kind}
+var path: Array = []       # yol noktaları (yön oku ve zemin okları)
+const BARRIER_T := 3.0
+const START_Z := 8.0
+const KINDS := ["containers", "racks", "machines", "pipes", "coils"]
 
 
 func build(lb: LevelBuilder) -> void:
@@ -46,20 +58,87 @@ func build(lb: LevelBuilder) -> void:
 	gate = f.gate
 	decor = str(f.decor)
 	isize = ItemDB.get_item(str(b.L.item)).size
-	clear_half = maxf(gate.x * 0.5 + 1.5, maxf(isize.x, isize.z) * 0.5 + 2.5)
-	spot_z = D - 3.5 - isize.z * 0.5
+	_layout(int(f.get("maze", 2)))
 
 	_floor()
 	_walls()
 	_roof()
 	_columns_and_crane()
 	_gate_wall()
-	_side_clutter()
+	_maze()
+	_start_corner()
+	_wall_details()
 	_goal_and_decor()
 	_signs()
 	_lights()
 	b.batch.build(b.root, b._building_material(), "Factory")
 	_info()
+
+
+# ================================================================ yerleşim
+
+## Labirent yerleşimi: sıra sayısı, aralıklar, kapı konumu ve salon boyu eşyaya göre hesaplanır.
+func _layout(maze_n: int) -> void:
+	var dims := [isize.x, isize.y, isize.z]
+	dims.sort()
+	var tallest: float = dims[2]
+	var maxfoot := maxf(isize.x, isize.z)
+	maze_n = clampi(maze_n, 0, 6)
+	# Sıra aralığı: açıklıktan dümdüz çıkıp eşyayı yana döndürecek ve bir sonraki açıklığa
+	# dümdüz girecek kadar yer (eşyanın yarı genişliği + pay, iki kez)
+	spacing = maxfoot * 2.0 + 10.0
+	gate_clear = tallest + 5.0
+	opening = minf(maxf(maxfoot + 3.5, W * 0.38), W - 6.0)
+	start_front = START_Z + 0.9 + isize.z + 4.0
+	var n1 := (maze_n + 1) / 2
+	var n2 := maze_n - n1
+	gz = start_front + n1 * spacing + gate_clear
+	var after := gz + gate_clear + n2 * spacing
+	# Son sıradan sonra: eşyayı hedefin önünde düzleştirip dümdüz yerleştirecek kadar yer
+	D = maxf(D, after + isize.z * 2.0 + 16.0)
+	spot_z = D - 3.5 - isize.z * 0.5
+	barriers.clear()
+	var side := -1.0
+	for i in n1:
+		barriers.append(_barrier_def(start_front + spacing * (i + 0.5), side))
+		side = -side
+	for i in n2:
+		barriers.append(_barrier_def(gz + gate_clear + spacing * (i + 0.5), side))
+		side = -side
+	# Her açıklık için iki nokta: önce hizalan (eşya tamamen önde, dümdüz gir), sonra
+	# tamamen çık (eşya sıranın arkasında kalınca dön).
+	var off := BARRIER_T * 0.5 + maxfoot * 0.5 + 1.2
+	path = [Vector3(0, 0, START_Z)]
+	for bd: Dictionary in barriers:
+		if float(bd.z) < gz:
+			path.append(Vector3(float(bd.path_x), 0, float(bd.z) - off - isize.z * 0.5))
+			path.append(Vector3(float(bd.path_x), 0, float(bd.z) + off))
+	path.append(Vector3(0, 0, gz - gate_clear + 2.0))
+	path.append(Vector3(0, 0, gz - 3.5))
+	path.append(Vector3(0, 0, gz + 3.5))
+	path.append(Vector3(0, 0, gz + gate_clear - 2.0))
+	for bd2: Dictionary in barriers:
+		if float(bd2.z) > gz:
+			path.append(Vector3(float(bd2.path_x), 0, float(bd2.z) - off - isize.z * 0.5))
+			path.append(Vector3(float(bd2.path_x), 0, float(bd2.z) + off))
+	path.append(Vector3(0, 0, spot_z - isize.z * 1.5 - 4.5))   # hedefin önünde hizalan
+	path.append(Vector3(0, 0, spot_z - isize.z * 0.5 - 1.2))
+
+
+## Bir labirent sırası: side = -1 sol duvardan, +1 sağ duvardan uzanır; açıklık karşı tarafta.
+func _barrier_def(z: float, side: float) -> Dictionary:
+	var cover := W - opening
+	var x_wall := side * W * 0.5
+	var x_end := x_wall - side * cover
+	return {
+		"z": z, "side": side,
+		"x0": minf(x_wall, x_end), "x1": maxf(x_wall, x_end),
+		"open_x": (x_end - side * W * 0.5) * 0.5,
+		# Yol, açıklığın ortası değil sıranın ucuna yakın geçer: eşya genişliği + pay.
+		# Böylece çapraz gelen dev eşyanın köşesi yan duvara takılmaz.
+		"path_x": x_end - side * (isize.x * 0.5 + 1.4),
+		"kind": KINDS[b.rng.randi() % KINDS.size()],
+	}
 
 
 # ================================================================ zemin
@@ -75,15 +154,22 @@ func _floor() -> void:
 	while xx < W * 0.5:
 		b.batch.add_box(Vector3(xx, 0.003, D * 0.5), Vector3(0.04, 0.004, D), C_CONCRETE.darkened(0.18), MPA)
 		xx += 6.0
-	# Yürüme yolu çizgileri (sarı) ve yön okları
-	for sx: float in [-1.0, 1.0]:
-		b.batch.add_box(Vector3(sx * clear_half, 0.006, D * 0.5), Vector3(0.18, 0.006, D - 1.0), C_YELLOW, MPA)
-	var az := 8.0
-	while az < D - 8.0:
-		if absf(az - D * 0.5) > 3.0:
-			b.batch.add_box_xform(Transform3D(Basis(Vector3.UP, PI * 0.25), Vector3(-0.45, 0.007, az)), Vector3(1.4, 0.006, 0.3), Color("f7f3e8"), MPA)
-			b.batch.add_box_xform(Transform3D(Basis(Vector3.UP, -PI * 0.25), Vector3(0.45, 0.007, az)), Vector3(1.4, 0.006, 0.3), Color("f7f3e8"), MPA)
-		az += 7.0
+	# Yol boyunca zemin okları (labirentte yön gösterir)
+	for k in range(path.size() - 1):
+		var a: Vector3 = path[k]
+		var c: Vector3 = path[k + 1]
+		var seg := c - a
+		var l := seg.length()
+		if l < 2.0:
+			continue
+		var yaw := atan2(seg.x, seg.z)
+		var t := 2.5
+		while t < l - 1.5:
+			var p := a + seg / l * t + Vector3(0, 0.007, 0)
+			var rb := Basis(Vector3.UP, yaw)
+			b.batch.add_box_xform(Transform3D(rb * Basis(Vector3.UP, PI * 0.25), p + rb * Vector3(-0.45, 0, 0)), Vector3(1.4, 0.006, 0.3), Color("f7f3e8"), MPA)
+			b.batch.add_box_xform(Transform3D(rb * Basis(Vector3.UP, -PI * 0.25), p + rb * Vector3(0.45, 0, 0)), Vector3(1.4, 0.006, 0.3), Color("f7f3e8"), MPA)
+			t += 5.0
 	# Yağ lekeleri (yaşanmışlık)
 	for i in 8:
 		var p := Vector3(b.rng.randf_range(-W * 0.4, W * 0.4), 0.005, b.rng.randf_range(4.0, D - 4.0))
@@ -182,7 +268,7 @@ func _columns_and_crane() -> void:
 	for sx: float in [-1.0, 1.0]:
 		b.batch.add_box(Vector3(sx * (W * 0.5 - 0.7), rail_y, D * 0.5), Vector3(0.5, 0.6, D), C_YELLOW.darkened(0.1), MMET)
 	# Köprülü vinç: salonun ilk çeyreğinde, eşyanın tepesinin üstünde
-	var cz := D * 0.2
+	var cz := gz - gate_clear * 0.55
 	var by := H - 2.4
 	b.batch.add_box(Vector3(0, by, cz), Vector3(W - 1.4, 0.8, 0.7), C_YELLOW, MPA)
 	b.batch.add_box(Vector3(0, by, cz + 1.2), Vector3(W - 1.4, 0.8, 0.7), C_YELLOW, MPA)
@@ -194,7 +280,7 @@ func _columns_and_crane() -> void:
 	_l.pixel_size = 0.008
 	_l.rotation.y = PI
 	# Kanca: yolun dışında, yan tarafta sarkıyor (yalnızca görsel)
-	var hx := clear_half + 2.0
+	var hx := W * 0.5 - 4.0
 	var hook := Vector3(hx, maxf(4.0, H * 0.45), cz + 0.6)
 	b.batch.add_box(Vector3(hx, by - 0.3, cz + 0.6), Vector3(0.8, 0.6, 0.8), Color("e0aa1f"), MPA)
 	b.batch.add_cylinder_between(Vector3(hx, by - 0.6, cz + 0.6), hook + Vector3(0, 0.8, 0), 0.05, C_BLACK, MMET)
@@ -205,7 +291,7 @@ func _columns_and_crane() -> void:
 # ================================================================ orta kapı
 
 func _gate_wall() -> void:
-	var z := D * 0.5
+	var z := gz
 	var t := 0.8
 	var gw := gate.x
 	var gh := gate.y
@@ -251,30 +337,195 @@ func _gate_wall() -> void:
 
 # ================================================================ yan dağınıklık (engeller)
 
-func _side_clutter() -> void:
-	var lx := -(clear_half + 1.6)
-	var rx := clear_half + 1.6
-	# Sol: konveyör bantları (kapı öncesi ve sonrası)
-	for seg: Vector2 in [Vector2(5.0, D * 0.5 - 3.0), Vector2(D * 0.5 + 3.0, D - 9.0)]:
-		if seg.y - seg.x < 4.0 or lx - 0.8 < -W * 0.5 + 0.9:
-			continue
-		_conveyor(Vector3(lx, 0, (seg.x + seg.y) * 0.5), seg.y - seg.x)
-	# Sağ: kasa yığınları, paletler, variller, forklift
-	if rx + 1.2 < W * 0.5 - 0.9:
-		var zs := [6.0, D * 0.5 - 6.0, D * 0.5 + 5.0]
-		for z: float in zs:
-			_crate_stack(Vector3(rx + 0.4, 0, z))
-		_barrels(Vector3(rx + 0.5, 0, D * 0.5 - 2.6))
-		_barrels(Vector3(rx + 0.5, 0, D * 0.5 + 9.5))
-		_forklift(Vector3(rx + 0.6, 0, D * 0.32))
-	# Duvar dibinde yangın tüpleri ve elektrik panoları (görsel)
-	for i in 4:
-		var z2 := 7.0 + i * (D - 14.0) / 3.0
+## Başlangıç köşesi: forklift, variller, kısa konveyör (oyuncunun ve eşyanın yolunu kesmez).
+func _start_corner() -> void:
+	_forklift(Vector3(W * 0.5 - 2.4, 0, 4.0))
+	_barrels(Vector3(-W * 0.5 + 1.4, 0, 4.0))
+	_crate_stack(Vector3(-W * 0.5 + 1.6, 0, 9.0))
+
+
+## Duvar dibinde yangın tüpleri ve elektrik panoları (görsel).
+func _wall_details() -> void:
+	var cnt := int(D / 14.0)
+	for i in cnt:
+		var z2 := 7.0 + i * (D - 14.0) / maxf(1.0, cnt - 1.0)
 		var p := Vector3(-W * 0.5 + 0.12, 1.2, z2)
 		b.batch.add_cylinder(p, 0.12, 0.55, Color("d62828"), Basis(), MPA)
 		b.batch.add_box(p + Vector3(0.0, 0.8, 0.0), Vector3(0.05, 0.4, 0.3), Color("ffffff"), MPA)
 		b.batch.add_box(Vector3(W * 0.5 - 0.12, 1.6, z2 + 1.5), Vector3(0.2, 1.2, 0.9), Color("9aa3ab"), MMET)
 		b.batch.add_box(Vector3(W * 0.5 - 0.23, 1.8, z2 + 1.5), Vector3(0.02, 0.18, 0.18), C_YELLOW, MPA)
+
+
+# ================================================================ labirent
+
+func _maze() -> void:
+	for bd: Dictionary in barriers:
+		var x0 := float(bd.x0)
+		var x1 := float(bd.x1)
+		var z := float(bd.z)
+		match str(bd.kind):
+			"containers":
+				_row_containers(x0, x1, z)
+			"racks":
+				_row_racks(x0, x1, z)
+			"machines":
+				_row_machines(x0, x1, z)
+			"pipes":
+				_row_pipes(x0, x1, z)
+			_:
+				_row_coils(x0, x1, z)
+		# Açık uçta sarı-siyah dikmeler ve zeminde tehlike şeridi
+		var side := float(bd.side)
+		var ex := x1 if side < 0.0 else x0
+		for dz: float in [-BARRIER_T * 0.5 - 0.25, BARRIER_T * 0.5 + 0.25]:
+			var bp := Vector3(ex - side * 0.0, 0.6, z + dz)
+			b.batch.add_cylinder(bp, 0.16, 1.2, C_YELLOW, Basis(), MPA)
+			b.batch.add_cylinder(bp + Vector3(0, 0.25, 0), 0.165, 0.15, C_BLACK, Basis(), MPA)
+			b._shape_cyl(bp, 0.17, 1.2)
+		for k in 6:
+			b.batch.add_box_xform(Transform3D(Basis(Vector3.UP, 0.7), Vector3(ex - side * (0.4 + k * 0.55), 0.008, z)), Vector3(0.22, 0.006, BARRIER_T + 0.6), C_YELLOW if k % 2 == 0 else C_BLACK, MPA)
+
+
+## Konteyner sırası: 2–3 katlı yığınlar, oluklu yanlar, uçta kapı kolları, "GIANT GOODS" yazısı.
+func _row_containers(x0: float, x1: float, z: float) -> void:
+	var cols := [Color("b03a2e"), Color("1f5fa8"), Color("2e8b57"), Color("e67e22"), Color("7f8c8d"), Color("8e44ad")]
+	var len_ := x1 - x0
+	var n := maxi(1, int(ceil(len_ / 6.2)))
+	var ml := len_ / n
+	var depth := 2.44
+	for i in n:
+		var cx := x0 + ml * (i + 0.5)
+		var stack := 2 + (b.rng.randi() % 2)
+		if 2.6 * stack > H - 1.0:
+			stack = 2
+		for k in stack:
+			var col: Color = cols[b.rng.randi() % cols.size()]
+			var c := Vector3(cx, 1.3 + k * 2.6, z)
+			b.solid(c, Vector3(ml - 0.08, 2.58, depth), col, true, MMET)
+			var rx := cx - ml * 0.5 + 0.25
+			while rx < cx + ml * 0.5 - 0.2:
+				for fz: float in [-1.0, 1.0]:
+					b.batch.add_box(Vector3(rx, c.y, z + fz * (depth * 0.5 + 0.02)), Vector3(0.12, 2.3, 0.04), col.darkened(0.18), MMET)
+				rx += 0.55
+			b.batch.add_box(c + Vector3(0, 1.27, 0), Vector3(ml - 0.06, 0.06, depth + 0.04), col.darkened(0.3), MMET)
+			if (i + k) % 2 == 0:
+				var lb := b._label("GIANT GOODS", Vector3(cx, c.y + 0.4, z - depth * 0.5 - 0.06), PI, 96, Color("f7f3e8"), false)
+				lb.pixel_size = 0.009
+			# Uç kapı (kollar)
+			for ex: float in [cx - ml * 0.5 + 0.03, cx + ml * 0.5 - 0.03]:
+				for dz2: float in [-0.6, -0.2, 0.2, 0.6]:
+					b.batch.add_cylinder_between(Vector3(ex, c.y - 1.1, z + dz2), Vector3(ex, c.y + 1.1, z + dz2), 0.03, Color("c0c4c8"), MMET)
+
+
+## Palet rafı: mavi dikmeler, turuncu kirişler, her katta paletli koliler.
+func _row_racks(x0: float, x1: float, z: float) -> void:
+	var levels := mini(4, int((H - 1.5) / 1.9))
+	var h := levels * 1.9 + 0.2
+	b.collider_mm(Vector3(x0, 0, z - BARRIER_T * 0.5), Vector3(x1, h, z + BARRIER_T * 0.5))
+	var n := maxi(1, int(ceil((x1 - x0) / 2.7)))
+	var bw := (x1 - x0) / n
+	for i in n + 1:
+		var x := x0 + bw * i
+		for dz: float in [-BARRIER_T * 0.5 + 0.08, BARRIER_T * 0.5 - 0.08]:
+			b.batch.add_box(Vector3(x, h * 0.5, z + dz), Vector3(0.1, h, 0.1), Color("1f5fa8"), MMET)
+		for k in levels:
+			b.batch.add_box_xform(Transform3D(Basis(Vector3.RIGHT, 0.5 if k % 2 == 0 else -0.5), Vector3(x, 0.9 + k * 1.9, z)), Vector3(0.05, 0.05, BARRIER_T * 1.1), Color("1f5fa8"), MMET)
+	for k in levels:
+		var y := 0.15 + k * 1.9
+		for dz: float in [-BARRIER_T * 0.5 + 0.08, BARRIER_T * 0.5 - 0.08]:
+			b.batch.add_box(Vector3((x0 + x1) * 0.5, y, z + dz), Vector3(x1 - x0, 0.14, 0.1), C_ORANGE, MMET)
+		for i in n:
+			var px := x0 + bw * (i + 0.5)
+			b.batch.add_box(Vector3(px, y + 0.14, z), Vector3(bw - 0.3, 0.14, BARRIER_T - 0.3), Color("a57c4f"), MW)
+			var bh := b.rng.randf_range(0.8, 1.5)
+			var wrap := b.rng.randf() < 0.35
+			b.batch.add_box(Vector3(px, y + 0.21 + bh * 0.5, z), Vector3(bw - 0.45, bh, BARRIER_T - 0.5), Color("dfe7ec") if wrap else C_CRATE.darkened(b.rng.randf_range(0.0, 0.15)), MG if wrap else MPA)
+			if not wrap:
+				b.batch.add_box(Vector3(px, y + 0.22 + bh, z), Vector3(0.15, 0.01, BARRIER_T - 0.48), Color("e8d9a8"), MPA)
+
+
+## Makine sırası: presler, kazanlar ve kontrol panoları; tepede dönen uyarı lambaları.
+func _row_machines(x0: float, x1: float, z: float) -> void:
+	var x := x0
+	var i := 0
+	while x < x1 - 0.5:
+		var w := minf(x1 - x, 3.2 if i % 3 != 1 else 2.8)
+		var cx := x + w * 0.5
+		match i % 3:
+			0:
+				# Pres: gövde, üst kafa, iki kolon, sarı-siyah şerit, kırmızı lamba
+				var h := minf(5.5, H - 1.5)
+				b.solid(Vector3(cx, 1.0, z), Vector3(w - 0.1, 2.0, BARRIER_T - 0.2), Color("3f6e5a"), true, MMET)
+				b.solid(Vector3(cx, h - 0.8, z), Vector3(w - 0.1, 1.6, BARRIER_T - 0.2), Color("3f6e5a"), true, MMET)
+				for sx: float in [-1.0, 1.0]:
+					b.solid(Vector3(cx + sx * (w * 0.5 - 0.35), h * 0.5, z), Vector3(0.5, h, 0.6), Color("2f5446"), true, MMET)
+				b.batch.add_box(Vector3(cx, 2.6, z), Vector3(w - 1.4, 1.2, 1.6), C_STEEL, MMET)
+				for k in int((w - 0.2) / 0.4):
+					b.batch.add_box(Vector3(x + 0.3 + k * 0.4, 2.05, z - BARRIER_T * 0.5 + 0.08), Vector3(0.4, 0.15, 0.02), C_YELLOW if k % 2 == 0 else C_BLACK, MPA)
+				b.glow.add_sphere(Vector3(cx, h + 0.15, z), 0.25, Color("ff3b30"))
+			1:
+				# Kazan: dikey silindir, yan borular, manometre
+				var r := minf(w, BARRIER_T) * 0.45
+				var h2 := minf(6.0, H - 1.5)
+				b.batch.add_cylinder(Vector3(cx, h2 * 0.5, z), r, h2, Color("c0c4c8"), Basis(), MMET)
+				b.batch.add_sphere(Vector3(cx, h2, z), r, Color("c0c4c8"), MMET, Vector3(1, 0.5, 1))
+				b._shape_cyl(Vector3(cx, h2 * 0.5, z), r, h2)
+				for k in 3:
+					b.batch.add_cylinder(Vector3(cx, 1.0 + k * 1.8, z), r + 0.04, 0.12, C_STEEL, Basis(), MMET)
+				b.batch.add_cylinder_between(Vector3(cx, h2 * 0.7, z), Vector3(cx + w * 0.5, h2 * 0.7, z), 0.18, Color("b55d2a"), MMET)
+				b.batch.add_cylinder(Vector3(cx, 2.0, z - r - 0.05), 0.22, 0.08, Color("f7f3e8"), Basis(Vector3.RIGHT, PI * 0.5), MPA)
+			_:
+				# Kontrol panosu: dolap, düğmeler, ekran
+				var h3 := 2.4
+				b.solid(Vector3(cx, h3 * 0.5, z), Vector3(w - 0.1, h3, BARRIER_T - 0.4), Color("d9d4c7"), true, MMET)
+				b.batch.add_box(Vector3(cx, 1.7, z - BARRIER_T * 0.5 + 0.18), Vector3(w * 0.5, 0.5, 0.02), Color("1b3a4b"), MG)
+				for k in 4:
+					b.glow.add_sphere(Vector3(cx - 0.6 + k * 0.4, 1.1, z - BARRIER_T * 0.5 + 0.17), 0.06, [Color("ff3b30"), Color("6fff8f"), Color("ffd23f"), Color("6fb7ea")][k])
+		x += w
+		i += 1
+
+
+## Dev boru yığını: 3-2-1 piramit, ahşap takozlar.
+func _row_pipes(x0: float, x1: float, z: float) -> void:
+	var r := 0.62
+	var axis := Basis(Vector3.FORWARD, PI * 0.5)
+	var rows := [[-1.0, 0.0, 1.0], [-0.5, 0.5], [0.0]]
+	var top := 0.0
+	for k in rows.size():
+		var y := r + 0.1 + k * r * 1.72
+		for zz: float in rows[k]:
+			var c := Vector3((x0 + x1) * 0.5, y, z + zz * r * 2.0)
+			b.batch.add_cylinder(c, r, x1 - x0, Color("6b7681") if k != 1 else Color("b55d2a"), axis, MMET)
+			b.batch.add_cylinder(Vector3(x1 if absf(x1) < absf(x0) else x0, y, c.z), r * 0.8, 0.02 + (x1 - x0) * 0.0, Color("2b2d31"), axis, MMET)
+		top = y + r
+	b.collider_mm(Vector3(x0, 0, z - BARRIER_T * 0.5 - 0.2), Vector3(x1, top, z + BARRIER_T * 0.5 + 0.2))
+	var xx := x0 + 1.0
+	while xx < x1:
+		b.batch.add_box(Vector3(xx, 0.06, z), Vector3(0.3, 0.12, BARRIER_T + 0.3), Color("8a6a4a"), MW)
+		xx += 3.0
+
+
+## Çelik bobin sırası: yan yatmış bobinler takozlarda, üstlerinde kasalar.
+func _row_coils(x0: float, x1: float, z: float) -> void:
+	var r := 1.15
+	var x := x0 + r + 0.15
+	var axis := Basis(Vector3.RIGHT, PI * 0.5)
+	while x < x1 - 0.3:
+		var c := Vector3(minf(x, x1 - r - 0.1), r + 0.15, z)
+		b.batch.add_cylinder(c, r, 1.6, Color("9aa3ab"), axis, MMET)
+		b.batch.add_cylinder(c, r * 0.4, 1.62, Color("3a3f45"), axis, MMET)
+		for dz: float in [-0.5, 0.5]:
+			b.batch.add_cylinder(c + Vector3(0, 0, dz), r + 0.02, 0.06, Color("1f5fa8"), axis, MPA)
+		b.batch.add_box(Vector3(c.x, 0.1, z), Vector3(2.2, 0.2, 1.8), Color("8a6a4a"), MW)
+		x += r * 2.0 + 0.4
+	b.collider_mm(Vector3(x0, 0, z - BARRIER_T * 0.5), Vector3(x1, 2.0 * r + 0.15, z + BARRIER_T * 0.5))
+	# Bobinlerin arkasında üst üste kasalar (sırayı yükseltir, görüşü keser)
+	var cx := x0 + 0.9
+	while cx < x1 - 0.8:
+		var s := 1.4
+		var c2 := Vector3(cx, 2.0 * r + 0.15 + s * 0.5, z + 0.7)
+		b.solid(c2, Vector3(s, s, s), C_CRATE, true, MW)
+		cx += 1.6
 
 
 func _conveyor(c: Vector3, length: float) -> void:
@@ -490,18 +741,12 @@ func _info() -> void:
 	info.spot_size = isize
 	info.npc_pos = Vector3(isize.x * 0.5 + 2.9, 0.0, spot_z - isize.z * 0.5 - 1.8)
 	info.npc_yaw = 0.0                         # girişe (oyuncuya) bakar
-	var start_z := 8.0
+	var start_z := START_Z
 	info.player_spawn = Transform3D(Basis(Vector3.UP, PI), Vector3(0, 0.05, start_z))
 	info.item_spawn = Vector3(0, 0, start_z + 0.9 + isize.z * 0.5)
-	info.waypoints = [
-		Vector3(0, 0, start_z),
-		Vector3(0, 0, D * 0.3),
-		Vector3(0, 0, D * 0.5 - 3.5),
-		Vector3(0, 0, D * 0.5 + 3.5),
-		Vector3(0, 0, D * 0.72),
-		Vector3(0, 0, spot_z - isize.z * 0.5 - 1.2),
-	]
+	info.waypoints = path.duplicate()
 	info.block_aabb = AABB(Vector3(-W * 0.5, -0.5, 0.0), Vector3(W, H + 1.0, D))
 	info.apt_aabb = AABB()
 	info.cam_scale = clampf(isize.y / 4.5, 1.6, 3.2)
-	info.factory = {"width": W, "length": D, "height": H, "gate": gate}
+	info.factory = {"width": W, "length": D, "height": H, "gate": gate, "gate_z": gz,
+		"gate_clear": gate_clear, "opening": opening, "spacing": spacing, "barriers": barriers.duplicate(true)}

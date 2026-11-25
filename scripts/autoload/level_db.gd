@@ -155,7 +155,11 @@ static func sanitize_factory(f, item: Dictionary) -> Dictionary:
 		"width": clampf(_num(f.get("width"), 26.0), maxf(16.0, tallest + 6.0), 60.0),
 		"height": clampf(_num(f.get("height"), 16.0), tallest + 2.5, 40.0),
 		"decor": str(f.get("decor", "pedestal")) if str(f.get("decor", "")) in FACTORY_DECORS else "pedestal",
+		"maze": clampi(_int(f.get("maze"), 2), 0, 6),
 	}
+	# Labirent: açıklık (eşya + 3.5 m) salonun en fazla %62'si olsun ki sıralar gerçekten yol kapatsın
+	var maxfoot := maxf(size.x, size.z)
+	out.width = maxf(out.width, (maxfoot + 3.5) / 0.62)
 	# Kapı: en dar kesitten geniş, ikinci kesitten yüksek; salonu aşamaz
 	out.gate = Vector2(clampf(gate.x, dims[0] + 1.2, out.width - 4.0), clampf(gate.y, dims[1] + 1.2, out.height - 1.0))
 	return out

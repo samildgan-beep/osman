@@ -25,6 +25,9 @@ func _ready() -> void:
 	await _test_home_speed()
 	await _test_first_person()
 	await _test_factory_gate()
+	await _test_factory_maze()
+	for fid in [16, 17, 18, 19, 20]:
+		await _test_factory_autopilot(fid)
 	await _test_audio()
 	GameState.from_dict(backup)
 	print("")
@@ -334,6 +337,125 @@ func _test_free_look() -> void:
 	await get_tree().process_frame
 
 
+## Fabrika labirenti: sıralar yolu gerçekten kapatır ama dev eşya her açıklıktan geçebilir.
+func _test_factory_maze() -> void:
+	section("Fabrika labirenti")
+	for fid in range(16, 21):
+		var L := LevelDB.get_level(fid)
+		var holder := Node3D.new()
+		add_child(holder)
+		var info := LevelBuilder.new().build(L, holder)
+		var f: Dictionary = info.factory
+		var bars: Array = f.barriers
+		var sz: Vector3 = ItemDB.get_item(str(L.item)).size
+		var maxfoot := maxf(sz.x, sz.z)
+		check(bars.size() >= 2, "bölüm %d: en az iki labirent sırası (%d)" % [fid, bars.size()])
+		var W: float = f.width
+		var sides := {}
+		var last_z := -100.0
+		for bd: Dictionary in bars:
+			var cover := float(bd.x1) - float(bd.x0)
+			check(cover >= W * 0.38, "bölüm %d: sıra salonun büyük kısmını kapatıyor (%.1f/%.1f)" % [fid, cover, W])
+			check(W - cover >= maxfoot + 3.0, "bölüm %d: açıklık eşyaya yetiyor (%.1f)" % [fid, W - cover])
+			check(absf(float(bd.z) - float(f.gate_z)) > float(f.gate_clear), "bölüm %d: kapının önü/arkası boş" % fid)
+			check(float(bd.z) - last_z > maxfoot + 4.0, "bölüm %d: sıralar arası dönmeye yetiyor" % fid)
+			last_z = float(bd.z)
+			sides[float(bd.side)] = true
+		check(sides.size() == 2, "bölüm %d: açıklıklar sağlı sollu (zikzak)" % fid)
+		check(float(bars[-1].z) + 6.0 < float(info.goal_center.z) - sz.z * 0.5, "bölüm %d: hedef labirentin dışında" % fid)
+		holder.queue_free()
+		await get_tree().process_frame
+
+
+## Otomatik pilot: dev eşyayla yol noktalarını izleyerek labirenti, kapıyı geçip hedefe ulaşır.
+## Kapıya sığmayan eşya kapı bölgesinde yatırılır/çevrilir, geçince tekrar dikilir.
+func _test_factory_autopilot(fid: int) -> void:
+	section("Fabrika otomatik pilot: bölüm %d" % fid)
+	var game := Game.new()
+	game.setup(fid)
+	add_child(game)
+	for i in 20:
+		await get_tree().physics_frame
+	await _grab_item(game)
+	check(game.player.is_holding(), "dev eşya elde")
+	for i in 10:
+		await get_tree().physics_frame
+	check(game.item.get_proximity_faces().is_empty(), "bölüm %d: açık alanda yanlış çarpma uyarısı yok %s" % [fid, str(game.item.get_proximity_faces())])
+	var f: Dictionary = game.info.factory
+	var gz: float = f.gate_z
+	var gate: Vector2 = f.gate
+	var half: Vector3 = game.item.half
+	var pass_basis := Basis()
+	if half.x * 2.0 > gate.x - 0.4 or half.y * 2.0 > gate.y - 0.4:
+		if half.z * 2.0 < gate.x - 0.4 and half.y * 2.0 < gate.y - 0.4:
+			pass_basis = Basis(Vector3.UP, PI * 0.5)
+		else:
+			pass_basis = Basis(Vector3.RIGHT, -PI * 0.5)
+	var wps: Array = game.info.waypoints
+	var idx := 1
+	var p := game.player
+	var stuck := 0
+	var hits := []
+	game.item.damaged.connect(func(amount: float, _dur: float, face: String, _hard: bool) -> void:
+		if amount >= 2.0:
+			hits.append("%.0f@%s(%.0f,%.0f)" % [amount, face, game.item.global_position.x, game.item.global_position.z]))
+	var last := p.global_position
+	var phase := 0
+	for frame in 12000:
+		if game.phase != Game.Phase.PLAYING:
+			break
+		p.stamina = Config.STAMINA_MAX   # pilot dinlenmez; yorgunluk ayrı test edildi
+		var pos := p.global_position
+		# Kapı bölgesi: yatır / çevir, geçince dik. Oyuncu gibi yavaş yavaş (oyunun dönüş sınırıyla)
+		if phase == 0 and pos.z > gz - float(f.gate_clear) + 3.0 and pass_basis != Basis():
+			phase = 1
+		elif phase == 1 and pos.z > gz + 2.0:
+			phase = 2
+		var want_b := pass_basis if phase == 1 else Basis()
+		var hb: Basis = p.carry.hold_basis
+		var qa := hb.get_rotation_quaternion()
+		var qb := want_b.get_rotation_quaternion()
+		var ang := qa.angle_to(qb)
+		if ang > 0.001:
+			var step := deg_to_rad(p.carry.max_rotation_deg(1.0 / 60.0))
+			p.carry.hold_basis = Basis(qa.slerp(qb, minf(1.0, step / ang)))
+			if ang > deg_to_rad(3.0):
+				# Çevirirken dur (oyuncu da önce çevirir, sonra yürür)
+				game.input.move = Vector2.ZERO
+				await get_tree().physics_frame
+				continue
+		var tgt: Vector3 = wps[idx]
+		var d := tgt - pos
+		d.y = 0.0
+		if d.length() < 1.8 and idx < wps.size() - 1:
+			idx += 1
+			continue
+		var want := atan2(-d.x, -d.z)
+		var diff := wrapf(want - p.get_yaw(), -PI, PI)
+		var mv := Vector2(clampf(-diff * 3.0, -1.0, 1.0), 1.0 if absf(diff) < 0.3 else 0.0)
+		if idx == wps.size() - 1 and d.length() < 2.0:
+			mv = Vector2.ZERO
+			game.input.move = mv
+			break
+		game.input.move = mv
+		await get_tree().physics_frame
+		if frame % 300 == 299:
+			if pos.distance_to(last) < 0.5:
+				stuck += 1
+				printerr("    pilot takıldı: bölüm %d nokta %d konum %s" % [fid, idx, str(pos)])
+				if stuck > 3:
+					break
+			last = pos
+	game.input.move = Vector2.ZERO
+	check(idx == wps.size() - 1, "bölüm %d: labirent ve kapı geçildi (yol noktası %d/%d)" % [fid, idx, wps.size() - 1])
+	check(p.is_holding(), "bölüm %d: eşya hâlâ elde" % fid)
+	if game.item.durability <= 60.0:
+		printerr("    büyük darbeler: ", hits)
+	check(game.item.durability > 60.0, "bölüm %d: eşya sağlam (%.0f)" % [fid, game.item.durability])
+	game.queue_free()
+	await get_tree().process_frame
+
+
 ## Fabrika: dik duran dev cıvata kapıdan geçmez; yatırılınca geçer, hasar almaz.
 func _test_factory_gate() -> void:
 	section("Fabrika: dev eşya kapıdan")
@@ -345,7 +467,7 @@ func _test_factory_gate() -> void:
 	await _grab_item(game)
 	check(game.player.is_holding(), "dev cıvata kaldırılıyor")
 	var f: Dictionary = game.info.factory
-	var gz: float = float(f.length) * 0.5
+	var gz: float = float(f.gate_z)
 	var gate: Vector2 = f.gate
 	var ext := DamageModel.rotated_half_extents(game.player.carry.hold_basis, game.item.half)
 	check(ext.y * 2.0 > gate.y, "dik dururken kapıdan yüksek (%.1f > %.1f)" % [ext.y * 2.0, gate.y])

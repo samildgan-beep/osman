@@ -448,6 +448,14 @@ func _update_home() -> void:
 		hud.hint("Inside the home: half speed. Move carefully!", 3.0)
 
 
+## Eşyanın bulunabileceği alan: oyun alanı (sokak + bina) ya da fabrika salonu, payıyla.
+func _item_area() -> AABB:
+	var area := AABB(Vector3(-120, -50, -120), Vector3(240, 200, 240))
+	if info.has("block_aabb"):
+		area = area.merge(AABB(info.block_aabb).grow(30.0))
+	return area
+
+
 func _is_indoor(p: Vector3) -> bool:
 	var b: AABB = info.block_aabb
 	return p.z > 0.05 and p.x > b.position.x and p.x < b.end.x and p.z < b.end.z and p.y > -1.0
@@ -476,10 +484,11 @@ func _check_safety() -> void:
 	if player.global_position.y < kill_y:
 		player.teleport(player.get_last_safe())
 		hud.hint("Back to a safe spot.", 2.5)
-	if item.global_position.y < kill_y or item.global_position.length() > 120.0:
+	if item.global_position.y < kill_y or not _item_area().has_point(item.global_position):
 		if player.is_holding():
 			player.carry.release(false)
-		var p := player.global_position + player.global_basis * Vector3(0, 0, -1.2)
+		# Eşya oyuncunun önüne, içine girmeyecek uzaklıkta konur (dev eşyalar dahil)
+		var p := player.global_position + player.global_basis * Vector3(0, 0, -(item.half.z + Config.PLAYER_RADIUS + 0.5))
 		item.place_on_ground(p)
 		item.grace = 1.0
 		hud.hint("The item was brought back.", 2.5)
