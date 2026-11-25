@@ -151,6 +151,18 @@ func max_rotation_deg(delta: float) -> float:
 	return rad_to_deg(Config.ITEM_MAX_TIP_SPEED * delta / maxf(0.3, item.half.length()))
 
 
+## Kaldıraç çarpanı: eşyanın ağırlık merkezi gövdeden ne kadar uzaksa taşımak o kadar yorar.
+## Sırttaki eşya ve fabrikanın dev eşyaları (hep ucundan tutulur) için 1.
+func leverage() -> float:
+	if not is_holding() or item.is_back_carry() or is_giant():
+		return 1.0
+	var h := _local_hold()
+	var local: Vector3 = h.local
+	var dist := Vector2(local.x, local.z).length()
+	var f := 1.0 + Config.LEVER_PER_M * maxf(0.0, dist - Config.LEVER_FREE_DIST) + Config.LEVER_LIFT_PER_M * maxf(0.0, lift)
+	return clampf(f, 1.0, Config.LEVER_MAX)
+
+
 func _local_hold() -> Dictionary:
 	var hb := hold_basis.orthonormalized()
 	var ext := DamageModel.rotated_half_extents(hb, item.half)

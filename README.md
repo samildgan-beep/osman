@@ -68,6 +68,10 @@ Masaüstünde fare ile dokunmatik taklit edilir (sol tık = parmak). Klavye kıs
   `spot` (eşyayı tam yerine, iki dolabın/komodinin arasına, ön yüzü odaya bakacak şekilde yerleştir — hayalet görüntü yol gösterir).
   1–5. bölümler kapıya/odaya teslim; **6. bölümden itibaren her bölümde eve girip eşyayı yerine koymak gerekir**
   (TV ve koltuk oturma odasında abajurlu iki komodin arasına, gardırop yatak odasına, beyaz eşya mutfak/çamaşır odasına)
+- **Kaldıraç (ucundan tutma):** eşyanın ağırlık merkezi gövdeden uzaklaştıkça (uzunlamasına, ucundan
+  tutma ya da kolları kaldırma) etkin ağırlık artar ve dayanıklılık daha hızlı biter (en fazla ×3).
+  Dayanıklılık çubuğu turuncu-kırmızıya döner, nabız gibi atar ve "STRAIN ×1.9" yazar. Gövdeye yakın
+  taşımak en az yorar. Sırttaki eşya ve fabrikanın dev eşyaları bu kuralın dışındadır.
 - **Ev içi:** daire koridoru ve odada eşya taşırken hız yarıya iner; dönüş, eşya çevirme ve kalkış/duruş daha yumuşak ve hassastır.
   Koridorda lambri, kilim yolluk, portmanto, ayna, diafon, sigorta kutusu, nazar boncuğu; odada avize, klima, kalorifer, saat, tablolar, konsol
 - **Kurye aracı:** küçük eşyalarda girişte kurye motosikleti; büyük eşyalarda yol kenarında arka kapıları açık, içi kolili şirin bir kamyonet

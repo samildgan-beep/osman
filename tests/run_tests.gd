@@ -24,6 +24,7 @@ func _ready() -> void:
 	await _test_spot_placement()
 	await _test_home_speed()
 	await _test_first_person()
+	await _test_leverage()
 	await _test_stair_entry()
 	await _test_factory_gate()
 	await _test_factory_maze()
@@ -543,6 +544,57 @@ func _test_factory_gate() -> void:
 	check(game.item.durability > dur0 - 3.0, "kapıdan geçerken hasar yok (%.1f)" % game.item.durability)
 	game.queue_free()
 	await get_tree().process_frame
+
+
+## Kaldıraç: eşya ucundan (gövdeden uzakta) tutulunca dayanıklılık daha hızlı biter, çubuk uyarır.
+func _test_leverage() -> void:
+	section("Kaldıraç (ucundan tutma)")
+	check(DamageModel.stamina_rate(true, 19.0, true, false, 2.0) < DamageModel.stamina_rate(true, 19.0, true, false, 1.0) * 1.8, "çarpan tüketimi artırır")
+	check(is_equal_approx(DamageModel.stamina_rate(true, 19.0, true, false), DamageModel.stamina_rate(true, 19.0, true, false, 1.0)), "varsayılan çarpan 1 (eski davranış)")
+	var game := Game.new()
+	game.setup(4)   # büyük TV
+	add_child(game)
+	for i in 10:
+		await get_tree().physics_frame
+	await _grab_item(game)
+	var p := game.player
+	check(p.is_holding(), "büyük TV elde")
+	var used := []
+	var factors := []
+	var straining := []
+	for hb: Basis in [Basis(), Basis(Vector3.UP, PI * 0.5)]:
+		p.carry.hold_basis = hb       # önce enine (gövdeye yakın), sonra uzunlamasına (ucundan)
+		game.item.global_transform = p.carry.target_transform()
+		for i in 5:
+			await get_tree().physics_frame
+		p.stamina = 100.0
+		for i in 120:
+			await get_tree().physics_frame
+		used.append(100.0 - p.stamina)
+		factors.append(p.carry.leverage())
+		straining.append(game.hud.is_stamina_straining())
+	check(float(factors[0]) < 1.1, "enine, gövdeye yakın: çarpan ~1 (%.2f)" % factors[0])
+	check(float(factors[1]) > 1.6, "ucundan tutunca çarpan büyük (%.2f)" % factors[1])
+	check(float(used[1]) > float(used[0]) * 1.5, "ucundan tutunca dayanıklılık daha hızlı biter (%.1f > %.1f)" % [used[1], used[0]])
+	check(not straining[0] and straining[1], "dayanıklılık çubuğu yalnızca zorlanınca uyarır")
+	# Kollar yukarı (LIFT) çarpanı artırır
+	var before: float = p.carry.leverage()
+	p.carry.lift = 0.4
+	check(p.carry.leverage() > before + 0.1, "kollar kalkınca zorlanma artar")
+	p.carry.lift = 0.0
+	game.queue_free()
+	await get_tree().process_frame
+	# Gövdeye yakın koli: etkilenmez. Sırttaki buzdolabı ve dev eşya: kural dışı.
+	for spec: Array in [[1, "koli"], [15, "sırttaki buzdolabı"], [16, "dev ördek"]]:
+		var g2 := Game.new()
+		g2.setup(int(spec[0]))
+		add_child(g2)
+		for i in 10:
+			await get_tree().physics_frame
+		await _grab_item(g2)
+		check(g2.player.is_holding() and g2.player.carry.leverage() < 1.1, "%s: çarpan ~1 (%.2f)" % [spec[1], g2.player.carry.leverage()])
+		g2.queue_free()
+		await get_tree().process_frame
 
 
 ## Birinci şahıs: kamera gözde, kafa dönerken gövde/eller/eşya sabit; LOOK ile üçüncü şahsa dönülür.

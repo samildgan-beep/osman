@@ -47,6 +47,13 @@ const STAMINA_IDLE_MULT := 0.35        # eşya elde, dururken
 const STAMINA_REGEN_REST := 22.0       # mola verirken (eşya yerde)
 const STAMINA_REGEN_FREE := 12.0       # eşyasız yürürken
 const STAMINA_WARN := 25.0
+# Kaldıraç: eşyanın ağırlık merkezi gövdeden uzaklaştıkça (ucundan tutma, kolları kaldırma)
+# taşıyıcının harcadığı güç artar. Etkin ağırlık = ağırlık × çarpan.
+const LEVER_FREE_DIST := 0.62    # m: gövdeye yakın tutuşta ağırlık merkezinin yatay uzaklığı
+const LEVER_PER_M := 1.7         # gövdeden her ek metre için çarpan artışı
+const LEVER_LIFT_PER_M := 0.6    # kollar yukarı kaldırıldıkça (LIFT)
+const LEVER_MAX := 3.0
+const LEVER_WARN := 1.25         # bu çarpanın üstünde dayanıklılık çubuğu uyarır
 const CRUSH_WEIGHT := 40.0            # bu kilodan ağır eşyada güç biterse taşıyıcı altında ezilir
 
 # --- Eşya tutma ---

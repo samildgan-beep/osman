@@ -143,6 +143,15 @@ func set_stamina(v: float) -> void:
 	_sta_bar.set_value(v)
 
 
+## Kaldıraç çarpanı (1 = normal). Eşik üstünde dayanıklılık çubuğu turuncu-kırmızı nabız atar.
+func set_stamina_strain(f: float) -> void:
+	_sta_bar.set_strain(f, Config.LEVER_WARN)
+
+
+func is_stamina_straining() -> bool:
+	return _sta_bar.is_straining()
+
+
 func set_guide(angle: float, text: String, visible_now: bool) -> void:
 	_arrow.active = visible_now
 	_arrow.set_data(angle, text)

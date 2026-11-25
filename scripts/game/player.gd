@@ -209,7 +209,7 @@ func _locomotion(delta: float) -> void:
 func _update_stamina(delta: float) -> void:
 	var holding := carry.is_holding()
 	var weight := level_item.get_weight() if level_item != null else 0.0
-	var rate := DamageModel.stamina_rate(holding, weight, moving, on_stairs)
+	var rate := DamageModel.stamina_rate(holding, weight, moving, on_stairs, carry.leverage() if holding else 1.0)
 	if resting and not holding:
 		rate = maxf(rate, Config.STAMINA_REGEN_REST * 1.25)
 	var before := stamina

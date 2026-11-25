@@ -240,6 +240,7 @@ func _physics_process(delta: float) -> void:
 		_update_free_look(delta)
 	cam.indoor = _is_indoor(cam.focus_point())
 	_update_home()
+	_update_strain(delta)
 	_update_labels()
 	cam.orbit(input.take_cam_orbit())
 	cam.zoom(input.take_cam_zoom())
@@ -434,6 +435,22 @@ func _update_labels() -> void:
 	for lb in info.labels:
 		if is_instance_valid(lb):
 			lb.visible = lb.global_position.y < cut - 0.1
+
+
+## Kaldıraç zorlanması: eşya gövdeden uzakta (ucundan) tutulunca dayanıklılık daha hızlı biter;
+## çubuk turuncu-kırmızı nabız atar. Bir süre sürerse bir kez ipucu verilir.
+var _strain_time := 0.0
+var _strain_hint_shown := false
+func _update_strain(delta: float) -> void:
+	var f := player.carry.leverage() if player.is_holding() else 1.0
+	hud.set_stamina_strain(f)
+	if f >= Config.LEVER_WARN and phase == Phase.PLAYING:
+		_strain_time += delta
+		if _strain_time > 1.2 and not _strain_hint_shown:
+			_strain_hint_shown = true
+			hud.hint("Holding it by the end wears you out ×%.1f faster! Carry it close to your body." % f, 4.0)
+	else:
+		_strain_time = 0.0
 
 
 ## Daire içi (koridor + odalar): taşırken yarı hız ve hassas kontrol. İlk girişte ipucu.

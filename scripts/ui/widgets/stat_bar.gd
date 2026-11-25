@@ -11,6 +11,10 @@ var mid := Color("ffc233")
 var low := Color("ef5350")
 var _trail := 100.0
 var _blink := 0.0
+var strain := 1.0          # >1: kaldıraç zorlanması (çubuk turuncu-kırmızı nabız atar)
+var strain_warn := 99.0
+var _pulse := 0.0
+const HOT := Color("ff5a1f")
 
 
 func _init(p_title: String = "", p_good: Color = Color("4cd07d")) -> void:
@@ -28,8 +32,23 @@ func set_value(v: float) -> void:
 	queue_redraw()
 
 
+## Kaldıraç zorlanmasını göster: çarpan uyarı eşiğini geçince renk ve nabız.
+func set_strain(f: float, warn: float) -> void:
+	strain_warn = warn
+	if absf(f - strain) > 0.01:
+		strain = f
+		queue_redraw()
+
+
+func is_straining() -> bool:
+	return strain >= strain_warn
+
+
 func _process(delta: float) -> void:
 	var changed := false
+	if is_straining():
+		_pulse += delta * (4.0 + 3.0 * (strain - strain_warn))
+		changed = true
 	if _trail > value:
 		_trail = maxf(value, _trail - delta * 40.0)
 		changed = true
@@ -47,7 +66,12 @@ func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	var fs := 18
 	var bar_rect := Rect2(Vector2(0, 20), Vector2(size.x, size.y - 20))
-	draw_string(font, Vector2(2, 15), title, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(1, 1, 1, 0.9))
+	var t := title
+	var tcol := Color(1, 1, 1, 0.9)
+	if is_straining():
+		t = "%s · STRAIN ×%.1f" % [title, strain]
+		tcol = Color(1.0, 0.72, 0.45).lerp(Color(1, 1, 1), 0.5 + 0.5 * sin(_pulse))
+	draw_string(font, Vector2(2, 15), t, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, tcol)
 	var pct := "%d%%" % int(round(value / max_value * 100.0))
 	var pw := font.get_string_size(pct, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 	draw_string(font, Vector2(size.x - pw - 2, 15), pct, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(1, 1, 1, 0.9))
@@ -58,6 +82,13 @@ func _draw() -> void:
 		col = low
 	elif f < 0.6:
 		col = mid.lerp(good, (f - 0.3) / 0.3)
+	if is_straining():
+		# Zorlanma: renk sıcaklaşır (çarpan arttıkça daha kırmızı) ve nabız gibi parlar
+		var k := clampf((strain - strain_warn) / 1.0, 0.25, 1.0)
+		col = col.lerp(HOT, k).lerp(Color(1, 0.85, 0.6), 0.25 * (0.5 + 0.5 * sin(_pulse)))
+		var glow := bar_rect.grow(2.0 + 1.5 * (0.5 + 0.5 * sin(_pulse)))
+		_round_rect(glow, Color(HOT, 0.35 + 0.25 * sin(_pulse)))
+		_round_rect(bar_rect, Color(0, 0, 0, 0.55))
 	if _trail > value:
 		_round_rect(Rect2(bar_rect.position, Vector2(bar_rect.size.x * (_trail / max_value), bar_rect.size.y)), Color(1, 1, 1, 0.55))
 	if f > 0.0:

@@ -67,10 +67,11 @@ static func carry_speed_mult(weight: float, back_carry: bool, on_stairs: bool) -
 
 
 ## Saniyedeki dayanıklılık değişimi (negatif = azalır).
-static func stamina_rate(holding: bool, weight: float, moving: bool, on_stairs: bool) -> float:
+## leverage: kaldıraç çarpanı (eşya gövdeden uzakta tutulunca etkin ağırlık artar).
+static func stamina_rate(holding: bool, weight: float, moving: bool, on_stairs: bool, leverage: float = 1.0) -> float:
 	if not holding:
 		return Config.STAMINA_REGEN_FREE if moving else Config.STAMINA_REGEN_REST
-	var extra := maxf(0.0, weight - Config.STAMINA_FREE_WEIGHT)
+	var extra := maxf(0.0, weight * maxf(1.0, leverage) - Config.STAMINA_FREE_WEIGHT)
 	if extra <= 0.0:
 		return Config.STAMINA_REGEN_FREE * 0.5
 	var drain := extra * Config.STAMINA_DRAIN_PER_KG

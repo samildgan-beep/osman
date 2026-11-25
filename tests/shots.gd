@@ -11,7 +11,7 @@ func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(out)
 	await _menu_shots()
 	await _follow_shots(1, "f1")
-	await _follow_shots(3, "f3")
+	await _strain_shots()
 	for fid in [16, 17, 18, 19, 20]:
 		await _factory_shots(fid, "fa%d" % fid)
 	get_tree().quit()
@@ -213,6 +213,30 @@ func _factory_shots(id: int, tag: String) -> void:
 	await _wait_sec(0.3)
 	await _snap(tag + "_goal")
 	cam.queue_free()
+	game.queue_free()
+	await _wait(5)
+
+
+## Kaldıraç uyarısı: büyük TV önce gövdeye yakın (enine), sonra ucundan (uzunlamasına).
+func _strain_shots() -> void:
+	var game := Game.new()
+	game.setup(4)
+	add_child(game)
+	await _wait_sec(1.0)
+	var p := game.player
+	var to_item := game.item.global_position - p.global_position
+	to_item.y = 0
+	p.teleport(game.item.global_position - to_item.normalized() * (1.0 + game.item.half.z) + Vector3(0, 0.05 - game.item.global_position.y, 0), atan2(-to_item.x, -to_item.z))
+	await _wait_sec(0.3)
+	game.input.press("interact")
+	await _wait_sec(1.0)
+	p.carry.hold_basis = Basis()
+	await _wait_sec(1.5)
+	await _snap("strain_close")
+	p.carry.hold_basis = Basis(Vector3.UP, PI * 0.5)
+	game.cam.preset("side")
+	await _wait_sec(2.5)
+	await _snap("strain_end")
 	game.queue_free()
 	await _wait(5)
 
