@@ -216,6 +216,14 @@ func _physics_process(delta: float) -> void:
 	var dir := rot * Vector3(0, 0, 1)
 	# Serbest bakışta kamera duvarlara takılmaz (her yere gidebilir)
 	var allowed := d_eff if free_look else _ray_distance(_pivot, dir, d_eff, cut, cut_h)
+	if not free_look and allowed < Config.CAM_CLOSE_LIMIT:
+		# Arkada duvar var: karakteri saydamlaştırmak yerine kamera yükselip başın üstünden bakar
+		var t := clampf((Config.CAM_CLOSE_LIMIT - allowed) / Config.CAM_CLOSE_LIMIT, 0.0, 1.0)
+		var steep := Basis.from_euler(Vector3(lerpf(p_eff, deg_to_rad(-62.0), t), yaw, 0.0)) * Vector3(0, 0, 1)
+		var allowed2 := _ray_distance(_pivot, steep, d_eff, cut, cut_h)
+		if allowed2 > allowed:
+			dir = steep
+			allowed = allowed2
 	# Yaklaşırken hızlı, uzaklaşırken yumuşak
 	if allowed < _cur_dist:
 		_cur_dist = lerpf(_cur_dist, allowed, 1.0 - exp(-25.0 * delta))
@@ -234,11 +242,7 @@ func _physics_process(delta: float) -> void:
 	else:
 		camera.look_at(_pivot, Vector3.UP)
 	camera.fov = lerpf(camera.fov, 58.0 if narrow_view else fov_target, 1.0 - exp(-3.0 * delta))
-	if target.visual != null:
-		# Kamera karaktere çok yaklaşınca (dar yerler) karakter saydamlaşır, görüşü kapatmaz
-		target.visual.set_head_visible(free_look or _cur_dist > 0.7)
-		target.visual.visible = free_look or _cur_dist > 0.45
-		target.visual.set_fade(1.0 if free_look else clampf((_cur_dist - 0.6) / 1.0, 0.3, 1.0))
+	# Karakter hiçbir zaman saydam/görünmez yapılmaz.
 
 
 ## Pivottan kamera yönüne en fazla ne kadar gidilebilir (duvar çarpışması).

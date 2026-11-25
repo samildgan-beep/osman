@@ -33,6 +33,10 @@ func _follow_shots(id: int, tag: String) -> void:
 	_tp(game, wps[1] + Vector3(0, 0.05, -0.8), PI)
 	await _wait_sec(1.5)
 	await _snap(tag + "_stair_bottom")
+	game.cam.zoom(5.0)   # en yakına yaklaş (fare tekerleği gibi)
+	await _wait_sec(1.0)
+	await _snap(tag + "_zoomed")
+	game.cam.dist = Config.CAM_DIST_DEFAULT
 	for i in 120:
 		game.input.move = Vector2(0, 0.8)
 		await get_tree().physics_frame

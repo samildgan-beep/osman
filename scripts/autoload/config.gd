@@ -75,7 +75,8 @@ const FLASH_TIME := 0.25
 
 # --- Kamera ---
 const CAM_DIST_DEFAULT := 2.9        # karakterin arkasında, omuz üstü takip kamerası
-const CAM_DIST_MIN := 1.2
+const CAM_DIST_MIN := 1.8           # tekerlek/sıkıştırma ile en fazla bu kadar yaklaşılır
+const CAM_CLOSE_LIMIT := 1.5         # duvar kamerayı bundan yakına iterse kamera yükselir
 const CAM_DIST_MAX := 9.0
 const CAM_PITCH_DEFAULT := -16.0
 const CAM_PIVOT_HEIGHT := 1.6        # kameranın baktığı nokta (ayaktan)
