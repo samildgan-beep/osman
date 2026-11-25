@@ -9,8 +9,9 @@ func _ready() -> void:
 	if args.size() > 0:
 		out = args[0]
 	DirAccess.make_dir_recursive_absolute(out)
+	await _portrait_shots(1, "p1")
 	await _follow_shots(1, "f1")
-	await _follow_shots(14, "f14")
+	await _win_shots(1, "w1")
 	get_tree().quit()
 
 
@@ -51,6 +52,47 @@ func _follow_shots(id: int, tag: String) -> void:
 	game.input.move = Vector2.ZERO
 	await _wait_sec(0.8)
 	await _snap(tag + "_landing_turn")
+	game.queue_free()
+	await _wait(5)
+
+
+## Karakterin yakın plan portresi: önden ve yandan, boşta ve eşya taşırken.
+func _portrait_shots(id: int, tag: String) -> void:
+	var game := Game.new()
+	game.setup(id)
+	add_child(game)
+	await _wait_sec(1.0)
+	var p := game.player
+	var cam := Camera3D.new()
+	cam.fov = 40.0
+	add_child(cam)
+	var look := func(off: Vector3, h: float) -> void:
+		var base := p.global_position + Vector3(0, h, 0)
+		cam.global_position = base + p.global_basis * off
+		cam.look_at(base)
+		cam.make_current()
+	look.call(Vector3(0, 0.1, -2.6), 1.0)
+	await _wait_sec(0.4)
+	await _snap(tag + "_front")
+	look.call(Vector3(0, 0.05, -0.9), 1.6)
+	await _wait_sec(0.2)
+	await _snap(tag + "_face")
+	var to_item := game.item.global_position - p.global_position
+	to_item.y = 0
+	p.teleport(game.item.global_position - to_item.normalized() * (1.0 + game.item.half.z) + Vector3(0, 0.05 - game.item.global_position.y, 0), atan2(-to_item.x, -to_item.z))
+	await _wait_sec(0.3)
+	game.input.press("interact")
+	await _wait_sec(1.2)
+	look.call(Vector3(-2.4, 0.3, -1.2), 1.0)
+	await _wait_sec(0.3)
+	await _snap(tag + "_carry_side")
+	for i in 40:
+		game.input.move = Vector2(0, 0.8)
+		await get_tree().physics_frame
+	look.call(Vector3(-2.4, 0.3, -1.2), 1.0)
+	await _snap(tag + "_walk_side")
+	game.input.move = Vector2.ZERO
+	cam.queue_free()
 	game.queue_free()
 	await _wait(5)
 
