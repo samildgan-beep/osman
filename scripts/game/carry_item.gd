@@ -16,7 +16,6 @@ enum State { FREE, HELD, LOWERING }
 
 const MAX_FOLLOW_SPEED := 5.0
 const FLOOR_NORMAL_Y := 0.55
-const MAX_SCRATCHES := 24
 
 var data: Dictionary = {}
 var half := Vector3(0.25, 0.25, 0.25)
@@ -245,8 +244,6 @@ func _on_collision(col: KinematicCollision3D, vel: Vector3, delta: float, floor_
 	var point := col.get_position()
 	var face := _face_at(point)
 	var dmg := _register_contact(impact, face, delta, is_obstacle)
-	if dmg >= 3.0:
-		_add_scratch(point, dmg)
 	if not is_obstacle and grace <= 0.0:
 		surface_contact.emit(point, nrm, vel, dmg, dmg >= 6.0)
 
@@ -303,29 +300,6 @@ func _nearest_contact_face() -> String:
 	if not _prox_faces.is_empty():
 		return str(_prox_faces[0])
 	return "front"
-
-
-func _add_scratch(world_point: Vector3, dmg: float) -> void:
-	if _visual.get_child_count() > _parts.size() + 6 + MAX_SCRATCHES:
-		return
-	var local := global_transform.affine_inverse() * world_point
-	local = local.clamp(-half, half)
-	var mi := MeshInstance3D.new()
-	var bm := BoxMesh.new()
-	var s := clampf(dmg * 0.012, 0.04, 0.18)
-	bm.size = Vector3(s, s * 0.35, s) + Vector3.ONE * 0.006
-	mi.mesh = bm
-	mi.position = local
-	mi.rotation = Vector3(randf() * TAU, randf() * TAU, randf() * TAU)
-	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.12, 0.1, 0.09)
-	mat.roughness = 1.0
-	mi.material_override = mat
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	_visual.add_child(mi)
-
-
-# ================================================================ serbest durum (yerde / düşüyor)
 
 func _physics_process(delta: float) -> void:
 	grace = maxf(0.0, grace - delta)
@@ -413,8 +387,6 @@ func _process_free(delta: float) -> void:
 			var face := _face_at(col.get_position())
 			var dmg := DamageModel.impact_damage(impact, float(data.get("fragility", 1.0)), DamageModel.face_multiplier(data, face)) * Config.DROP_DAMAGE_MULT
 			apply_damage(dmg, face, dmg >= 6.0, true)
-			if dmg >= 3.0:
-				_add_scratch(col.get_position(), dmg)
 			surface_contact.emit(col.get_position(), nrm, _fall_velocity, dmg, dmg >= 6.0)
 		if nrm.y > FLOOR_NORMAL_Y:
 			resting = true
