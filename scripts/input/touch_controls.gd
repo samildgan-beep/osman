@@ -35,6 +35,7 @@ func _ready() -> void:
 	_make_button("cam_top", "TOP", "tap", 30.0)
 	_make_button("cam_side", "SIDE", "tap", 30.0)
 	_make_button("pause", "II", "tap", 30.0)
+	_make_button("look", "LOOK", "toggle", 32.0)
 	buttons.interact.accent = Color(0.35, 0.85, 0.45)
 	buttons.mode.sublabel = "3rd axis"
 	buttons.interact.tapped.connect(func(): state.press("interact"))
@@ -45,6 +46,8 @@ func _ready() -> void:
 	buttons.cam_side.tapped.connect(func(): state.press("cam_side"))
 	buttons.pause.tapped.connect(func(): state.press("pause"))
 	buttons.mode.toggled_state.connect(func(on: bool): state.roll_mode = on)
+	buttons.look.accent = Color(0.4, 0.75, 1.0)
+	buttons.look.toggled_state.connect(func(on: bool): state.look_mode = on)
 	_left_handed = bool(GameState.get_setting("left_handed"))
 	GameState.settings_changed.connect(_on_settings_changed)
 	resized.connect(_layout)
@@ -82,18 +85,19 @@ func _layout() -> void:
 		"cam_top": Vector2(W - 135, 62),
 		"cam_side": Vector2(W - 65, 62),
 		"pause": Vector2(W - 290, 62),
+		"look": Vector2(W - 365, 62),
 	}
 	for id in buttons:
 		var b: TouchButton = buttons[id]
 		var p: Vector2 = pos[id]
-		if _left_handed and not id.begins_with("cam_") and id != "pause":
+		if _left_handed and not id.begins_with("cam_") and id != "pause" and id != "look":
 			p.x = W - p.x
 		b.position = p - b.size * 0.5
 
 
 func set_holding(v: bool) -> void:
 	holding = v
-	for id in ["lift_up", "lift_down", "precise", "mode", "reset"]:
+	for id: String in ["lift_up", "lift_down", "precise", "mode", "reset"]:
 		buttons[id].set_enabled(v)
 
 
@@ -183,7 +187,7 @@ func _on_drag(e: InputEventScreenDrag) -> void:
 	_right_touches[e.index] = e.position
 	if _right_touches.size() == 1:
 		var rel := e.position - prev
-		if holding:
+		if holding and not state.look_mode:
 			state.rotate_px += rel
 		else:
 			state.cam_orbit_px += rel
@@ -194,7 +198,13 @@ func _on_drag(e: InputEventScreenDrag) -> void:
 		var centroid := (a + b) * 0.5
 		var d := a.distance_to(b)
 		if _pinch_prev > 0.0:
-			state.cam_orbit_px += centroid - _centroid_prev
+			var cd := centroid - _centroid_prev
+			if state.look_mode:
+				# Serbest bakışta iki parmak yukarı/aşağı: kamerayı yükselt/alçalt
+				state.cam_orbit_px.x += cd.x
+				state.cam_rise += -cd.y * 0.02
+			else:
+				state.cam_orbit_px += cd
 			state.cam_zoom += (d - _pinch_prev) * Config.CAM_PINCH_FACTOR
 		_pinch_prev = d
 		_centroid_prev = centroid
@@ -241,6 +251,14 @@ func _draw() -> void:
 			hint.x = size.x - 150
 		draw_arc(hint, JOY_RADIUS, 0, TAU, 48, Color(1, 1, 1, 0.18), 2.0, true)
 		draw_circle(hint, 30.0, Color(1, 1, 1, 0.15))
+
+
+## Serbest bakış düğmesini dış durumla eşitle (klavyeden açılınca vb.)
+func set_look(on: bool) -> void:
+	var b: TouchButton = buttons.look
+	if b.toggled != on:
+		b.toggled = on
+		b.queue_redraw()
 
 
 func joystick_active() -> bool:

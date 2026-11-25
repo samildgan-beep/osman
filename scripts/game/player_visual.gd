@@ -21,6 +21,8 @@ var _arm_pose := 0.0     # 0 serbest, 1 önde taşıma, 2 sırtta taşıma
 var _cap: MeshInstance3D
 var _brim: MeshInstance3D
 var _t := 0.0
+var _fatigue := 0.0
+var crushed := false
 
 
 func _ready() -> void:
@@ -68,11 +70,11 @@ func _ready() -> void:
 
 	_arm_l = _limb(_torso, Vector3(-0.29, 0.56, 0), Vector3(0.11, 0.56, 0.11), "body")
 	_arm_r = _limb(_torso, Vector3(0.29, 0.56, 0), Vector3(0.11, 0.56, 0.11), "body")
-	for arm in [_arm_l, _arm_r]:
+	for arm: Node3D in [_arm_l, _arm_r]:
 		_box(arm, Vector3(0.1, 0.1, 0.1), Vector3(0, -0.6, 0), "skin")
 	_leg_l = _limb(_hips, Vector3(-0.11, 0.0, 0), Vector3(0.16, 0.9, 0.17), "legs")
 	_leg_r = _limb(_hips, Vector3(0.11, 0.0, 0), Vector3(0.16, 0.9, 0.17), "legs")
-	for leg in [_leg_l, _leg_r]:
+	for leg: Node3D in [_leg_l, _leg_r]:
 		_box(leg, Vector3(0.17, 0.08, 0.26), Vector3(0, -0.88, -0.04), "shoe")
 	apply_outfit(GameState.get_outfit_data())
 
@@ -120,6 +122,10 @@ func apply_outfit(o: Dictionary) -> void:
 
 ## st: {"speed", "holding", "back", "resting", "tired", "backward", "on_stairs"}
 func update_anim(delta: float, st: Dictionary) -> void:
+	if crushed:
+		return
+	# Yorgunluk (0..1): eşyayla uzun kalınca yavaş yavaş öne eğilir, dizler bükülür, titrer
+	_fatigue = lerpf(_fatigue, clampf(float(st.get("fatigue", 0.0)), 0.0, 1.0), 1.0 - exp(-2.0 * delta))
 	var speed := float(st.get("speed", 0.0))
 	var holding := bool(st.get("holding", false))
 	var back := bool(st.get("back", false))
@@ -145,11 +151,13 @@ func update_anim(delta: float, st: Dictionary) -> void:
 		lean_target = 0.08
 	if tired:
 		lean_target -= 0.12
+	if holding:
+		lean_target -= 0.55 * _fatigue
 	if resting:
 		lean_target = -0.55
 	_lean = lerpf(_lean, lean_target, k)
 	_torso.rotation.x = _lean
-	_crouch = lerpf(_crouch, 0.22 if resting else 0.0, k)
+	_crouch = lerpf(_crouch, 0.22 if resting else (0.16 * _fatigue if holding else 0.0), k)
 	_hips.position.y = 0.92 - _crouch + absf(sin(_phase)) * 0.035 * amp
 
 	# Bacaklar
@@ -164,7 +172,7 @@ func update_anim(delta: float, st: Dictionary) -> void:
 	var free_l := -swing * 0.8
 	var free_r := swing * 0.8
 	# +X ekseni etrafında pozitif dönüş sarkan kolu ileri (-Z) kaldırır.
-	var carry_front := 1.35 + sin(_phase * 2.0) * 0.04 * amp
+	var carry_front := 1.35 - 0.4 * _fatigue + sin(_phase * 2.0) * 0.04 * amp
 	var carry_back := -2.4
 	var arm_l: float
 	var arm_r: float
@@ -185,6 +193,21 @@ func update_anim(delta: float, st: Dictionary) -> void:
 
 	# Duygu pozları (ev sahibi ve bölüm sonu): sevinç, el sallama, endişe, üzüntü
 	_t += delta
+	# Yorgunluk: diz bükülmesi, baş eğilmesi ve titreme
+	if holding and _fatigue > 0.05 and not resting:
+		_leg_l.rotation.x += 0.35 * _fatigue
+		_leg_r.rotation.x += 0.35 * _fatigue
+		_head.rotation.x -= 0.3 * _fatigue
+		if _fatigue > 0.6:
+			var tr := (_fatigue - 0.6) * 2.5
+			_hips.position.x = sin(_t * 47.0) * 0.012 * tr
+			_torso.rotation.z = sin(_t * 31.0) * 0.03 * tr
+		else:
+			_hips.position.x = 0.0
+			_torso.rotation.z = 0.0
+	else:
+		_hips.position.x = 0.0
+		_torso.rotation.z = 0.0
 	if bool(st.get("cheer", false)):
 		var w := sin(_t * 9.0)
 		_arm_l.rotation = Vector3(2.85 + w * 0.15, 0.0, -0.35)
@@ -205,6 +228,24 @@ func update_anim(delta: float, st: Dictionary) -> void:
 		_arm_r.rotation = Vector3(2.6, 0.0, -0.75)
 		_head.rotation.x = -0.35
 		_torso.rotation.x = -0.2
+
+
+## Ağır eşyanın altında ezilme: sırtüstü düşer, yassılaşır, kollar ve bacaklar yana açılır.
+func play_crushed() -> void:
+	if crushed:
+		return
+	crushed = true
+	_arm_l.rotation = Vector3(0.3, 0.0, -1.4)
+	_arm_r.rotation = Vector3(0.3, 0.0, 1.4)
+	_leg_l.rotation = Vector3(0.0, 0.0, -0.35)
+	_leg_r.rotation = Vector3(0.0, 0.0, 0.35)
+	_torso.rotation = Vector3.ZERO
+	_hips.position = Vector3(0, 0.92, 0)
+	var tw := create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(self, "rotation:x", PI * 0.5, 0.28).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_property(self, "position:y", 0.14, 0.28)
+	tw.chain().tween_property(self, "scale", Vector3(1.3, 1.0, 0.32), 0.12).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 func set_head_visible(v: bool) -> void:

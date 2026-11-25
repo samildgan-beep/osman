@@ -6,6 +6,7 @@ extends CharacterBody3D
 signal stamina_changed(value: float)
 signal exhausted
 signal prompt_changed(text: String, enabled: bool)
+signal crushed            # ağır eşyayla güç bitti: altında ezilir
 signal picked_up
 signal put_down
 
@@ -136,6 +137,7 @@ func _locomotion(delta: float) -> void:
 		speed *= DamageModel.carry_speed_mult(level_item.get_weight(), level_item.is_back_carry(), on_stairs)
 		if stamina < Config.STAMINA_WARN:
 			speed *= 0.75
+		speed *= lerpf(1.0, 0.7, get_fatigue())
 	elif on_stairs:
 		speed *= 0.85
 
@@ -181,7 +183,7 @@ func _locomotion(delta: float) -> void:
 		_step_timer -= delta * (_speed_now / 1.6)
 		if _step_timer <= 0.0:
 			_step_timer = 0.45
-			AudioManager.play("step", -14.0, 1.2 if not holding else 0.9, 0.1)
+			AudioManager.play_step(on_stairs, holding and level_item != null and level_item.get_weight() >= 20.0)
 
 
 func _update_stamina(delta: float) -> void:
@@ -197,6 +199,10 @@ func _update_stamina(delta: float) -> void:
 	if holding and stamina < Config.STAMINA_WARN and _tired_sound_cd <= 0.0 and rate < 0.0:
 		_tired_sound_cd = 3.0
 		AudioManager.play("tired", -8.0)
+	if holding and stamina <= 0.0 and level_item.get_weight() >= Config.CRUSH_WEIGHT:
+		# Ağır eşya (buzdolabı, çamaşır makinesi, gardırop): taşıyıcı altında ezilir.
+		crushed.emit()
+		return
 	if holding and stamina <= 0.0:
 		# Güç bitti: eşya düşer.
 		carry.release(false, Vector3(velocity.x, 0.0, velocity.z) * 0.4)
@@ -305,7 +311,15 @@ func _animate(delta: float) -> void:
 		"tired": stamina < Config.STAMINA_WARN,
 		"backward": walking_backward,
 		"cheer": celebrating,
+		"fatigue": get_fatigue(),
 	})
+
+
+## Eşyayla geçen yorgunluk (0..1). Hafif eşyalar yormadığı için onlarda hep 0'a yakındır.
+func get_fatigue() -> float:
+	if not carry.is_holding():
+		return 0.0
+	return clampf(1.0 - stamina / Config.STAMINA_MAX, 0.0, 1.0)
 
 
 ## Bir noktaya dön (kutlama vb.)

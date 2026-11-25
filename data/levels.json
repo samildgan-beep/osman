@@ -1,8 +1,8 @@
 {
-	"_aciklama": "Bölüm tanımları. goal: door (daire kapısına teslim), room (odaya taşı), spot (tam yerine, ön yüz odaya bakacak şekilde yerleştir). theme: 0-5 renk teması. Ölçüler metre. corridor.turn: none | left | right. Engeller: cat, lamp, shoe_rack, plant, door, boxes. at: hall, flightA, flightB, mid, landing (floor ile), corridor, corridor2, room.",
+	"_aciklama": "Bölüm tanımları. building: turkish (eski Türk apartmanı, HİCRET APARTMANI) | modern (renkli tuğla apartman). goal: door (daire kapısına teslim), room (odaya taşı), spot (tam yerine, ön yüz odaya bakacak şekilde yerleştir). theme: 0-5 renk teması. Ölçüler metre. corridor.turn: none | left | right. Engeller: cat, lamp, shoe_rack, plant, door, boxes. at: hall, flightA, flightB, mid, landing (floor ile), corridor, corridor2, room.",
 	"levels": [
 		{
-			"id": 1, "name": "First Day", "subtitle": "Bring the box up to the 1st floor door.",
+			"id": 1, "name": "First Day", "building": "turkish", "subtitle": "Bring the box up to the 1st floor door.",
 			"item": "kutu", "floors": 1, "goal": "door", "theme": 0,
 			"stair_width": 1.6, "steps": 8, "rise": 0.175, "tread": 0.3, "landing": 2.0, "gap": 0.4, "ceiling": 2.6,
 			"entrance": [1.8, 2.4], "apt_door": [1.4, 2.2],
@@ -13,7 +13,7 @@
 			"tips": []
 		},
 		{
-			"id": 2, "name": "Kitchen Box", "subtitle": "Plates inside. No hard knocks!",
+			"id": 2, "name": "Kitchen Box", "building": "turkish", "subtitle": "Plates inside. No hard knocks!",
 			"item": "buyuk_kutu", "floors": 1, "goal": "door", "theme": 1,
 			"stair_width": 1.4, "steps": 8, "rise": 0.175, "tread": 0.3, "landing": 1.9, "gap": 0.35, "ceiling": 2.6,
 			"entrance": [1.6, 2.3], "apt_door": [1.2, 2.1],
@@ -24,7 +24,7 @@
 			"tips": ["When the box gets close to a wall, that edge glows yellow.", "Push the joystick gently to walk slowly."]
 		},
 		{
-			"id": 3, "name": "Handle With Care", "subtitle": "Carry the TV into the living room.",
+			"id": 3, "name": "Handle With Care", "building": "turkish", "subtitle": "Carry the TV into the living room.",
 			"item": "tv", "floors": 1, "goal": "room", "theme": 2,
 			"stair_width": 1.3, "steps": 8, "rise": 0.175, "tread": 0.29, "landing": 1.8, "gap": 0.35, "ceiling": 2.6,
 			"entrance": [1.5, 2.3], "apt_door": [1.1, 2.1],
@@ -35,7 +35,7 @@
 			"tips": ["The screen (front) takes double damage.", "Swipe on the right side to rotate the TV.", "Keep the screen away from the walls in the corridor."]
 		},
 		{
-			"id": 4, "name": "Second Floor", "subtitle": "Big screen, narrow stairs with railings.",
+			"id": 4, "name": "Second Floor", "building": "turkish", "subtitle": "Big screen, narrow stairs with railings.",
 			"item": "buyuk_tv", "floors": 2, "goal": "door", "theme": 3,
 			"stair_width": 1.15, "steps": 8, "rise": 0.175, "tread": 0.28, "landing": 1.6, "gap": 0.3, "ceiling": 2.5,
 			"entrance": [1.5, 2.3], "apt_door": [1.1, 2.1],
@@ -46,7 +46,7 @@
 			"tips": ["A cat wanders on the stairs. Don't hit it!", "Tilt the wide screen to fit narrow stairs.", "Use the TOP camera to see tight spots."]
 		},
 		{
-			"id": 5, "name": "Glass Table", "subtitle": "Glass top. Mind the hanging lamps.",
+			"id": 5, "name": "Glass Table", "building": "turkish", "subtitle": "Glass top. Mind the hanging lamps.",
 			"item": "sehpa", "floors": 2, "goal": "room", "theme": 4,
 			"stair_width": 1.2, "steps": 8, "rise": 0.175, "tread": 0.28, "landing": 1.6, "gap": 0.3, "ceiling": 2.5,
 			"entrance": [1.4, 2.3], "apt_door": [1.05, 2.1],
@@ -57,7 +57,7 @@
 			"tips": ["The glass top takes double damage.", "Use LIFT / LOWER to pass under low lamps."]
 		},
 		{
-			"id": 6, "name": "Giant Screen", "subtitle": "Very narrow stairs, an open door, a shoe rack.",
+			"id": 6, "name": "Giant Screen", "building": "turkish", "subtitle": "Very narrow stairs, an open door, a shoe rack.",
 			"item": "buyuk_tv", "floors": 2, "goal": "room", "theme": 5,
 			"stair_width": 1.05, "steps": 8, "rise": 0.175, "tread": 0.28, "landing": 1.5, "gap": 0.3, "ceiling": 2.5,
 			"entrance": [1.4, 2.3], "apt_door": [1.05, 2.1],
@@ -68,7 +68,7 @@
 			"tips": ["Hold FINE to rotate slowly.", "Put the TV down to close the open door."]
 		},
 		{
-			"id": 7, "name": "Sofa Time", "subtitle": "Deliver the sofa to the 1st floor door.",
+			"id": 7, "name": "Sofa Time", "building": "modern", "subtitle": "Deliver the sofa to the 1st floor door.",
 			"item": "koltuk", "floors": 1, "goal": "door", "theme": 0,
 			"stair_width": 1.5, "steps": 8, "rise": 0.175, "tread": 0.3, "landing": 2.1, "gap": 0.35, "ceiling": 2.6,
 			"entrance": [1.8, 2.4], "apt_door": [0.98, 2.1],
@@ -79,7 +79,7 @@
 			"tips": ["Turning on the landing needs space: lift the sofa or stand it up.", "ROLL mode tilts it on its side."]
 		},
 		{
-			"id": 8, "name": "Tight Door", "subtitle": "Narrow door, turning corridor. Sofa goes in the living room.",
+			"id": 8, "name": "Tight Door", "building": "modern", "subtitle": "Narrow door, turning corridor. Sofa goes in the living room.",
 			"item": "koltuk", "floors": 1, "goal": "room", "theme": 1,
 			"stair_width": 1.45, "steps": 8, "rise": 0.175, "tread": 0.3, "landing": 2.1, "gap": 0.35, "ceiling": 2.6,
 			"entrance": [1.6, 2.4], "apt_door": [0.95, 2.1],
@@ -90,7 +90,7 @@
 			"tips": ["The sofa won't go through sideways: point the long side at the door.", "Stand the sofa upright to get around the corner."]
 		},
 		{
-			"id": 9, "name": "Corner Trouble", "subtitle": "Two floors, a tight corridor and a cat.",
+			"id": 9, "name": "Corner Trouble", "building": "modern", "subtitle": "Two floors, a tight corridor and a cat.",
 			"item": "koltuk", "floors": 2, "goal": "room", "theme": 2,
 			"stair_width": 1.45, "steps": 8, "rise": 0.175, "tread": 0.3, "landing": 2.1, "gap": 0.35, "ceiling": 2.6,
 			"entrance": [1.6, 2.4], "apt_door": [0.95, 2.1],
@@ -101,7 +101,7 @@
 			"tips": ["The sofa is heavy: take a REST when your stamina is low."]
 		},
 		{
-			"id": 10, "name": "Wardrobe", "subtitle": "Tall wardrobe, low ceiling. Deliver to the door.",
+			"id": 10, "name": "Wardrobe", "building": "turkish", "subtitle": "Tall wardrobe, low ceiling. Deliver to the door.",
 			"item": "gardirop", "floors": 2, "goal": "door", "theme": 3,
 			"stair_width": 1.3, "steps": 8, "rise": 0.175, "tread": 0.3, "landing": 1.8, "gap": 0.35, "ceiling": 2.2,
 			"entrance": [1.6, 2.3], "apt_door": [1.1, 2.05],
@@ -112,7 +112,7 @@
 			"tips": ["Tilt the wardrobe to match the slope of the stairs.", "The mirror doors (front) are fragile."]
 		},
 		{
-			"id": 11, "name": "Low Ceiling", "subtitle": "Put the wardrobe in its spot in the bedroom.",
+			"id": 11, "name": "Low Ceiling", "building": "turkish", "subtitle": "Put the wardrobe in its spot in the bedroom.",
 			"item": "gardirop", "floors": 2, "goal": "spot", "theme": 4,
 			"stair_width": 1.3, "steps": 8, "rise": 0.175, "tread": 0.3, "landing": 1.8, "gap": 0.35, "ceiling": 2.05,
 			"entrance": [1.5, 2.2], "apt_door": [1.05, 2.0],
@@ -123,7 +123,7 @@
 			"tips": ["The ghost outline shows the exact spot.", "Mirrors must face the room."]
 		},
 		{
-			"id": 12, "name": "Spiral Up", "subtitle": "Three floors of low, winding stairs.",
+			"id": 12, "name": "Spiral Up", "building": "turkish", "subtitle": "Three floors of low, winding stairs.",
 			"item": "gardirop", "floors": 3, "goal": "spot", "theme": 5,
 			"stair_width": 1.25, "steps": 8, "rise": 0.175, "tread": 0.29, "landing": 1.7, "gap": 0.3, "ceiling": 2.0,
 			"entrance": [1.5, 2.2], "apt_door": [1.05, 2.0],
@@ -134,7 +134,7 @@
 			"tips": ["Keep the wardrobe upright when turning on landings."]
 		},
 		{
-			"id": 13, "name": "Laundry Day", "subtitle": "Install the washing machine in the laundry room.",
+			"id": 13, "name": "Laundry Day", "building": "modern", "subtitle": "Install the washing machine in the laundry room.",
 			"item": "camasir", "floors": 1, "goal": "spot", "theme": 0,
 			"stair_width": 1.3, "steps": 8, "rise": 0.175, "tread": 0.29, "landing": 1.8, "gap": 0.35, "ceiling": 2.5,
 			"entrance": [1.5, 2.3], "apt_door": [1.0, 2.1],
@@ -145,7 +145,7 @@
 			"tips": ["It's heavy: you'll get tired fast.", "Pick it up from the front so the door faces you, then back it into the slot.", "The glass door (front) is fragile."]
 		},
 		{
-			"id": 14, "name": "Spin Cycle", "subtitle": "Narrow stairs, two floors, one heavy washer.",
+			"id": 14, "name": "Spin Cycle", "building": "modern", "subtitle": "Narrow stairs, two floors, one heavy washer.",
 			"item": "camasir", "floors": 2, "goal": "spot", "theme": 1,
 			"stair_width": 1.0, "steps": 8, "rise": 0.175, "tread": 0.28, "landing": 1.6, "gap": 0.3, "ceiling": 2.4,
 			"entrance": [1.4, 2.3], "apt_door": [0.95, 2.1],
@@ -156,7 +156,7 @@
 			"tips": ["Rest on the landings before you run out of stamina."]
 		},
 		{
-			"id": 15, "name": "Wash & Go", "subtitle": "Three floors. Lamps, boxes and an open door.",
+			"id": 15, "name": "Wash & Go", "building": "modern", "subtitle": "Three floors. Lamps, boxes and an open door.",
 			"item": "camasir", "floors": 3, "goal": "spot", "theme": 2,
 			"stair_width": 1.1, "steps": 8, "rise": 0.175, "tread": 0.28, "landing": 1.6, "gap": 0.3, "ceiling": 2.3,
 			"entrance": [1.4, 2.3], "apt_door": [0.95, 2.1],
@@ -167,7 +167,7 @@
 			"tips": ["Plan your rests: one on every landing."]
 		},
 		{
-			"id": 16, "name": "Cold Cargo", "subtitle": "Fridge on your back. Deliver it to the door.",
+			"id": 16, "name": "Cold Cargo", "building": "turkish", "subtitle": "Fridge on your back. Deliver it to the door.",
 			"item": "buzdolabi", "floors": 2, "goal": "door", "theme": 3,
 			"stair_width": 1.25, "steps": 8, "rise": 0.175, "tread": 0.29, "landing": 1.7, "gap": 0.3, "ceiling": 2.5,
 			"entrance": [1.5, 2.3], "apt_door": [1.0, 2.1],
@@ -178,7 +178,7 @@
 			"tips": ["If your stamina runs out, the fridge falls!", "REST puts it down so you can catch your breath.", "Carrying on your back narrows your view."]
 		},
 		{
-			"id": 17, "name": "Steep & Narrow", "subtitle": "Steep steps, three floors. Fridge goes in the kitchen.",
+			"id": 17, "name": "Steep & Narrow", "building": "turkish", "subtitle": "Steep steps, three floors. Fridge goes in the kitchen.",
 			"item": "buzdolabi", "floors": 3, "goal": "spot", "theme": 4,
 			"stair_width": 1.0, "steps": 8, "rise": 0.185, "tread": 0.27, "landing": 1.55, "gap": 0.3, "ceiling": 2.4,
 			"entrance": [1.4, 2.3], "apt_door": [0.95, 2.1],
@@ -189,7 +189,7 @@
 			"tips": ["Walk backwards into the kitchen slot so the fridge door faces the room."]
 		},
 		{
-			"id": 18, "name": "Final Stop", "subtitle": "Fourth floor. Are you a true mover?",
+			"id": 18, "name": "Final Stop", "building": "turkish", "subtitle": "Fourth floor. Are you a true mover?",
 			"item": "buzdolabi", "floors": 4, "goal": "spot", "theme": 5,
 			"stair_width": 1.0, "steps": 8, "rise": 0.185, "tread": 0.27, "landing": 1.5, "gap": 0.3, "ceiling": 2.3,
 			"entrance": [1.4, 2.3], "apt_door": [0.92, 2.1],

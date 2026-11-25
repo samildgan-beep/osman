@@ -34,6 +34,7 @@ const STAMINA_IDLE_MULT := 0.35        # eşya elde, dururken
 const STAMINA_REGEN_REST := 22.0       # mola verirken (eşya yerde)
 const STAMINA_REGEN_FREE := 12.0       # eşyasız yürürken
 const STAMINA_WARN := 25.0
+const CRUSH_WEIGHT := 40.0            # bu kilodan ağır eşyada güç biterse taşıyıcı altında ezilir
 
 # --- Eşya tutma ---
 const HOLD_GAP := 0.32               # karakter gövdesi ile eşya arası boşluk
@@ -78,7 +79,10 @@ const CAM_DIST_MIN := 1.6
 const CAM_DIST_MAX := 9.0
 const CAM_PITCH_DEFAULT := -28.0
 const CAM_PITCH_MIN := -86.0
-const CAM_PITCH_MAX := 12.0
+const CAM_PITCH_MAX := 35.0          # normal modda yukarı bakış sınırı
+const CAM_FREE_PITCH_MAX := 70.0     # serbest bakışta yukarı bakış sınırı
+const CAM_PAN_SPEED := 4.5           # serbest bakışta kaydırma hızı (m/s)
+const CAM_RISE_SPEED := 3.0          # serbest bakışta yükselme hızı (m/s)
 const CAM_ORBIT_DEG_PER_PIXEL := 0.28
 const CAM_PINCH_FACTOR := 0.012
 const CAM_SMOOTH := 10.0
@@ -127,6 +131,7 @@ func _setup_input_map() -> void:
 		"cam_top": [KEY_2],
 		"cam_side": [KEY_3],
 		"pause": [KEY_ESCAPE, KEY_P],
+		"look_toggle": [KEY_V, KEY_C],
 	}
 	for action in map:
 		if not InputMap.has_action(action):

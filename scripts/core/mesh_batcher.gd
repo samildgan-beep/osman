@@ -20,6 +20,7 @@ const M_GRASS := 10
 const M_PAVING := 11
 const M_PAINT := 12
 const M_FABRIC := 13
+const M_TERRAZZO := 14
 
 static var _unit_box: Array = []
 static var _unit_cyl: Array = []

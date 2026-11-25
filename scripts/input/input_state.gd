@@ -11,6 +11,8 @@ var lift := 0.0                     # -1 indir, +1 kaldır
 var precise := false
 var cam_orbit_px := Vector2.ZERO
 var cam_zoom := 0.0                 # + yakınlaş, - uzaklaş
+var look_mode := false              # serbest bakış: karakter durur, kamera gezer
+var cam_rise := 0.0                 # serbest bakışta yukarı/aşağı (birikimli)
 var _pressed: Dictionary = {}       # tek seferlik düğmeler
 
 
@@ -38,6 +40,12 @@ func take_cam_orbit() -> Vector2:
 	return v
 
 
+func take_cam_rise() -> float:
+	var v := cam_rise
+	cam_rise = 0.0
+	return v
+
+
 func take_cam_zoom() -> float:
 	var v := cam_zoom
 	cam_zoom = 0.0
@@ -52,4 +60,5 @@ func clear() -> void:
 	precise = false
 	cam_orbit_px = Vector2.ZERO
 	cam_zoom = 0.0
+	cam_rise = 0.0
 	_pressed.clear()

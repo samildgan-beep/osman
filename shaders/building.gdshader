@@ -140,6 +140,18 @@ void fragment() {
 		// Boya: hafif parlak düz yüzey
 		col = base * (0.97 + 0.06 * noise(uv * 4.0));
 		rough = 0.45;
+	} else if (m == 14) {
+		// Mozaik (terrazzo): cilalı zemin içinde renkli taş kırıntıları
+		vec2 cell = floor(uv * 55.0);
+		float h = hash(cell);
+		vec3 chip = mix(vec3(0.32, 0.28, 0.25), vec3(0.96, 0.94, 0.89), hash(cell + 3.1));
+		chip = mix(chip, vec3(0.6, 0.28, 0.2), step(0.92, hash(cell + 7.7)));
+		vec2 cell2 = floor(uv * 23.0);
+		float big = step(0.86, hash(cell2 + 1.7));
+		col = base * (0.93 + 0.08 * noise(uv * 6.0));
+		col = mix(col, chip, step(0.6, h) * 0.7);
+		col = mix(col, vec3(0.45, 0.42, 0.4), big * 0.35);
+		rough = 0.28;
 	} else if (m == 13) {
 		// Kumaş
 		col = base * (0.88 + 0.2 * noise(uv * 50.0));

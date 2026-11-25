@@ -4,6 +4,8 @@ extends Node3D
 ## - İki parmak kaydırma: döndürme, sıkıştırma: yakınlaştırma
 ## - Hazır görünümler: arka, üst (duvarlar kesitli), yan
 ## - Duvarlara girmez (ışın testi); üst görünümde kesilmiş geometriyi yok sayar.
+## - Serbest bakış (LOOK): karakter yerinde durur, kamera sahnede her yere götürülür,
+##   yukarı/aşağı yükseltilir ve her yöne döndürülür.
 
 var target: Player
 var camera: Camera3D
@@ -24,6 +26,12 @@ var _anim_dist := 0.0
 var _cut_active := false
 var _excluded: Array[RID] = []
 var _shake := 0.0
+
+# Serbest bakış
+var free_look := false
+var bounds := AABB(Vector3(-16, -0.5, -16), Vector3(32, 30, 40))   # Game sahneye göre ayarlar
+var _free_pivot := Vector3.ZERO
+var _return_time := 0.0
 
 
 func setup(player: Player) -> void:
@@ -49,7 +57,8 @@ func orbit(px: Vector2) -> void:
 		return
 	var sens := float(GameState.get_setting("camera_sensitivity")) * Config.CAM_ORBIT_DEG_PER_PIXEL
 	yaw -= deg_to_rad(px.x * sens)
-	pitch = clampf(pitch - deg_to_rad(px.y * sens), deg_to_rad(Config.CAM_PITCH_MIN), deg_to_rad(Config.CAM_PITCH_MAX))
+	var max_p := Config.CAM_FREE_PITCH_MAX if free_look else Config.CAM_PITCH_MAX
+	pitch = clampf(pitch - deg_to_rad(px.y * sens), deg_to_rad(Config.CAM_PITCH_MIN), deg_to_rad(max_p))
 	_anim_active = false
 
 
@@ -87,6 +96,47 @@ func focus(p_yaw: float, p_pitch_deg: float, p_dist: float) -> void:
 	_start_anim(p_yaw, deg_to_rad(p_pitch_deg), p_dist)
 
 
+## Serbest bakışı aç/kapat. Kapanınca kamera yumuşakça karaktere döner.
+func set_free_look(on: bool) -> void:
+	if on == free_look:
+		return
+	free_look = on
+	if on:
+		_free_pivot = _pivot
+		_anim_active = false
+	else:
+		_return_time = 1.2
+		pitch = clampf(pitch, deg_to_rad(Config.CAM_PITCH_MIN), deg_to_rad(Config.CAM_PITCH_MAX))
+	AudioManager.play("click", -6.0)
+
+
+## Serbest bakışta kamerayı kaydır: move.x sağ/sol, move.y ileri/geri (kameranın baktığı yöne göre),
+## rise yukarı/aşağı. Hız uzaklığa göre ölçeklenir.
+func pan(move: Vector2, rise: float, delta: float) -> void:
+	if not free_look or (move == Vector2.ZERO and rise == 0.0):
+		return
+	var fwd := Vector3(-sin(yaw), 0.0, -cos(yaw))
+	var right := Vector3(cos(yaw), 0.0, -sin(yaw))
+	var spd := Config.CAM_PAN_SPEED * (0.6 + dist / 6.0)
+	_free_pivot += (right * move.x + fwd * move.y) * spd * delta
+	_free_pivot.y += rise * Config.CAM_RISE_SPEED * delta
+	_free_pivot = _free_pivot.clamp(bounds.position, bounds.end)
+
+
+## Serbest bakışta kamerayı doğrudan yükselt/alçalt (dokunmatik iki parmak).
+func raise(amount: float) -> void:
+	if not free_look or amount == 0.0:
+		return
+	_free_pivot.y = clampf(_free_pivot.y + amount, bounds.position.y, bounds.end.y)
+
+
+## Kameranın odaklandığı nokta (serbest bakışta kaydırılan nokta, değilse karakter).
+func focus_point() -> Vector3:
+	if free_look:
+		return _free_pivot - Vector3(0, 1.55, 0)
+	return target.global_position
+
+
 func is_top_view() -> bool:
 	return pitch < deg_to_rad(-60.0)
 
@@ -101,16 +151,22 @@ func _physics_process(delta: float) -> void:
 		dist = lerpf(dist, _anim_dist, k)
 		if absf(yaw - _anim_yaw) < 0.002 and absf(pitch - _anim_pitch) < 0.002 and absf(dist - _anim_dist) < 0.01:
 			_anim_active = false
-	var desired_pivot := target.global_position + Vector3(0, 1.55, 0)
-	_pivot = _pivot.lerp(desired_pivot, 1.0 - exp(-Config.CAM_SMOOTH * delta))
-	if _pivot.distance_to(desired_pivot) > 4.0:
+	var desired_pivot := _free_pivot if free_look else target.global_position + Vector3(0, 1.55, 0)
+	var smooth := Config.CAM_SMOOTH
+	if free_look:
+		smooth = 14.0
+	elif _return_time > 0.0:
+		_return_time -= delta
+		smooth = 5.0
+	_pivot = _pivot.lerp(desired_pivot, 1.0 - exp(-smooth * delta))
+	if not free_look and _return_time <= 0.0 and _pivot.distance_to(desired_pivot) > 4.0:
 		_pivot = desired_pivot
 
 	# Kesit: bina içinde veya üstten görünümde, oyuncunun başının üstündeki her şey gizlenir.
 	# Tavanlar ayrı (yarı saydam) çizilir; yalnızca bulunulan katınki görünür.
 	var top := is_top_view()
 	var cut := top or indoor
-	var feet := target.global_position.y
+	var feet := _pivot.y - 1.55 if (free_look or _return_time > 0.0) else target.global_position.y
 	var cut_h := feet + (Config.CAM_TOP_CUT if top else Config.CAM_INDOOR_CUT)
 	if cut:
 		RenderingServer.global_shader_parameter_set("cut_height", cut_h)
@@ -123,13 +179,17 @@ func _physics_process(delta: float) -> void:
 
 	var rot := Basis.from_euler(Vector3(pitch, yaw, 0.0))
 	var dir := rot * Vector3(0, 0, 1)
-	var allowed := _ray_distance(_pivot, dir, dist, cut, cut_h)
+	# Serbest bakışta kamera duvarlara takılmaz (her yere gidebilir)
+	var allowed := dist if free_look else _ray_distance(_pivot, dir, dist, cut, cut_h)
 	# Yaklaşırken hızlı, uzaklaşırken yumuşak
 	if allowed < _cur_dist:
 		_cur_dist = lerpf(_cur_dist, allowed, 1.0 - exp(-25.0 * delta))
 	else:
 		_cur_dist = lerpf(_cur_dist, allowed, 1.0 - exp(-4.0 * delta))
 	camera.global_position = _pivot + dir * _cur_dist
+	if free_look:
+		# Bulunulan zeminin altına inmesin
+		camera.global_position.y = maxf(camera.global_position.y, _pivot.y - 1.4)
 	if _shake > 0.0:
 		_shake = maxf(0.0, _shake - delta * 2.5)
 		var s := _shake * _shake * 0.12
@@ -140,7 +200,7 @@ func _physics_process(delta: float) -> void:
 		camera.look_at(_pivot, Vector3.UP)
 	camera.fov = lerpf(camera.fov, 58.0 if narrow_view else fov_target, 1.0 - exp(-3.0 * delta))
 	if target.visual != null:
-		target.visual.set_head_visible(_cur_dist > 0.9)
+		target.visual.set_head_visible(free_look or _cur_dist > 0.9)
 
 
 ## Pivottan kamera yönüne en fazla ne kadar gidilebilir (duvar çarpışması).

@@ -147,6 +147,7 @@ func _spawn_player() -> void:
 	player.stamina_changed.connect(func(v: float): hud.set_stamina(v))
 	player.prompt_changed.connect(func(t: String, e: bool): touch.set_interact(t, e))
 	player.picked_up.connect(_on_holding_changed)
+	player.crushed.connect(_on_player_crushed)
 	player.put_down.connect(_on_holding_changed)
 	player.exhausted.connect(func():
 		hud.center_message("Out of stamina!", 1.6, UITheme.BAD)
@@ -182,6 +183,9 @@ func _spawn_camera() -> void:
 	add_child(cam)
 	cam.setup(player)
 	cam.add_exclude(item.get_rid())
+	# Serbest bakışta kameranın gezebileceği alan: sokak + bina + çatının biraz üstü
+	var b: AABB = info.block_aabb
+	cam.bounds = AABB(Vector3(-38.0, -0.3, -38.0), Vector3(76.0, b.end.y + 8.0, 66.0))
 
 
 func _build_ui() -> void:
@@ -227,7 +231,8 @@ func _physics_process(delta: float) -> void:
 	if phase == Phase.PLAYING:
 		_gather_keyboard()
 		_handle_ui_actions()
-	cam.indoor = _is_indoor(player.global_position)
+		_update_free_look(delta)
+	cam.indoor = _is_indoor(cam.focus_point())
 	_update_labels()
 	cam.orbit(input.take_cam_orbit())
 	cam.zoom(input.take_cam_zoom())
@@ -263,7 +268,7 @@ func _gather_keyboard() -> void:
 		input.lift = kl
 	if Input.is_action_pressed("precise"):
 		input.precise = true
-	for a in ["interact", "rest", "reset_rotation", "cam_back", "cam_top", "cam_side", "pause"]:
+	for a: String in ["interact", "rest", "reset_rotation", "cam_back", "cam_top", "cam_side", "pause", "look_toggle"]:
 		if Input.is_action_just_pressed(a):
 			if a == "pause" and Time.get_ticks_msec() < _ignore_pause_until:
 				continue
@@ -279,6 +284,39 @@ func _handle_ui_actions() -> void:
 		cam.preset("side")
 	if input.consume("pause"):
 		pause_game()
+
+
+## Serbest bakış: karakter yerinde durur; joystick/WASD kamerayı gezdirir,
+## LIFT/LOWER (Q/E) veya iki parmak yukarı/aşağı kamerayı yükseltir.
+func _update_free_look(delta: float) -> void:
+	if input.consume("look_toggle"):
+		input.look_mode = not input.look_mode
+		touch.set_look(input.look_mode)
+	if input.look_mode != cam.free_look:
+		cam.set_free_look(input.look_mode)
+		if input.look_mode:
+			hud.hint("Free camera: move with the joystick, swipe to look around, two fingers up/down (or LIFT/LOWER) to rise. Tap LOOK to return.", 5.0)
+		elif _tut_step >= 0 and _tut_step < _tutorial.size():
+			hud.hint_persistent(str(_tutorial[_tut_step].t))
+		else:
+			hud.hint("")
+	if not cam.free_look:
+		return
+	cam.pan(input.move, input.lift, delta)
+	cam.raise(input.take_cam_rise())
+	# Karakter bu sırada hareket etmez, eşya dönmez
+	input.move = Vector2.ZERO
+	input.lift = 0.0
+	input.key_rotate = Vector3.ZERO
+	input.rotate_px = Vector2.ZERO
+
+
+func _exit_free_look() -> void:
+	input.look_mode = false
+	if touch != null:
+		touch.set_look(false)
+	if cam != null:
+		cam.set_free_look(false)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -461,7 +499,10 @@ func _on_item_destroyed() -> void:
 	if phase != Phase.PLAYING:
 		return
 	_fail("The %s broke!" % str(item_data.name).to_lower(), "Tip: when an edge glows yellow, slow down and change the angle.")
-	# Eşya parçalara ayrılır
+	# Eşya parçalara ayrılır: camlı eşyalarda cam kırılma sesi, diğerlerinde çatırtı
+	var glassy := not (item_data.get("fragile_faces", {}) as Dictionary).is_empty()
+	AudioManager.play("shatter" if glassy else "crack", 2.0)
+	AudioManager.play("thud", 0.0, 0.8)
 	fx.shatter(item.get_debris_parts(), item.global_position, Vector3.ZERO)
 	item.hide_visual()
 	item.collision_layer = 0
@@ -469,6 +510,34 @@ func _on_item_destroyed() -> void:
 	item.set_physics_process(false)
 	if npc != null:
 		npc.sad()
+
+
+## Ağır eşyayla güç bitti: taşıyıcı sırtüstü düşer, eşya üstüne yığılır (komik başarısızlık).
+func _on_player_crushed() -> void:
+	if phase != Phase.PLAYING:
+		return
+	var pp := player.global_position
+	var pb := Basis(Vector3.UP, player.get_yaw())
+	player.carry.release(false)
+	_on_holding_changed()
+	# Eşyayı taşıyıcının vücudunun üstüne, yatık şekilde konumla ve düşür
+	var body_center := pp + pb * Vector3(0, 0, 0.85)
+	var lying := pb * Basis(Vector3.RIGHT, PI * 0.5)
+	item.global_transform = Transform3D(lying, body_center + Vector3.UP * (item.half.z + 0.45))
+	if item.is_overlapping():
+		# Dar yerde yatık sığmıyorsa dik olarak üstüne düşsün
+		item.global_transform = Transform3D(pb, body_center + Vector3.UP * (item.half.y + 0.3))
+	item.grace = 0.0
+	item.drop(Vector3(0, -2.5, 0))
+	player.visual.play_crushed()
+	AudioManager.play("thud", 2.0, 0.7)
+	AudioManager.play("crack", 0.0, 0.6)
+	cam.shake(1.0)
+	cam.focus(player.get_yaw() + 0.7, -38.0, 4.0)
+	if npc != null:
+		npc.set_state("worried", 3.0)
+		npc.say("Oh no! Are you okay?!", 3.0)
+	_fail("Crushed under the %s!" % str(item_data.name).to_lower(), "Tip: take a REST before your stamina runs out. Heavy items will flatten you!")
 
 
 func _on_proximity(faces: Array) -> void:
@@ -631,6 +700,7 @@ func rescue() -> void:
 # ================================================================ bitiş
 
 func _win() -> void:
+	_exit_free_look()
 	phase = Phase.WON
 	player.frozen = true
 	touch.release_all()
@@ -684,6 +754,7 @@ func _celebrate(perfect: bool) -> void:
 
 
 func _fail(reason: String, tip: String) -> void:
+	_exit_free_look()
 	phase = Phase.FAILED
 	player.frozen = true
 	if player.is_holding():

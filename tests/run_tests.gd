@@ -18,6 +18,9 @@ func _ready() -> void:
 	_test_save_files()
 	await _test_level_builds()
 	await _test_gameplay_smoke()
+	await _test_free_look()
+	await _test_crush()
+	await _test_audio()
 	GameState.from_dict(backup)
 	print("")
 	print("==== SONUÇ: %d geçti, %d başarısız ====" % [_passed, _failed])
@@ -76,7 +79,7 @@ func _test_damage_model() -> void:
 func _test_item_db() -> void:
 	section("Eşya verisi")
 	check(ItemDB.errors.is_empty(), "items.json hatasız olmalı: %s" % str(ItemDB.errors))
-	for id in ["kutu", "buyuk_kutu", "tv", "buyuk_tv", "sehpa", "koltuk", "gardirop", "camasir", "buzdolabi"]:
+	for id: String in ["kutu", "buyuk_kutu", "tv", "buyuk_tv", "sehpa", "koltuk", "gardirop", "camasir", "buzdolabi"]:
 		check(ItemDB.has_item(id), "eşya var: " + id)
 	check(ItemDB.get_item("buzdolabi").carry == "back", "buzdolabı sırtta")
 	check(ItemDB.get_item("yok_boyle_bir_sey").id == "kutu", "bilinmeyen eşya koliye düşer")
@@ -96,6 +99,8 @@ func _test_level_db() -> void:
 		goals[str(L.goal)] = true
 	check(goals.has("door") and goals.has("room") and goals.has("spot"), "üç hedef türü de kullanılıyor")
 	check(LevelDB.get_level(13).item == "camasir" and LevelDB.get_level(13).goal == "spot", "çamaşır makinesi yerleştirme bölümü")
+	check(LevelDB.get_level(1).building == "turkish", "oyun eski Türk apartmanında başlıyor")
+	check(LevelDB.get_level(7).building == "modern", "modern apartman da kullanılıyor")
 	for L in LevelDB.all_levels():
 		var id := int(L.id)
 		var item := ItemDB.get_item(str(L.item))
@@ -150,7 +155,7 @@ func _test_save_sanitize() -> void:
 func _test_save_files() -> void:
 	section("Bozuk kayıt dosyası")
 	var path := "user://test_corrupt.json"
-	for content in ["", "{bozuk json", "[1,2,3]", "null", "\"metin\""]:
+	for content: String in ["", "{bozuk json", "[1,2,3]", "null", "\"metin\""]:
 		var f := FileAccess.open(path, FileAccess.WRITE)
 		f.store_string(content)
 		f.close()
@@ -209,6 +214,97 @@ func _test_level_builds() -> void:
 		check(clear, "bölüm %d: yol noktaları oyuncuya yetecek kadar boş" % int(L.id))
 		holder.queue_free()
 		await get_tree().process_frame
+
+
+## Eşyayı oyuncunun eline verir (yanına ışınlayıp AL'a basar).
+func _grab_item(game: Game) -> void:
+	var p := game.player
+	var to_item := game.item.global_position - p.global_position
+	to_item.y = 0
+	if to_item.length() < 0.01:
+		to_item = Vector3.FORWARD
+	p.teleport(game.item.global_position - to_item.normalized() * (1.0 + game.item.half.z) + Vector3(0, 0.05 - game.item.global_position.y, 0), atan2(-to_item.x, -to_item.z))
+	for i in 5:
+		await get_tree().physics_frame
+	game.input.press("interact")
+	for i in 30:
+		await get_tree().physics_frame
+
+
+func _test_free_look() -> void:
+	section("Serbest kamera")
+	var game := Game.new()
+	game.setup(1)
+	add_child(game)
+	for i in 30:
+		await get_tree().physics_frame
+	var start := game.player.global_position
+	var cam_before := game.cam.focus_point()
+	game.input.look_mode = true
+	for i in 40:
+		game.input.move = Vector2(0, 1)
+		await get_tree().physics_frame
+	game.input.move = Vector2.ZERO
+	check(game.cam.free_look, "serbest bakış açılıyor")
+	check(game.player.global_position.distance_to(start) < 0.2, "serbest bakışta karakter yerinde duruyor")
+	check(game.cam.focus_point().distance_to(cam_before) > 1.0, "serbest bakışta kamera geziyor")
+	game.cam.orbit(Vector2(0, -400))
+	check(game.cam.pitch > 0.0, "kamera yukarı da bakabiliyor")
+	game.input.look_mode = false
+	for i in 5:
+		await get_tree().physics_frame
+	check(not game.cam.free_look, "serbest bakış kapanıyor")
+	game.queue_free()
+	await get_tree().process_frame
+
+
+func _test_crush() -> void:
+	section("Yorulma ve ezilme")
+	# Ağır eşya (buzdolabı): güç bitince taşıyıcı ezilir
+	var game := Game.new()
+	game.setup(16)
+	add_child(game)
+	for i in 30:
+		await get_tree().physics_frame
+	await _grab_item(game)
+	check(game.player.is_holding(), "buzdolabı sırta alınıyor")
+	game.player.stamina = 50.0
+	check(game.player.get_fatigue() > 0.4, "yorgunluk dayanıklılıkla artıyor")
+	game.player.stamina = 0.01
+	for i in 20:
+		await get_tree().physics_frame
+	check(game.phase == Game.Phase.FAILED, "güç bitince bölüm başarısız")
+	check(game.player.visual.crushed, "taşıyıcı buzdolabının altında eziliyor")
+	game.queue_free()
+	await get_tree().process_frame
+	# Hafif eşya (koli): ezilme yok, sadece düşer
+	var g2 := Game.new()
+	g2.setup(1)
+	add_child(g2)
+	for i in 30:
+		await get_tree().physics_frame
+	await _grab_item(g2)
+	g2.player.stamina = 0.0
+	var old_w = g2.player.level_item.data["weight"]
+	g2.player.level_item.data["weight"] = 30.0   # yorulsun ama ezilmesin (< CRUSH_WEIGHT)
+	for i in 20:
+		await get_tree().physics_frame
+	g2.player.level_item.data["weight"] = old_w   # paylaşılan eşya verisini geri yükle
+	check(g2.phase == Game.Phase.PLAYING, "hafif eşyada bölüm sürüyor")
+	check(not g2.player.visual.crushed and not g2.player.is_holding(), "hafif eşya sadece düşüyor")
+	g2.queue_free()
+	await get_tree().process_frame
+
+
+func _test_audio() -> void:
+	section("Sesler")
+	var t0 := Time.get_ticks_msec()
+	while not AudioManager._music_ready and Time.get_ticks_msec() - t0 < 30000:
+		await get_tree().process_frame
+	for nm: String in ["step0", "thud", "bump", "crack", "shatter", "scrape", "success", "music"]:
+		check(AudioManager._streams.has(nm), "ses üretildi: " + nm)
+	var m = AudioManager._streams.get("music")
+	check(m is AudioStream and m.get_length() > 10.0, "müzik döngüsü 10 saniyeden uzun")
 
 
 func _test_gameplay_smoke() -> void:

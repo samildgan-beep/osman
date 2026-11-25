@@ -62,6 +62,7 @@ func sanitize_level(src: Dictionary, index: int) -> Dictionary:
 		errors.append("bölüm %d: geçersiz hedef %s" % [index, goal])
 		goal = "room"
 	L.goal = goal
+	L.building = "modern" if str(src.get("building", "turkish")) == "modern" else "turkish"
 	L.theme = clampi(_int(src.get("theme"), (index - 1) % 6), 0, 5)
 	L.steps = clampi(_int(src.get("steps"), 8), 4, 12)
 	L.rise = clampf(_num(src.get("rise"), 0.175), 0.12, 0.2)

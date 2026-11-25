@@ -32,10 +32,25 @@ Masaüstünde fare ile dokunmatik taklit edilir (sol tık = parmak). Klavye kıs
 | **REST** | R | Eşyayı bırak ve dinlen (dayanıklılık hızlı dolar) |
 | İki parmak kaydır / sıkıştır | Sağ tık sürükle, tekerlek | Kamera döndür / yakınlaştır |
 | **BACK / TOP / SIDE** | 1 / 2 / 3 | Hazır kamera görünümleri |
+| **LOOK** (aç/kapa) | V / C | Serbest kamera: karakter durur; joystick/WASD kamerayı sahnede gezdirir, kaydırınca her yöne (yukarı/aşağı dahil) bakar, iki parmak yukarı/aşağı veya LIFT/LOWER (E/Q) yükseltir |
 | **II** | Esc / P | Duraklat |
 
 ## Oyunun özellikleri
 
+- **Oyun eski bir Türk apartmanının, "HİCRET APARTMANI"nın girişinde başlar:** pastel sıvalı cephe, mermer
+  levha, mavi kapı numarası, telli camlı demir çift kanat kapı, diyafon, beton saçak; içeride mozaik basamaklar,
+  düz demir parmaklıklı korkuluk ve plastik küpeşte, yağlı boyalı duvarlar, posta kutuları, sayaç dolabı, ilan
+  panosu, otomatik merdiven ışığı düğmeleri, kapı önlerinde paspas ve ayakkabılar; balkonlarda çamaşır ipi,
+  çanak anten, klima; çatıda su depoları ve antenler. 7–9 ve 13–15. bölümler renkli modern apartmanda geçer
+  (`levels.json` → `"building": "turkish" | "modern"`).
+- **Karakter görünen alanın her yerine gidebilir** (sokak, karşı kaldırım, binanın çevresi); kamera normal modda da
+  yukarı bakabilir.
+- **Yorulma ve ezilme:** ağır eşyayla uzun süre kalınca (beklerken de) karakter yavaş yavaş öne eğilir, dizleri
+  bükülür, titrer ve yavaşlar. Gücü biterse 40 kg ve üzeri eşyaların (buzdolabı, çamaşır makinesi, gardırop)
+  **altında ezilir**; TV ve küçük eşyalar sadece düşer.
+- **Sesler:** neşeli döngüsel müzik (davul, bas, akor, marimba melodisi), 4 çeşit adım sesi, tok çarpma, ahşap
+  çatırtısı, cam kırılması, sürtünme. `audio/<ad>.ogg` (veya .wav/.mp3) koyarak herhangi bir sesi gerçek kayıtla
+  değiştirebilirsin: `music, step0..step3, thud, bump, crack, shatter, scrape, success, fail, meow...`
 - **18 bölüm**: koli → TV → büyük TV/cam sehpa → koltuk → gardırop → **çamaşır makinesi** → buzdolabı (sırtta)
 - **Üç hedef türü:** `door` (daire kapısına teslim et), `room` (eve girip odaya taşı),
   `spot` (eşyayı tam yerine, iki dolabın arasına, ön yüzü odaya bakacak şekilde yerleştir — hayalet görüntü yol gösterir)

@@ -60,8 +60,8 @@ func _build_visual() -> void:
 	_part(BoxMesh, Vector3(0.05, 0.06, 0.03), Vector3(-0.055, 0.43, -0.25), dark)     # kulak
 	_part(BoxMesh, Vector3(0.05, 0.06, 0.03), Vector3(0.055, 0.43, -0.25), dark)
 	_part(BoxMesh, Vector3(0.1, 0.05, 0.02), Vector3(0, 0.3, -0.32), white)           # ağız
-	for lx in [-0.07, 0.07]:
-		for lz in [-0.14, 0.14]:
+	for lx: float in [-0.07, 0.07]:
+		for lz: float in [-0.14, 0.14]:
 			_part(BoxMesh, Vector3(0.05, 0.12, 0.05), Vector3(lx, 0.06, lz), dark)
 	_tail = Node3D.new()
 	_tail.position = Vector3(0, 0.26, 0.2)
