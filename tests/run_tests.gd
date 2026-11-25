@@ -23,6 +23,7 @@ func _ready() -> void:
 	await _test_crush()
 	await _test_spot_placement()
 	await _test_home_speed()
+	await _test_first_person()
 	await _test_audio()
 	GameState.from_dict(backup)
 	print("")
@@ -312,6 +313,53 @@ func _test_free_look() -> void:
 		await get_tree().physics_frame
 	off = absf(wrapf(game.cam.yaw - game.player.get_yaw(), -PI, PI))
 	check(off < 0.2, "BACK ile kamera arkaya dönüyor")
+	game.queue_free()
+	await get_tree().process_frame
+
+
+## Birinci şahıs: kamera gözde, kafa dönerken gövde/eller/eşya sabit; LOOK ile üçüncü şahsa dönülür.
+func _test_first_person() -> void:
+	section("Birinci şahıs")
+	var game := Game.new()
+	game.setup(1)
+	add_child(game)
+	for i in 20:
+		await get_tree().physics_frame
+	await _grab_item(game)
+	check(game.player.is_holding(), "koli elde")
+	game.input.press("cam_first")
+	for i in 5:
+		await get_tree().physics_frame
+	check(game.cam.first_person, "1P ile birinci şahıs açılıyor")
+	check(game.touch.buttons.fpv.toggled, "1P butonu açık görünüyor")
+	var eye := game.player.visual.eye_position()
+	check(game.cam.camera.global_position.distance_to(eye) < 0.05, "kamera gözde")
+	check(not game.player.visual._head.visible, "birinci şahısta kafa görüşü kapatmıyor")
+	var body_yaw := game.player.get_yaw()
+	var item_xf := game.item.global_transform
+	game.cam.orbit(Vector2(-260, 0))
+	for i in 10:
+		await get_tree().physics_frame
+	check(game.cam.fp_yaw > 0.5, "kafa yana dönüyor")
+	check(absf(game.player.get_yaw() - body_yaw) < 0.001, "kafa dönerken gövde dönmüyor")
+	check(game.item.global_transform.origin.distance_to(item_xf.origin) < 0.02, "kafa dönerken eşya yerinde")
+	var fwd := -game.cam.camera.global_basis.z
+	var body_fwd := Vector3(-sin(body_yaw), 0, -cos(body_yaw))
+	check(fwd.dot(body_fwd) < 0.85, "bakış gövdeden farklı yöne")
+	game.cam.orbit(Vector2(0, -2000))
+	check(absf(game.cam.fp_pitch - deg_to_rad(Config.FP_PITCH_UP_DEG)) < 0.01, "yukarı bakış sınırlı")
+	game.cam.orbit(Vector2(5000, 0))
+	check(absf(game.cam.fp_yaw + deg_to_rad(Config.FP_YAW_LIMIT_DEG)) < 0.01, "yana bakış sınırlı (boyun)")
+	game.cam.preset("back")
+	check(game.cam.first_person and absf(game.cam.fp_yaw) < 0.001, "BACK bakışı ortalar")
+	game.input.look_mode = true
+	for i in 3:
+		await get_tree().physics_frame
+	check(not game.cam.first_person and game.cam.free_look, "LOOK birinci şahısı kapatır")
+	check(game.player.visual._head.visible, "üçüncü şahısta kafa yine görünür")
+	game.input.look_mode = false
+	for i in 3:
+		await get_tree().physics_frame
 	game.queue_free()
 	await get_tree().process_frame
 

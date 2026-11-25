@@ -15,6 +15,11 @@ const LAYER_STEPS := 128    # gerçek basamak şekli: yalnızca eşya (görünme
 const WALK_SPEED := 3.4             # m/s, elinde eşya yokken
 const ACCELERATION := 14.0          # m/s²
 const DECELERATION := 18.0
+# Birinci şahıs: kafa gövdeden bağımsız döner (eller ve eşya sabit kalır)
+const FP_YAW_LIMIT_DEG := 83.0
+const FP_PITCH_UP_DEG := 60.0
+const FP_PITCH_DOWN_DEG := 75.0
+const FP_FOV := 78.0
 # Evin içinde (daire koridoru + odalar) eşya taşırken: yarı hız, daha hassas kontrol
 const HOME_CARRY_SPEED_MULT := 0.5
 const HOME_TURN_MULT := 0.6         # yerinde dönüş daha yavaş
@@ -144,6 +149,7 @@ func _setup_input_map() -> void:
 		"cam_back": [KEY_1],
 		"cam_top": [KEY_2],
 		"cam_side": [KEY_3],
+		"cam_first": [KEY_4],
 		"pause": [KEY_ESCAPE, KEY_P],
 		"look_toggle": [KEY_V, KEY_C],
 	}

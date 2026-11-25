@@ -37,6 +37,10 @@ var yaw_offset := 0.0
 var _orbit_hold := 0.0
 ## SIDE / TOP seçilince kamera o açıda kalır; kendiliğinden arkaya dönmez (BACK ile çözülür).
 var view_locked := false
+# Birinci şahıs: kamera gözde; kafa (fp_yaw/fp_pitch) gövdeden bağımsız döner
+var first_person := false
+var fp_yaw := 0.0
+var fp_pitch := 0.0
 
 
 func setup(player: Player) -> void:
@@ -61,6 +65,12 @@ func orbit(px: Vector2) -> void:
 	if px == Vector2.ZERO:
 		return
 	var sens := float(GameState.get_setting("camera_sensitivity")) * Config.CAM_ORBIT_DEG_PER_PIXEL
+	if first_person:
+		# Yalnızca kafa döner: gövde, eller ve eşya yerinde kalır
+		var ylim := deg_to_rad(Config.FP_YAW_LIMIT_DEG)
+		fp_yaw = clampf(fp_yaw - deg_to_rad(px.x * sens), -ylim, ylim)
+		fp_pitch = clampf(fp_pitch - deg_to_rad(px.y * sens), -deg_to_rad(Config.FP_PITCH_DOWN_DEG), deg_to_rad(Config.FP_PITCH_UP_DEG))
+		return
 	yaw -= deg_to_rad(px.x * sens)
 	yaw_offset = wrapf(yaw_offset - deg_to_rad(px.x * sens), -PI, PI)
 	_orbit_hold = Config.CAM_RECENTER_DELAY
@@ -70,7 +80,7 @@ func orbit(px: Vector2) -> void:
 
 
 func zoom(amount: float) -> void:
-	if amount == 0.0:
+	if amount == 0.0 or first_person:
 		return
 	dist = clampf(dist * (1.0 - amount), Config.CAM_DIST_MIN, Config.CAM_DIST_MAX)
 	_anim_active = false
@@ -79,6 +89,14 @@ func zoom(amount: float) -> void:
 func preset(view: String) -> void:
 	if target == null:
 		return
+	if first_person:
+		if view == "back":
+			# Birinci şahısta BACK: bakışı ortala
+			fp_yaw = 0.0
+			fp_pitch = deg_to_rad(-10.0)
+			AudioManager.play("click", -8.0)
+			return
+		set_first_person(false)
 	var py := target.get_yaw()
 	view_locked = view != "back"
 	match view:
@@ -97,6 +115,32 @@ func _start_anim(y: float, p: float, d: float) -> void:
 	_anim_yaw = yaw + wrapf(y - yaw, -PI, PI)
 	_anim_pitch = p
 	_anim_dist = d
+
+
+## Birinci şahıs modunu aç/kapat. Açıkken kafa gizlenir (görüşü kapatmasın), bakış ortalanır.
+func set_first_person(on: bool) -> void:
+	if on == first_person or target == null:
+		return
+	first_person = on
+	fp_yaw = 0.0
+	fp_pitch = deg_to_rad(-10.0)
+	_anim_active = false
+	if target.visual != null:
+		target.visual.set_head_visible(not on)
+	if on:
+		camera.fov = Config.FP_FOV
+	else:
+		camera.fov = fov_target
+		yaw = target.get_yaw()
+		yaw_offset = 0.0
+		_cur_dist = 0.6   # gözden arkaya doğru yumuşakça açılsın
+		_pivot = target.global_position + Vector3(0, Config.CAM_PIVOT_HEIGHT, 0)
+	AudioManager.play("click", -6.0)
+
+
+## Birinci şahısta kafanın gövdeye göre açısı (görsel kafa da bu yöne döner).
+func head_look() -> Vector2:
+	return Vector2(fp_yaw, fp_pitch) if first_person else Vector2.ZERO
 
 
 ## Belirli bir açıya yumuşakça dön (kutlama sahnesi vb.)
@@ -151,6 +195,9 @@ func is_top_view() -> bool:
 
 func _physics_process(delta: float) -> void:
 	if target == null or camera == null:
+		return
+	if first_person:
+		_first_person_update(delta)
 		return
 	if _anim_active:
 		var k := 1.0 - exp(-8.0 * delta)
@@ -279,3 +326,22 @@ func shake(amount: float) -> void:
 
 func get_forward_yaw() -> float:
 	return yaw
+
+
+## Birinci şahıs kamerası: göz noktasında, gövde yönü + kafa açısı. Kesit kapalı.
+func _first_person_update(delta: float) -> void:
+	if _cut_active:
+		RenderingServer.global_shader_parameter_set("cut_height", 100000.0)
+		RenderingServer.global_shader_parameter_set("ceil_cut_height", 100000.0)
+		_cut_active = false
+	current_cut = INF
+	var eye: Vector3 = target.visual.eye_position() if target.visual != null else target.global_position + Vector3(0, 1.65, 0)
+	var total_yaw := target.get_yaw() + fp_yaw
+	camera.global_transform = Transform3D(Basis.from_euler(Vector3(fp_pitch, total_yaw, 0.0)), eye)
+	if _shake > 0.0:
+		_shake = maxf(0.0, _shake - delta * 2.5)
+		var s := _shake * _shake * 0.05
+		camera.global_position += Vector3(randf_range(-s, s), randf_range(-s, s), randf_range(-s, s))
+	# Üçüncü şahsa dönüşte kamera buradan başlasın
+	yaw = total_yaw
+	_pivot = target.global_position + Vector3(0, Config.CAM_PIVOT_HEIGHT, 0)

@@ -271,7 +271,7 @@ func _gather_keyboard() -> void:
 		input.lift = kl
 	if Input.is_action_pressed("precise"):
 		input.precise = true
-	for a: String in ["interact", "rest", "reset_rotation", "cam_back", "cam_top", "cam_side", "pause", "look_toggle"]:
+	for a: String in ["interact", "rest", "reset_rotation", "cam_back", "cam_top", "cam_side", "cam_first", "pause", "look_toggle"]:
 		if Input.is_action_just_pressed(a):
 			if a == "pause" and Time.get_ticks_msec() < _ignore_pause_until:
 				continue
@@ -285,6 +285,9 @@ func _handle_ui_actions() -> void:
 		cam.preset("top")
 	if input.consume("cam_side"):
 		cam.preset("side")
+	if input.consume("cam_first"):
+		set_first_person(not cam.first_person)
+	touch.set_first_person(cam.first_person)
 	if input.consume("pause"):
 		pause_game()
 
@@ -295,6 +298,8 @@ func _update_free_look(delta: float) -> void:
 	if input.consume("look_toggle"):
 		input.look_mode = not input.look_mode
 		touch.set_look(input.look_mode)
+	if input.look_mode and cam.first_person:
+		cam.set_first_person(false)
 	if input.look_mode != cam.free_look:
 		cam.set_free_look(input.look_mode)
 		touch.set_look(input.look_mode)
@@ -325,7 +330,24 @@ func _end_hints() -> void:
 	hud.show_proximity([])
 
 
+## Birinci şahıs (göz) kamerası. Serbest bakış açıksa önce kapanır.
+func set_first_person(on: bool) -> void:
+	if on and cam.free_look:
+		_exit_free_look()
+	cam.set_first_person(on)
+	if touch != null:
+		touch.set_first_person(on)
+	if on and not _fp_hint_shown:
+		_fp_hint_shown = true
+		hud.hint("First person: drag with two fingers (or right mouse) to turn your head. BACK centers your view.", 4.0)
+
+
+var _fp_hint_shown := false
+
+
 func _exit_free_look() -> void:
+	if cam != null and cam.first_person:
+		cam.set_first_person(false)
 	input.look_mode = false
 	if touch != null:
 		touch.set_look(false)
@@ -555,6 +577,7 @@ func _on_player_crushed() -> void:
 		item.global_transform = Transform3D(pb, body_center + Vector3.UP * (item.half.y + 0.3))
 	item.grace = 0.0
 	item.drop(Vector3(0, -2.5, 0))
+	cam.set_first_person(false)
 	player.visual.play_crushed()
 	AudioManager.play("thud", 2.0, 0.7)
 	AudioManager.play("crack", 0.0, 0.6)

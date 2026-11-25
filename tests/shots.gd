@@ -9,8 +9,8 @@ func _ready() -> void:
 	if args.size() > 0:
 		out = args[0]
 	DirAccess.make_dir_recursive_absolute(out)
-	await _interior_shots(3, "i3")
-	await _interior_shots(8, "i8")
+	await _fp_shots(10, "fp10")
+	await _fp_shots(3, "fp3")
 	get_tree().quit()
 
 
@@ -135,6 +135,35 @@ func _interior_shots(id: int, tag: String) -> void:
 		_tp(game, b + Vector3(0, 0.05, 0) - d.normalized() * 0.6, yaw)
 		await _wait_sec(1.2)
 		await _snap(tag + "_" + k)
+	game.queue_free()
+	await _wait(5)
+
+
+## Birinci şahıs: eşya elde, kafa ileri / sola / sağa / yukarı / aşağı.
+func _fp_shots(id: int, tag: String) -> void:
+	var game := Game.new()
+	game.setup(id)
+	add_child(game)
+	await _wait_sec(1.0)
+	var p := game.player
+	var to_item := game.item.global_position - p.global_position
+	to_item.y = 0
+	p.teleport(game.item.global_position - to_item.normalized() * (1.0 + game.item.half.z) + Vector3(0, 0.05 - game.item.global_position.y, 0), atan2(-to_item.x, -to_item.z))
+	await _wait_sec(0.3)
+	game.input.press("interact")
+	await _wait_sec(1.2)
+	var wps: Array = game.info.waypoints
+	_tp(game, wps[1] + Vector3(0, 0.05, -0.9), PI)
+	await _wait_sec(1.0)
+	game.set_first_person(true)
+	var views := {"fwd": Vector2(0, -0.17), "left": Vector2(1.3, -0.25), "right": Vector2(-1.3, -0.25), "up": Vector2(0, 0.9), "down": Vector2(0, -1.2)}
+	for k: String in views:
+		var v: Vector2 = views[k]
+		game.cam.fp_yaw = v.x
+		game.cam.fp_pitch = v.y
+		await _wait_sec(0.5)
+		await _snap(tag + "_" + k)
+	game.set_first_person(false)
 	game.queue_free()
 	await _wait(5)
 

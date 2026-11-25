@@ -33,6 +33,7 @@ var _ankle_r: Node3D
 var _cap_parts: Array[MeshInstance3D] = []
 var _hair_parts: Array[MeshInstance3D] = []
 var _mustache: MeshInstance3D
+var _neck: MeshInstance3D
 var _glove_parts: Array[MeshInstance3D] = []
 var _hand_parts: Array[MeshInstance3D] = []
 var _mats := {}
@@ -103,7 +104,7 @@ func _ready() -> void:
 	_box(_torso, Vector3(0.09, 0.08, 0.008), Vector3(0.1, 0.4, -0.132), "body")
 
 	# --- Boyun ve kafa
-	_capsule(_torso, 0.052, 0.14, Vector3(0, 0.6, 0.005), "skin")
+	_neck = _capsule(_torso, 0.052, 0.14, Vector3(0, 0.6, 0.005), "skin")
 	_head = _node(_torso, Vector3(0, 0.63, 0))
 	var skull := _sphere(_head, 0.11, Vector3(0, 0.12, 0.0), "skin", Vector3(0.92, 1.08, 1.0))
 	skull.name = "Skull"
@@ -411,3 +412,12 @@ func set_grips(left: Vector3, right: Vector3, active: bool) -> void:
 func set_head_visible(v: bool) -> void:
 	if _head != null:
 		_head.visible = v
+	if _neck != null:
+		_neck.visible = v
+
+
+## Birinci şahıs kamerasının göz noktası (kafayla birlikte eğilir, çömelir, sallanır).
+func eye_position() -> Vector3:
+	if _head == null:
+		return global_position + Vector3(0, 1.65, 0)
+	return _head.global_transform * Vector3(0, 0.13, -0.1)

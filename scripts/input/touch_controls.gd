@@ -36,6 +36,10 @@ func _ready() -> void:
 	_make_button("cam_side", "SIDE", "tap", 30.0)
 	_make_button("pause", "II", "tap", 30.0)
 	_make_button("look", "LOOK", "toggle", 32.0)
+	_make_button("fpv", "1P", "toggle", 30.0)
+	buttons.fpv.sublabel = "eyes"
+	buttons.fpv.accent = Color(1.0, 0.6, 0.25)
+	buttons.fpv.toggled_state.connect(func(_on: bool): state.press("cam_first"))
 	buttons.interact.accent = Color(0.35, 0.85, 0.45)
 	buttons.mode.sublabel = "3rd axis"
 	buttons.interact.tapped.connect(func(): state.press("interact"))
@@ -86,11 +90,12 @@ func _layout() -> void:
 		"cam_side": Vector2(W - 65, 62),
 		"pause": Vector2(W - 290, 62),
 		"look": Vector2(W - 365, 62),
+		"fpv": Vector2(W - 440, 62),
 	}
 	for id in buttons:
 		var b: TouchButton = buttons[id]
 		var p: Vector2 = pos[id]
-		if _left_handed and not id.begins_with("cam_") and id != "pause" and id != "look":
+		if _left_handed and not id.begins_with("cam_") and id != "pause" and id != "look" and id != "fpv":
 			p.x = W - p.x
 		b.position = p - b.size * 0.5
 
@@ -265,6 +270,13 @@ func _draw() -> void:
 
 
 ## Serbest bakış düğmesini dış durumla eşitle (klavyeden açılınca vb.)
+func set_first_person(on: bool) -> void:
+	var b: TouchButton = buttons.fpv
+	if b.toggled != on:
+		b.toggled = on
+		b.queue_redraw()
+
+
 func set_look(on: bool) -> void:
 	var b: TouchButton = buttons.look
 	if b.toggled != on:

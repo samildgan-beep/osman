@@ -33,6 +33,7 @@ Masaüstünde fare ile dokunmatik taklit edilir (sol tık = parmak). Klavye kıs
 | **REST** | R | Eşyayı bırak ve dinlen (dayanıklılık hızlı dolar) |
 | İki parmak kaydır / sıkıştır | Sağ tık sürükle, tekerlek | Kamerayı geçici çevir / yakınlaştır (ana kamera karakterin arkasına geri döner) |
 | **BACK / TOP / SIDE** | 1 / 2 / 3 | Hazır kamera görünümleri. TOP ve SIDE seçilince kamera o açıda kalır; BACK'e basınca arkaya döner |
+| **1P** (aç/kapa) | 4 | Birinci şahıs (göz) kamerası: iki parmak kaydır / sağ tık sürükle ile yalnızca kafa döner (sağa-sola ±83°, yukarı-aşağı); gövde, eller ve eşya sabit kalır. BACK bakışı ortalar; TOP/SIDE/LOOK üçüncü şahsa döner |
 | **LOOK** (aç/kapa) | V / C | Serbest kamera: karakter durur; joystick/WASD kamerayı sahnede gezdirir, kaydırınca her yöne (yukarı/aşağı dahil) bakar, iki parmak yukarı/aşağı veya LIFT/LOWER (E/Q) yükseltir |
 | **II** | Esc / P | Duraklat |
 
@@ -57,6 +58,8 @@ Masaüstünde fare ile dokunmatik taklit edilir (sol tık = parmak). Klavye kıs
   `spot` (eşyayı tam yerine, iki dolabın/komodinin arasına, ön yüzü odaya bakacak şekilde yerleştir — hayalet görüntü yol gösterir).
   1–5. bölümler kapıya/odaya teslim; **6. bölümden itibaren her bölümde eve girip eşyayı yerine koymak gerekir**
   (TV ve koltuk oturma odasında abajurlu iki komodin arasına, gardırop yatak odasına, beyaz eşya mutfak/çamaşır odasına)
+- **Ev içi:** daire koridoru ve odada eşya taşırken hız yarıya iner; dönüş, eşya çevirme ve kalkış/duruş daha yumuşak ve hassastır.
+  Koridorda lambri, kilim yolluk, portmanto, ayna, diafon, sigorta kutusu, nazar boncuğu; odada avize, klima, kalorifer, saat, tablolar, konsol
 - **Kurye aracı:** küçük eşyalarda girişte kurye motosikleti; büyük eşyalarda yol kenarında arka kapıları açık, içi kolili şirin bir kamyonet
 - **Ev sahibi:** kapıda/odada bekler, yaklaşınca el sallar ("Hi! Over here, please!"), eşya çarpınca endişelenir
   ("Careful!"), teslimde zıplar, döner, sevinir ve teşekkür eder ("Thank you so much! I'm so happy!") + konfeti
