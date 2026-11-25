@@ -99,6 +99,9 @@ func set_holding(v: bool) -> void:
 	holding = v
 	for id: String in ["lift_up", "lift_down", "precise", "mode", "reset"]:
 		buttons[id].set_enabled(v)
+	if state != null and state.look_mode:
+		for id: String in ["lift_up", "lift_down"]:
+			buttons[id].set_enabled(true)
 
 
 func set_interact(text: String, enabled: bool) -> void:
@@ -259,6 +262,9 @@ func set_look(on: bool) -> void:
 	if b.toggled != on:
 		b.toggled = on
 		b.queue_redraw()
+	# Serbest bakışta LIFT/LOWER kamerayı yükseltip alçaltır (eşya elde olmasa da)
+	for id: String in ["lift_up", "lift_down"]:
+		buttons[id].set_enabled(on or holding)
 
 
 func joystick_active() -> bool:

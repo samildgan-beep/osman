@@ -294,6 +294,7 @@ func _update_free_look(delta: float) -> void:
 		touch.set_look(input.look_mode)
 	if input.look_mode != cam.free_look:
 		cam.set_free_look(input.look_mode)
+		touch.set_look(input.look_mode)
 		if input.look_mode:
 			hud.hint("Free camera: move with the joystick, swipe to look around, two fingers up/down (or LIFT/LOWER) to rise. Tap LOOK to return.", 5.0)
 		elif _tut_step >= 0 and _tut_step < _tutorial.size():

@@ -82,3 +82,15 @@ Her maddeyi işaretle; sorun olursa bölüm numarasını ve ne olduğunu not al.
 - [ ] `door` bölümlerinde kapının önüne bırakmak yetiyor; `room` bölümlerinde odaya girmek gerekiyor
 - [ ] `spot` bölümlerinde (13–15 çamaşır makinesi) hayalet görüntü var; ters bırakınca "Almost! ... FRONT facing the room" uyarısı çıkıyor, doğru yönde bırakınca bölüm bitiyor
 - [ ] Oyundaki tüm yazılar İngilizce
+
+## Yeni: HİCRET APARTMANI, serbest kamera, yorulma, sesler
+- [ ] Oyun, eski Türk apartmanının giriş kapısının önünde başlıyor; kapının üstündeki mermer levhada "HİCRET APARTMANI" yazıyor, yanında mavi kapı numarası var
+- [ ] Giriş: telli camlı demir çift kanat kapı içeri açık, diyafon, beton saçak ve lamba görünüyor
+- [ ] Merdiven: mozaik basamaklar, düz demir parmaklık, koyu plastik küpeşte, yağlı boyalı duvar; kapı önlerinde ayakkabılar
+- [ ] 7–9 ve 13–15. bölümlerde önceki renkli modern apartman kullanılıyor
+- [ ] Karakter sokağın karşısına, binanın yanlarına ve arkasına kadar yürüyebiliyor; arkadaki binaların içinden geçemiyor
+- [ ] LOOK (veya V) ile serbest kamera: karakter duruyor, joystick kamerayı gezdiriyor, kaydırınca yukarı/aşağı bakılıyor, LIFT/LOWER yükseltiyor; tekrar basınca kamera karaktere dönüyor
+- [ ] Buzdolabıyla uzun süre bekleyince karakter yavaş yavaş öne eğiliyor, dizleri bükülüyor, titriyor
+- [ ] Güç bitince buzdolabı/çamaşır makinesi/gardırobun altında eziliyor ("Crushed under the ...!"), ev sahibi "Oh no! Are you okay?!" diyor
+- [ ] TV ve koliyle güç bitince sadece eşya düşüyor (ezilme yok)
+- [ ] Müzik neşeli ve döngü sınırında tıklama yok; adım, çarpma, çatırtı ve cam kırılma sesleri duyuluyor
