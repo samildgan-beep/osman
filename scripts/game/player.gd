@@ -22,6 +22,7 @@ var walking_backward := false
 var resting := false
 var frozen := false
 var celebrating := false
+var in_home := false               # daire içinde mi (Game ayarlar): taşırken yarı hız, hassas kontrol
 var goal_check: Callable          # eşya hedefte mi? (Game sağlar)
 
 var _yaw := 0.0
@@ -135,6 +136,8 @@ func _locomotion(delta: float) -> void:
 		var rate := Config.TURN_RATE_CARRY if holding else Config.TURN_RATE
 		if input.precise:
 			rate *= 0.35
+		if holding and in_home:
+			rate *= Config.HOME_TURN_MULT
 		# Joystick ucunda daha hızlı, az itince yavaş (ince ayar)
 		var amt := signf(mv.x) * pow(absf(mv.x), 1.6)
 		_yaw = wrapf(_yaw - amt * rate * delta, -PI, PI)
@@ -143,6 +146,11 @@ func _locomotion(delta: float) -> void:
 		resting = false
 	var fwd_axis := Vector3(-sin(_yaw), 0.0, -cos(_yaw))
 	var mag := absf(mv.y) if absf(mv.y) > 0.08 else 0.0
+	var home_carry := holding and in_home
+	carry.fine_mult = Config.HOME_ROTATE_MULT if home_carry else 1.0
+	if home_carry and mag > 0.0:
+		# Evde: joystick az itilince çok yavaş, ince ayarlı ilerleme
+		mag = pow(mag, 1.5)
 	var dir := fwd_axis * signf(mv.y) if mag > 0.0 else Vector3.ZERO
 	on_stairs = is_on_floor() and get_floor_normal().y < 0.97
 
@@ -152,6 +160,8 @@ func _locomotion(delta: float) -> void:
 		if stamina < Config.STAMINA_WARN:
 			speed *= 0.75
 		speed *= lerpf(1.0, 0.7, get_fatigue())
+		if in_home:
+			speed *= Config.HOME_CARRY_SPEED_MULT
 	elif on_stairs:
 		speed *= 0.85
 
@@ -168,6 +178,8 @@ func _locomotion(delta: float) -> void:
 	var target_vel := dir * speed * mag
 	var hv := Vector3(velocity.x, 0.0, velocity.z)
 	var accel := Config.ACCELERATION if mag > 0.05 else Config.DECELERATION
+	if home_carry:
+		accel = Config.HOME_ACCEL if mag > 0.05 else Config.HOME_DECEL
 	hv = hv.move_toward(target_vel, accel * delta)
 	velocity.x = hv.x
 	velocity.z = hv.z

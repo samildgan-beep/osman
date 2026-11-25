@@ -22,6 +22,7 @@ func _ready() -> void:
 	await _test_stairs_no_phantom_damage()
 	await _test_crush()
 	await _test_spot_placement()
+	await _test_home_speed()
 	await _test_audio()
 	GameState.from_dict(backup)
 	print("")
@@ -311,6 +312,39 @@ func _test_free_look() -> void:
 		await get_tree().physics_frame
 	off = absf(wrapf(game.cam.yaw - game.player.get_yaw(), -PI, PI))
 	check(off < 0.2, "BACK ile kamera arkaya dönüyor")
+	game.queue_free()
+	await get_tree().process_frame
+
+
+## Evin içinde eşya taşırken hız yarıya iner, eşya çevirme daha hassas olur.
+func _test_home_speed() -> void:
+	section("Ev içi taşıma hızı")
+	var game := Game.new()
+	game.setup(3)
+	add_child(game)
+	for i in 20:
+		await get_tree().physics_frame
+	await _grab_item(game)
+	check(game.player.is_holding(), "TV alınıyor")
+	var speeds := []
+	for spot: Vector3 in [Vector3(9.0, 0.05, -2.6), Vector3(game.info.goal_center) + Vector3(0.8, 0.05, 0)]:
+		game.player.teleport(spot, PI * 0.5)
+		game.player.carry.hold_basis = Basis()
+		game.item.global_transform = game.player.carry.target_transform()
+		game.item.grace = 1.0
+		for i in 5:
+			await get_tree().physics_frame
+		var vmax := 0.0
+		for i in 45:
+			game.input.move = Vector2(0, 1)
+			await get_tree().physics_frame
+			vmax = maxf(vmax, game.player._speed_now)
+		game.input.move = Vector2.ZERO
+		speeds.append(vmax)
+		speeds.append(game.player.in_home)
+	check(not speeds[1] and speeds[3], "sokakta evin dışı, odada evin içi algılanıyor")
+	check(float(speeds[2]) < float(speeds[0]) * 0.6 and float(speeds[2]) > 0.1, "evde taşıma hızı yarıya iniyor (%.2f → %.2f)" % [speeds[0], speeds[2]])
+	check(absf(game.player.carry.fine_mult - Config.HOME_ROTATE_MULT) < 0.001, "evde eşya çevirme daha hassas")
 	game.queue_free()
 	await get_tree().process_frame
 

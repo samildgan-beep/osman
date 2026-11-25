@@ -235,6 +235,7 @@ func _physics_process(delta: float) -> void:
 		_handle_ui_actions()
 		_update_free_look(delta)
 	cam.indoor = _is_indoor(cam.focus_point())
+	_update_home()
 	_update_labels()
 	cam.orbit(input.take_cam_orbit())
 	cam.zoom(input.take_cam_zoom())
@@ -407,6 +408,18 @@ func _update_labels() -> void:
 	for lb in info.labels:
 		if is_instance_valid(lb):
 			lb.visible = lb.global_position.y < cut - 0.1
+
+
+## Daire içi (koridor + odalar): taşırken yarı hız ve hassas kontrol. İlk girişte ipucu.
+var _home_hint_shown := false
+func _update_home() -> void:
+	var a: AABB = info.get("apt_aabb", AABB())
+	var p := player.global_position
+	var was := player.in_home
+	player.in_home = a.size != Vector3.ZERO and a.grow(0.05).has_point(p + Vector3(0, 0.3, 0))
+	if player.in_home and not was and player.is_holding() and not _home_hint_shown:
+		_home_hint_shown = true
+		hud.hint("Inside the home: half speed. Move carefully!", 3.0)
 
 
 func _is_indoor(p: Vector3) -> bool:

@@ -15,6 +15,12 @@ const LAYER_STEPS := 128    # gerçek basamak şekli: yalnızca eşya (görünme
 const WALK_SPEED := 3.4             # m/s, elinde eşya yokken
 const ACCELERATION := 14.0          # m/s²
 const DECELERATION := 18.0
+# Evin içinde (daire koridoru + odalar) eşya taşırken: yarı hız, daha hassas kontrol
+const HOME_CARRY_SPEED_MULT := 0.5
+const HOME_TURN_MULT := 0.6         # yerinde dönüş daha yavaş
+const HOME_ROTATE_MULT := 0.6       # eşyayı çevirme daha hassas
+const HOME_ACCEL := 5.0             # yumuşak kalkış
+const HOME_DECEL := 9.0             # yumuşak duruş (kaymadan)
 const TURN_RATE := 2.6             # rad/s, joystick sağ/sol ile yerinde dönüş hızı
 const TURN_RATE_CARRY := 1.3       # eşya taşırken daha yavaş, kontrollü döner
 const STAIR_SPEED_MULT := 0.68      # merdivende ek yavaşlama

@@ -11,6 +11,7 @@ var slope_comp := 0.0
 var last_lag := 0.0
 var rotated_total_deg := 0.0
 var lift_used := false
+var fine_mult := 1.0     # Player ayarlar: evin içinde eşya çevirme daha hassas
 
 
 func is_holding() -> bool:
@@ -88,7 +89,7 @@ func apply_input(input: InputState, delta: float) -> void:
 		hold_basis = Basis()
 		AudioManager.play("click", -6.0)
 	var sens := float(GameState.get_setting("sensitivity"))
-	var mult := Config.PRECISE_MULT if input.precise else 1.0
+	var mult := (Config.PRECISE_MULT if input.precise else 1.0) * fine_mult
 	var deg := px * Config.ROTATE_DEG_PER_PIXEL * sens * mult
 	var yaw := 0.0
 	var pitch := 0.0
