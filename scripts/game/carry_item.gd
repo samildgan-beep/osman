@@ -25,7 +25,8 @@ var total_damage := 0.0
 var state := State.FREE
 var resting := false
 var grace := 0.0
-var exclude_rids: Array = []   # RID listesi (kendisi + elde tutan oyuncu)
+var exclude_rids: Array = []
+var carrier_speed := 0.0      # taşıyıcının gerçek hızı (çarpma hızını sınırlamak için, Player ayarlar)   # RID listesi (kendisi + elde tutan oyuncu)
 
 var _fall_velocity := Vector3.ZERO
 var _shape: BoxShape3D
@@ -54,7 +55,7 @@ func setup(item_data: Dictionary) -> void:
 
 func _ready() -> void:
 	collision_layer = Config.LAYER_ITEM
-	collision_mask = Config.LAYER_WORLD | Config.LAYER_OBSTACLE
+	collision_mask = Config.LAYER_WORLD | Config.LAYER_OBSTACLE | Config.LAYER_STEPS
 	add_to_group("carry_item")
 	var size := half * 2.0
 	_shape = BoxShape3D.new()
@@ -218,6 +219,11 @@ func follow(target: Transform3D, delta: float) -> Dictionary:
 	if motion.length() > max_step:
 		motion = motion.normalized() * max_step
 	var vel := motion / maxf(delta, 0.0001)
+	# Çarpma hızı taşıyıcının gerçek hızını aşamaz: eşya geride kalıp yetişirken
+	# yaptığı hızlı hareket hafif bir değmeyi sert çarpma gibi göstermesin.
+	var cap := carrier_speed + 0.4
+	if vel.length() > cap:
+		vel = vel.normalized() * cap
 	var remaining := motion
 	for i in 4:
 		if remaining.length_squared() < 1e-8:
@@ -264,10 +270,12 @@ func _register_contact(impact: float, face: String, delta: float, is_obstacle: b
 		if is_obstacle:
 			dmg = maxf(dmg, Config.OBSTACLE_BUMP_DAMAGE * fragility)
 		hard = dmg >= 6.0
-		if dmg <= 0.0:
-			dmg = DamageModel.scrape_damage(delta, fragility, mult)
-	else:
+	elif impact >= Config.SCRAPE_MIN_PRESS:
+		# Süren temas: yalnızca yüzeye bastırarak sürtünce az hasar
 		dmg = DamageModel.scrape_damage(delta, fragility, mult)
+	if dmg <= 0.0:
+		AudioManager.play("scrape", -16.0, 1.0, 0.4)
+		return 0.0
 	apply_damage(dmg, face, hard, fresh and dmg >= 0.5)
 	return dmg
 

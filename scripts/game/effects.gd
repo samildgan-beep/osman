@@ -211,7 +211,7 @@ func spawn_piece(pos: Vector3, size: Vector3, basis: Basis, color: Color, vel: V
 	size = Vector3(maxf(size.x, 0.012), maxf(size.y, 0.012), maxf(size.z, 0.012))
 	var rb := RigidBody3D.new()
 	rb.collision_layer = LAYER_DEBRIS
-	rb.collision_mask = Config.LAYER_WORLD
+	rb.collision_mask = Config.LAYER_WORLD | Config.LAYER_STEPS
 	rb.mass = clampf(size.x * size.y * size.z * 600.0, 0.05, 8.0)
 	rb.physics_material_override = _phys_mat
 	rb.continuous_cd = false

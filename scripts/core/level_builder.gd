@@ -81,6 +81,8 @@ var T: Dictionary          # etkin tema (renkler)
 var turk := true           # true: eski Türk apartmanı, false: modern renkli apartman
 var root: Node3D
 var body: StaticBody3D
+var ramp_body: StaticBody3D    # merdiven rampası (karakter + kamera)
+var steps_body: StaticBody3D   # gerçek basamaklar (eşya)
 var batch := MeshBatcher.new()
 var glow := MeshBatcher.new()
 var ceil_batch := MeshBatcher.new()   # tavanlar: kesit görünümünde yarı saydam
@@ -131,6 +133,16 @@ func build(level: Dictionary, parent: Node3D) -> Dictionary:
 	body.collision_layer = Config.LAYER_WORLD
 	body.collision_mask = 0
 	root.add_child(body)
+	ramp_body = StaticBody3D.new()
+	ramp_body.name = "StairRamps"
+	ramp_body.collision_layer = Config.LAYER_RAMP
+	ramp_body.collision_mask = 0
+	root.add_child(ramp_body)
+	steps_body = StaticBody3D.new()
+	steps_body.name = "StairSteps"
+	steps_body.collision_layer = Config.LAYER_STEPS
+	steps_body.collision_mask = 0
+	root.add_child(steps_body)
 	info = {"obstacles": [], "lights": [], "waypoints": [], "labels": []}
 
 	_derive()
@@ -227,7 +239,7 @@ func collider_mm(mn: Vector3, mx: Vector3) -> void:
 	_shape_box(Transform3D(Basis(), (a + b) * 0.5), b - a)
 
 
-func _shape_box(xf: Transform3D, size: Vector3) -> void:
+func _shape_box(xf: Transform3D, size: Vector3, target: StaticBody3D = null) -> void:
 	if size.x < 0.001 or size.y < 0.001 or size.z < 0.001:
 		return
 	var cs := CollisionShape3D.new()
@@ -235,7 +247,7 @@ func _shape_box(xf: Transform3D, size: Vector3) -> void:
 	bs.size = size
 	cs.shape = bs
 	cs.transform = xf
-	body.add_child(cs)
+	(target if target != null else body).add_child(cs)
 
 
 func _shape_cyl(center: Vector3, radius: float, height: float) -> void:
@@ -757,15 +769,22 @@ func _flight(start: Vector3, dz: float, rail_x: float, k: int) -> void:
 	var u := (dir * Lf + Vector3.UP * Hh) / ell
 	var nrm := Vector3.UP * cos(a) - dir * sin(a)
 	var bas := Basis(nrm.cross(u), nrm, u)
-	# Rampa çarpışması: basamak burunları çizgisinin yarım basamak gerisinden geçer
+	# Rampa çarpışması (yalnızca karakter ve kamera): basamak burunları çizgisinin
+	# yarım basamak gerisinden geçer, karakter takılmadan çıkar.
 	var thick := 0.3
 	var mid := start + dir * ((Lf - t) * 0.5) + Vector3.UP * (Hh * 0.5)
-	_shape_box(Transform3D(bas, mid - nrm * (thick * 0.5)), Vector3(sw, thick, ell))
-	# İç korkuluk çarpışması (boşluk tarafı)
+	_shape_box(Transform3D(bas, mid - nrm * (thick * 0.5)), Vector3(sw, thick, ell), ramp_body)
+	# Gerçek basamaklar (yalnızca eşya): görünen basamaklarla birebir aynı
+	for i in n:
+		var top := (i + 1) * r
+		_shape_box(Transform3D(Basis(), start + dir * (i * t + t * 0.5) + Vector3.UP * (top - (r + 0.12) * 0.5)), Vector3(sw, r + 0.12, t + 0.01), steps_body)
+	# İç korkuluk çarpışması (boşluk tarafı): görünen trabzanla aynı yükseklikte.
+	# Eğik kutunun eğime dik kalınlığı = dikey yükseklik × cos(eğim)
 	var side_off := Vector3(signf(-rail_x) * 0.04, 0, 0)
 	var rail_start := Vector3(rail_x, start.y, start.z) + side_off
 	var rail_mid := rail_start + dir * (Lf * 0.5) + Vector3.UP * (Hh * 0.5)
-	_shape_box(Transform3D(bas, rail_mid + nrm * (RAIL_H * 0.5)), Vector3(0.06, RAIL_H, ell))
+	var rail_th := (RAIL_H + 0.03) * cos(a)
+	_shape_box(Transform3D(bas, rail_mid + nrm * (rail_th * 0.5)), Vector3(0.06, rail_th, ell))
 	var g := {"start": start, "dir": dir, "dz": dz, "ell": ell, "a": a, "nrm": nrm, "bas": bas,
 		"slope": Hh / Lf, "rail_start": rail_start, "rail_mid": rail_mid}
 	if turk:

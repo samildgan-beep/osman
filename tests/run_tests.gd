@@ -19,6 +19,7 @@ func _ready() -> void:
 	await _test_level_builds()
 	await _test_gameplay_smoke()
 	await _test_free_look()
+	await _test_stairs_no_phantom_damage()
 	await _test_crush()
 	await _test_audio()
 	GameState.from_dict(backup)
@@ -229,6 +230,41 @@ func _grab_item(game: Game) -> void:
 	game.input.press("interact")
 	for i in 30:
 		await get_tree().physics_frame
+
+
+## Koliyle merdiveni düz çıkmak hasar vermemeli (görünmeyen rampaya/korkuluğa çarpma yok).
+func _test_stairs_no_phantom_damage() -> void:
+	section("Merdivende görünmez çarpma yok")
+	var game := Game.new()
+	game.setup(1)
+	add_child(game)
+	for i in 30:
+		await get_tree().physics_frame
+	await _grab_item(game)
+	var p := game.player
+	var wps: Array = game.info.waypoints
+	var start: Vector3 = wps[1] + Vector3(0, 0.05, -0.7)
+	p.teleport(start, PI)
+	p.carry.hold_basis = Basis()
+	game.item.global_transform = p.carry.target_transform()
+	game.item.grace = 0.5
+	for i in 40:
+		await get_tree().physics_frame
+	var dur0 := game.item.durability
+	var landing_y := float(game.info.floor_height) * 0.5
+	for i in 300:
+		# Ara sahanlığa varınca dur (arka duvara yürümesin)
+		if p.global_position.y >= landing_y - 0.05:
+			break
+		game.input.move = Vector2(0, 0.7)
+		await get_tree().physics_frame
+	game.input.move = Vector2.ZERO
+	for i in 20:
+		await get_tree().physics_frame
+	check(p.global_position.y > start.y + 0.8, "koliyle merdiven çıkılabiliyor (y=%.2f)" % p.global_position.y)
+	check(game.item.durability >= dur0 - 1.0, "düz çıkışta hasar yok (%.1f -> %.1f)" % [dur0, game.item.durability])
+	game.queue_free()
+	await get_tree().process_frame
 
 
 func _test_free_look() -> void:

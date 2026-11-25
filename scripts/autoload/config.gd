@@ -8,6 +8,8 @@ const LAYER_PLAYER := 2
 const LAYER_ITEM := 4
 const LAYER_OBSTACLE := 8
 const LAYER_TRIGGER := 16
+const LAYER_RAMP := 64      # merdiven rampası: yalnızca karakter (rahat yürüsün) ve kamera
+const LAYER_STEPS := 128    # gerçek basamak şekli: yalnızca eşya (görünmeyen yere çarpmasın)
 
 # --- Oyuncu hareketi ---
 const WALK_SPEED := 3.4             # m/s, elinde eşya yokken
@@ -58,10 +60,11 @@ const KEY_ROTATE_DEG_PER_SEC := 90.0
 
 # --- Hasar modeli ---
 const DURABILITY_MAX := 100.0
-const IMPACT_THRESHOLD := 0.45       # m/s altı çarpma zarar vermez
+const IMPACT_THRESHOLD := 0.6        # m/s altı çarpma zarar vermez
 const IMPACT_DAMAGE_PER_MS := 15.0   # eşiğin üstündeki her m/s için hasar
 const IMPACT_MAX_DAMAGE := 45.0      # tek çarpmada en fazla
-const SCRAPE_DAMAGE_PER_SEC := 2.2   # sürekli sürtünme
+const SCRAPE_DAMAGE_PER_SEC := 1.2   # bastırarak sürtünme (hafif değme hasarsız)
+const SCRAPE_MIN_PRESS := 0.2        # yüzeye bu hızdan yavaş bastırma sürtünme hasarı vermez (m/s)
 const CONTACT_COOLDOWN := 0.3        # aynı temas tekrar tam hasar vermez
 const ROTATION_BLOCK_DAMAGE := 0.5   # dönerken takılma (sürtünme)
 const DROP_DAMAGE_MULT := 1.4        # düşmede ek çarpan

@@ -37,7 +37,7 @@ var _turn_input := 0.0
 
 func _ready() -> void:
 	collision_layer = Config.LAYER_PLAYER
-	collision_mask = Config.LAYER_WORLD | Config.LAYER_ITEM | Config.LAYER_OBSTACLE
+	collision_mask = Config.LAYER_WORLD | Config.LAYER_ITEM | Config.LAYER_OBSTACLE | Config.LAYER_RAMP
 	floor_max_angle = deg_to_rad(Config.FLOOR_MAX_ANGLE_DEG)
 	floor_snap_length = Config.FLOOR_SNAP
 	floor_constant_speed = true
@@ -94,6 +94,8 @@ func _physics_process(delta: float) -> void:
 	_locomotion(delta)
 
 	if carry.is_holding():
+		# Eşyanın çarpma hızı: yürüme + dönüşten gelen kol hızı (eşya merkezi ~1 m ötede)
+		level_item.carrier_speed = Vector3(velocity.x, 0.0, velocity.z).length() + absf(wrapf(_yaw - prev_yaw, -PI, PI)) / maxf(delta, 0.0001) * 1.0
 		var res := carry.follow(delta)
 		var lag := float(res.lag)
 		if bool(res.rot_blocked):

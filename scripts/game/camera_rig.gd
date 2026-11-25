@@ -254,7 +254,7 @@ func _ray_distance(from: Vector3, dir: Vector3, max_d: float, cut: bool, cut_h: 
 		var remaining := max_d - travelled
 		if remaining <= 0.01:
 			return max_d
-		var q := PhysicsRayQueryParameters3D.create(start, start + dir * remaining, Config.LAYER_WORLD, _excluded)
+		var q := PhysicsRayQueryParameters3D.create(start, start + dir * remaining, Config.LAYER_WORLD | Config.LAYER_RAMP, _excluded)
 		var hit := space.intersect_ray(q)
 		if hit.is_empty():
 			return max_d
