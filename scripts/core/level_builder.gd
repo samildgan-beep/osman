@@ -371,6 +371,92 @@ func _car(p: Vector3, color: Color, yaw: float) -> void:
 			batch.add_cylinder(wp + b * Vector3(0, 0, signf(wz) * 0.125), 0.18, 0.02, Color("c0c4c8"), b * Basis(Vector3.RIGHT, PI * 0.5), MMET)
 
 
+## Büyük eşya mı? (ağır ya da çok uzun: koltuk, gardırop, beyaz eşya, büyük TV)
+func _is_big_item() -> bool:
+	var it := ItemDB.get_item(str(L.get("item", "")))
+	if it.is_empty():
+		return false
+	var sz: Vector3 = it.size
+	return float(it.get("weight", 0.0)) >= 18.0 or maxf(sz.x, maxf(sz.y, sz.z)) >= 1.4
+
+
+## Şirin teslimat kamyoneti: iki renkli yuvarlak hatlı gövde, kocaman yuvarlak farlar,
+## açık arka kapılar, içinde birkaç koli. Yerel eksenler: +X burun, -X arka, ±Z yanlar.
+func _van(p: Vector3, yaw: float) -> void:
+	var b := Basis(Vector3.UP, yaw)
+	var xf := Transform3D(b, p)
+	var orange := Color("ff8c1a")
+	var cream := Color("fff3dc")
+	var dark := Color("2b2d42")
+	var metal := Color("c0c4c8")
+	var axle := b * Basis(Vector3.RIGHT, PI * 0.5)
+	var along_x := b * Basis(Vector3.FORWARD, PI * 0.5)   # silindir ekseni yerel X
+	var L_ := 3.7
+	var W := 1.72
+	# Tekerlekler + jant + çamurluk kemerleri
+	for wx: float in [-1.15, 1.2]:
+		for wz: float in [-W * 0.5 + 0.08, W * 0.5 - 0.08]:
+			var wc: Vector3 = xf * Vector3(wx, 0.36, wz)
+			batch.add_cylinder(wc, 0.36, 0.24, C_TIRE, axle)
+			batch.add_cylinder(wc + b * Vector3(0, 0, signf(wz) * 0.125), 0.2, 0.02, metal, axle, MMET)
+			batch.add_cylinder(wc + b * Vector3(0, 0, signf(wz) * 0.135), 0.07, 0.02, orange, axle, MPA)
+			batch.add_cylinder(xf * Vector3(wx, 0.5, signf(wz) * (W * 0.5 + 0.005)), 0.44, 0.02, dark, axle, MPA)
+	# Alt gövde (turuncu) ve üst kasa (krem), yuvarlatılmış tavan kenarları
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(0, 0.82, 0)), Vector3(L_, 0.9, W), orange, MPA)
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(-0.5, 1.68, 0)), Vector3(2.7, 0.82, W - 0.02), cream, MPA)
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(-0.5, 2.1, 0)), Vector3(2.7, 0.06, W - 0.3), cream, MPA)
+	for sz: float in [-1.0, 1.0]:
+		batch.add_cylinder(xf * Vector3(-0.5, 1.98, sz * (W * 0.5 - 0.16)), 0.15, 2.7, cream, along_x, MPA)
+	# Kabin: eğimli ön cam, yan camlar, tavan
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(1.08, 1.5, 0)), Vector3(0.5, 0.46, W - 0.04), cream, MPA)
+	batch.add_box_xform(xf * Transform3D(Basis(Vector3.BACK, 0.5), Vector3(1.47, 1.55, 0)), Vector3(0.05, 0.62, W - 0.2), C_GLASS, MG)
+	batch.add_box_xform(xf * Transform3D(Basis(Vector3.BACK, 0.5), Vector3(1.44, 1.55, 0)), Vector3(0.04, 0.68, W - 0.06), cream, MPA)
+	for sz: float in [-1.0, 1.0]:
+		batch.add_box_xform(xf * Transform3D(Basis(), Vector3(1.08, 1.55, sz * (W * 0.5 - 0.005))), Vector3(0.45, 0.36, 0.02), C_GLASS, MG)
+		# Kapı çizgisi ve kolu
+		batch.add_box_xform(xf * Transform3D(Basis(), Vector3(0.78, 1.05, sz * (W * 0.5 + 0.004))), Vector3(0.02, 0.85, 0.01), dark, MPA)
+		batch.add_box_xform(xf * Transform3D(Basis(), Vector3(0.95, 1.15, sz * (W * 0.5 + 0.012))), Vector3(0.14, 0.03, 0.02), metal, MMET)
+		# Yan ayna
+		batch.add_box_xform(xf * Transform3D(Basis(), Vector3(1.42, 1.42, sz * (W * 0.5 + 0.1))), Vector3(0.06, 0.16, 0.12), dark, MPA)
+		# Kasada yuvarlak "lombar" pencere
+		batch.add_cylinder(xf * Vector3(0.1, 1.68, sz * (W * 0.5 - 0.005)), 0.18, 0.02, Color("ffffff"), axle, MPA)
+		batch.add_cylinder(xf * Vector3(0.1, 1.68, sz * (W * 0.5 + 0.002)), 0.14, 0.02, C_GLASS, axle, MG)
+		# Yazılar
+		var side_yaw := yaw if sz > 0.0 else yaw + PI
+		_label("EXPRESS", xf * Vector3(-0.85, 1.78, sz * (W * 0.5 + 0.015)), side_yaw, 72, orange, false)
+		_label("DELIVERY", xf * Vector3(-0.85, 1.55, sz * (W * 0.5 + 0.015)), side_yaw, 48, dark, false)
+		_label("We carry, you smile!", xf * Vector3(-0.3, 0.95, sz * (W * 0.5 + 0.015)), side_yaw, 30, Color("ffffff"), false)
+	# Ön yüz: ızgara, gülen tampon, kocaman yuvarlak farlar
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(L_ * 0.5 + 0.01, 0.85, 0)), Vector3(0.02, 0.22, 0.7), dark, MPA)
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(L_ * 0.5 + 0.06, 0.45, 0)), Vector3(0.14, 0.16, W + 0.04), metal, MMET)
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(-L_ * 0.5 - 0.06, 0.45, 0)), Vector3(0.14, 0.16, W + 0.04), metal, MMET)
+	for sz: float in [-1.0, 1.0]:
+		batch.add_cylinder(xf * Vector3(L_ * 0.5 + 0.005, 0.95, sz * 0.6), 0.16, 0.03, metal, along_x, MMET)
+		glow.add_sphere(xf * Vector3(L_ * 0.5 + 0.02, 0.95, sz * 0.6), 0.13, Color("fff6d0"))
+		glow.add_box(xf * Vector3(-L_ * 0.5 - 0.005, 1.0, sz * 0.7), Vector3(0.02, 0.2, 0.12), Color("ff3b30"))
+	_label(":)", xf * Vector3(L_ * 0.5 + 0.03, 0.72, 0.0), yaw + PI * 0.5, 64, dark, false)
+	# Arka: açık kasa (koyu iç), menteşesinden yana açılmış arka kapılar, içeride koliler
+	var rear := -L_ * 0.5
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(rear - 0.006, 1.32, 0)), Vector3(0.01, 1.2, W - 0.24), Color("34343a"), MPA)
+	batch.add_box_xform(xf * Transform3D(Basis(), Vector3(rear - 0.004, 0.68, 0)), Vector3(0.012, 0.06, W - 0.2), metal, MMET)
+	for sz: float in [-1.0, 1.0]:
+		var hinge: Vector3 = xf * Vector3(rear, 1.32, sz * (W * 0.5 - 0.02))
+		var bd := b * Basis(Vector3.UP, sz * deg_to_rad(105.0))
+		var door_c: Vector3 = hinge + bd * Vector3(0, 0, -sz * W * 0.25)
+		batch.add_box_xform(Transform3D(bd, door_c), Vector3(0.04, 1.24, W * 0.5 - 0.02), cream, MPA)
+		batch.add_box_xform(Transform3D(bd, door_c + Vector3(0, -0.38, 0)), Vector3(0.045, 0.44, W * 0.5 - 0.01), orange, MPA)
+		batch.add_box_xform(Transform3D(bd, door_c + Vector3(0, 0.25, 0)), Vector3(0.05, 0.4, W * 0.5 - 0.16), C_GLASS, MG)
+	for i in 3:
+		var bc: Vector3 = xf * Vector3(rear + 0.12, 0.9 + (0.36 if i == 2 else 0.0), -0.45 + i * 0.42 - (0.2 if i == 2 else 0.0))
+		batch.add_box_xform(Transform3D(b, bc), Vector3(0.45, 0.34, 0.4), Color("c48a55").darkened(i * 0.08), MPA)
+		batch.add_box_xform(Transform3D(b, bc + Vector3(0, 0.171, 0)), Vector3(0.46, 0.004, 0.08), Color("e8d9a8"), MPA)
+	batch.add_box_xform(xf * Transform3D(Basis(Vector3.BACK, 0.38), Vector3(rear - 0.55, 0.3, 0.0)), Vector3(1.2, 0.04, 0.8), metal, MMET)
+	# Turuncu tepe lambası
+	glow.add_sphere(xf * Vector3(1.0, 1.82, 0.0), 0.07, Color("ffb347"))
+	# Çarpışma: gövde
+	_shape_box(Transform3D(b, p + Vector3(0, 1.1, 0)), Vector3(L_ + 0.2, 2.2, W + 0.1))
+
+
 ## Kurye motosikleti (scooter): kırmızı gövde, teslimat kutusu, kask, yanan far.
 ## Yerel eksenler: +X ileri (motorun burnu), +Z yan. Yan ayağa hafif yaslanmış durur.
 func _motorbike(p: Vector3, yaw: float) -> void:
@@ -487,8 +573,12 @@ func _build_street() -> void:
 	_label("EASY MOVERS", Vector3(tx - 3.4, 2.5, tz + 1.23), 0.0, 96, Color("2b2d42"))
 	_label("We carry, you smile!", Vector3(tx - 3.4, 1.62, tz + 1.23), 0.0, 44, Color("2b2d42"))
 
-	# Kurye motosikleti: giriş kapısının yanında (motor kuryesiyiz!)
-	_motorbike(Vector3(-2.45, 0.0, -2.75), 0.0)
+	# Kurye aracı: küçük eşyalarda giriş yanında motosiklet; büyük eşyalarda
+	# yol kenarında arka kapıları açık şirin bir kamyonet (eşya oradan indirildi).
+	if _is_big_item():
+		_van(Vector3(-4.6, -0.06, -5.15), PI)
+	else:
+		_motorbike(Vector3(-2.45, 0.0, -2.75), 0.0)
 
 	# Park etmiş arabalar
 	var car_colors := [Color("e63946"), Color("2a9d8f"), Color("ffb703"), Color("4361ee"), Color("8338ec")]
@@ -1253,9 +1343,17 @@ func _spot_niche(far_center: Vector3, inward: Vector3, along: Vector3, isize: Ve
 	var gap_half := isize.x * 0.5 + 0.12
 	var depth := maxf(0.55, isize.z + 0.05)
 	var h := 0.9
+	var side_w := 0.6
 	var col := Color("f7f7f2")
 	var top_col := Color("4a4e57")
 	match style:
+		"living":
+			# Oturma odası: iki yanda alçak sehpa + abajur (koltuk/TV köşesi)
+			col = Color("6b4630")
+			top_col = Color("8a5a32")
+			h = 0.55
+			side_w = 0.45
+			depth = minf(depth, 0.5)
 		"bedroom":
 			col = Color("a8774f")
 			top_col = Color("8a5a32")
@@ -1267,13 +1365,18 @@ func _spot_niche(far_center: Vector3, inward: Vector3, along: Vector3, isize: Ve
 			col = Color("3d7c98")
 			top_col = Color("dcd6cc")
 	for sgn: float in [-1.0, 1.0]:
-		var c := far_center + inward * (depth * 0.5) + along * (sgn * (gap_half + 0.3)) + Vector3.UP * (h * 0.5)
-		var size := Vector3(depth, h, 0.6) if absf(inward.x) > 0.5 else Vector3(0.6, h, depth)
-		solid(c, size, col, true, MPA)
-		var top_size := Vector3(depth + 0.03, 0.04, 0.62) if absf(inward.x) > 0.5 else Vector3(0.62, 0.04, depth + 0.03)
+		var c := far_center + inward * (depth * 0.5) + along * (sgn * (gap_half + side_w * 0.5)) + Vector3.UP * (h * 0.5)
+		var size := Vector3(depth, h, side_w) if absf(inward.x) > 0.5 else Vector3(side_w, h, depth)
+		solid(c, size, col, true, MW if style == "living" else MPA)
+		var top_size := Vector3(depth + 0.03, 0.04, side_w + 0.02) if absf(inward.x) > 0.5 else Vector3(side_w + 0.02, 0.04, depth + 0.03)
 		batch.add_box(c + Vector3.UP * (h * 0.5 + 0.02), top_size, top_col, MM)
 		# Kapak tutamağı
 		batch.add_box(c + inward * (depth * 0.5 + 0.01) + Vector3.UP * (h * 0.25), Vector3(0.02, 0.02, 0.14) if absf(inward.x) > 0.5 else Vector3(0.14, 0.02, 0.02), C_BRASS, MMET)
+		if style == "living":
+			# Abajur: ayak + kumaş şapka
+			var lp := c + Vector3.UP * (h * 0.5 + 0.04)
+			batch.add_cylinder_between(lp, lp + Vector3.UP * 0.32, 0.025, C_BRASS, MMET)
+			props.add_cylinder(lp + Vector3.UP * 0.4, 0.15, 0.2, Color("f3e3c3"))
 		# Üst dolap (mutfak/çamaşır)
 		if style in ["kitchen", "laundry"]:
 			var uc := far_center + inward * 0.18 + along * (sgn * (gap_half + 0.3)) + Vector3.UP * 1.75
@@ -1629,7 +1732,11 @@ func _build_waypoints() -> void:
 		w.append(Vector3(info.apt_door_pos) + Vector3(float(info.apt_side) * 0.4, 0, 0))
 		w.append(info.corridor_end)
 		w.append(info.room_door_pos)
-		w.append(info.goal_center)
+		if str(info.goal_type) == "spot":
+			# Yuvanın hemen önü: ince eşyalarda (TV) yuva duvara çok yakın
+			w.append(Vector3(info.goal_center) + Vector3(info.goal_facing) * 0.5)
+		else:
+			w.append(info.goal_center)
 	info.waypoints = w
 
 

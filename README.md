@@ -32,7 +32,7 @@ Masaüstünde fare ile dokunmatik taklit edilir (sol tık = parmak). Klavye kıs
 | **GRAB / DROP** | Boşluk / F | Eşyayı al, yavaşça yere bırak, kapı kapat (CLOSE) |
 | **REST** | R | Eşyayı bırak ve dinlen (dayanıklılık hızlı dolar) |
 | İki parmak kaydır / sıkıştır | Sağ tık sürükle, tekerlek | Kamerayı geçici çevir / yakınlaştır (ana kamera karakterin arkasına geri döner) |
-| **BACK / TOP / SIDE** | 1 / 2 / 3 | Hazır kamera görünümleri |
+| **BACK / TOP / SIDE** | 1 / 2 / 3 | Hazır kamera görünümleri. TOP ve SIDE seçilince kamera o açıda kalır; BACK'e basınca arkaya döner |
 | **LOOK** (aç/kapa) | V / C | Serbest kamera: karakter durur; joystick/WASD kamerayı sahnede gezdirir, kaydırınca her yöne (yukarı/aşağı dahil) bakar, iki parmak yukarı/aşağı veya LIFT/LOWER (E/Q) yükseltir |
 | **II** | Esc / P | Duraklat |
 
@@ -54,7 +54,10 @@ Masaüstünde fare ile dokunmatik taklit edilir (sol tık = parmak). Klavye kıs
   değiştirebilirsin: `music, step0..step3, thud, bump, crack, shatter, scrape, success, fail, meow...`
 - **18 bölüm**: koli → TV → büyük TV/cam sehpa → koltuk → gardırop → **çamaşır makinesi** → buzdolabı (sırtta)
 - **Üç hedef türü:** `door` (daire kapısına teslim et), `room` (eve girip odaya taşı),
-  `spot` (eşyayı tam yerine, iki dolabın arasına, ön yüzü odaya bakacak şekilde yerleştir — hayalet görüntü yol gösterir)
+  `spot` (eşyayı tam yerine, iki dolabın/komodinin arasına, ön yüzü odaya bakacak şekilde yerleştir — hayalet görüntü yol gösterir).
+  1–5. bölümler kapıya/odaya teslim; **6. bölümden itibaren her bölümde eve girip eşyayı yerine koymak gerekir**
+  (TV ve koltuk oturma odasında abajurlu iki komodin arasına, gardırop yatak odasına, beyaz eşya mutfak/çamaşır odasına)
+- **Kurye aracı:** küçük eşyalarda girişte kurye motosikleti; büyük eşyalarda yol kenarında arka kapıları açık, içi kolili şirin bir kamyonet
 - **Ev sahibi:** kapıda/odada bekler, yaklaşınca el sallar ("Hi! Over here, please!"), eşya çarpınca endişelenir
   ("Careful!"), teslimde zıplar, döner, sevinir ve teşekkür eder ("Thank you so much! I'm so happy!") + konfeti
 - **Canlı görsellik:** kodla üretilen dokular (tuğla cephe, mermer basamak, halı yolluk, ahşap parke, fayans,

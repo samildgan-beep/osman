@@ -21,6 +21,7 @@ func _ready() -> void:
 	await _test_free_look()
 	await _test_stairs_no_phantom_damage()
 	await _test_crush()
+	await _test_spot_placement()
 	await _test_audio()
 	GameState.from_dict(backup)
 	print("")
@@ -101,6 +102,15 @@ func _test_level_db() -> void:
 	check(goals.has("door") and goals.has("room") and goals.has("spot"), "üç hedef türü de kullanılıyor")
 	check(LevelDB.get_level(13).item == "camasir" and LevelDB.get_level(13).goal == "spot", "çamaşır makinesi yerleştirme bölümü")
 	check(LevelDB.get_level(1).building == "turkish", "oyun eski Türk apartmanında başlıyor")
+	var lb := LevelBuilder.new()
+	lb.L = LevelDB.get_level(1)
+	check(not lb._is_big_item(), "küçük eşyada kurye motosikleti")
+	for big_id in [7, 11, 13, 16]:
+		lb.L = LevelDB.get_level(big_id)
+		check(lb._is_big_item(), "bölüm %d: büyük eşyada kamyonet" % big_id)
+	for L in LevelDB.all_levels():
+		if int(L.id) > 5:
+			check(str(L.goal) == "spot", "bölüm %d: 5. bölümden sonra eve girip eşya yerine konur" % int(L.id))
 	check(LevelDB.get_level(7).building == "modern", "modern apartman da kullanılıyor")
 	for L in LevelDB.all_levels():
 		var id := int(L.id)
@@ -290,8 +300,46 @@ func _test_free_look() -> void:
 	for i in 5:
 		await get_tree().physics_frame
 	check(not game.cam.free_look, "serbest bakış kapanıyor")
+	# SIDE: kamera yan açıda kalır, birkaç saniye sonra arkaya dönmez
+	game.cam.preset("side")
+	for i in 300:
+		await get_tree().physics_frame
+	var off := absf(wrapf(game.cam.yaw - game.player.get_yaw(), -PI, PI))
+	check(absf(off - PI * 0.5) < 0.2, "SIDE açısı kendiliğinden geri dönmüyor (%.2f)" % off)
+	game.cam.preset("back")
+	for i in 120:
+		await get_tree().physics_frame
+	off = absf(wrapf(game.cam.yaw - game.player.get_yaw(), -PI, PI))
+	check(off < 0.2, "BACK ile kamera arkaya dönüyor")
 	game.queue_free()
 	await get_tree().process_frame
+
+
+## 6. bölümden sonra: eşya evin içindeki yerine doğru konunca bölüm kazanılır, yuva hasar vermez.
+func _test_spot_placement() -> void:
+	section("Evin içinde yerine koyma")
+	for id in range(6, LevelDB.count() + 1):
+		var game := Game.new()
+		game.setup(id)
+		add_child(game)
+		for i in 20:
+			await get_tree().physics_frame
+		var info: Dictionary = game.info
+		var sb: Basis = info.spot_basis
+		var yaw := atan2(-(-sb.z).x, -(-sb.z).z)
+		# Ters yönde: kazanılmamalı
+		game.item.place_on_ground(info.goal_center, yaw + PI)
+		for i in 60:
+			await get_tree().physics_frame
+		check(game.phase != Game.Phase.WON, "bölüm %d: ters konunca kazanılmaz" % id)
+		game.item.place_on_ground(info.goal_center, yaw)
+		for i in 90:
+			await get_tree().physics_frame
+		check(game.goal.contains(game.item.global_position), "bölüm %d: eşya yuvada kalıyor" % id)
+		check(game.item.durability > 99.0, "bölüm %d: yuva eşyaya hasar vermiyor (%.1f)" % [id, game.item.durability])
+		check(game.phase == Game.Phase.WON, "bölüm %d: doğru konunca kazanılır" % id)
+		game.queue_free()
+		await get_tree().process_frame
 
 
 func _test_crush() -> void:

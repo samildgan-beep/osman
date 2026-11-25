@@ -35,6 +35,8 @@ var _return_time := 0.0
 # Karaktere bağlı takip: kamera karakterin arkasında kalır; elle çevrilince bir süre sonra geri döner
 var yaw_offset := 0.0
 var _orbit_hold := 0.0
+## SIDE / TOP seçilince kamera o açıda kalır; kendiliğinden arkaya dönmez (BACK ile çözülür).
+var view_locked := false
 
 
 func setup(player: Player) -> void:
@@ -78,6 +80,7 @@ func preset(view: String) -> void:
 	if target == null:
 		return
 	var py := target.get_yaw()
+	view_locked = view != "back"
 	match view:
 		"back":
 			_start_anim(py, deg_to_rad(Config.CAM_PITCH_DEFAULT), Config.CAM_DIST_DEFAULT)
@@ -163,7 +166,7 @@ func _physics_process(delta: float) -> void:
 		# Takip: kamera karakterin arkasında (+ elle verilen sapma). Sapma bir süre sonra sıfırlanır.
 		if _orbit_hold > 0.0:
 			_orbit_hold -= delta
-		else:
+		elif not view_locked:
 			yaw_offset = lerpf(yaw_offset, 0.0, 1.0 - exp(-1.6 * delta))
 		var want := target.get_yaw() + yaw_offset
 		yaw = lerp_angle(yaw, want, 1.0 - exp(-Config.CAM_FOLLOW_RATE * delta))

@@ -9,9 +9,8 @@ func _ready() -> void:
 	if args.size() > 0:
 		out = args[0]
 	DirAccess.make_dir_recursive_absolute(out)
-	await _portrait_shots(1, "p1")
-	await _follow_shots(1, "f1")
-	await _win_shots(1, "w1")
+	await _vehicle_shots(7, "v7")
+	await _vehicle_shots(1, "v1")
 	get_tree().quit()
 
 
@@ -97,6 +96,26 @@ func _portrait_shots(id: int, tag: String) -> void:
 	await _wait(5)
 
 
+## Girişteki kurye aracı: küçük eşyada motosiklet, büyük eşyada kamyonet.
+func _vehicle_shots(id: int, tag: String) -> void:
+	var game := Game.new()
+	game.setup(id)
+	add_child(game)
+	await _wait_sec(1.2)
+	await _snap(tag + "_start")
+	var cam := Camera3D.new()
+	cam.fov = 55.0
+	add_child(cam)
+	cam.global_position = Vector3(2.5, 2.6, -9.0)
+	cam.look_at(Vector3(-3.5, 0.9, -4.5))
+	cam.make_current()
+	await _wait_sec(0.3)
+	await _snap(tag + "_vehicle")
+	cam.queue_free()
+	game.queue_free()
+	await _wait(5)
+
+
 func _menu_shots() -> void:
 	var layer := CanvasLayer.new()
 	add_child(layer)
@@ -119,8 +138,14 @@ func _win_shots(id: int, tag: String) -> void:
 	add_child(game)
 	await _wait(30)
 	var g: Vector3 = game.info.goal_center
-	game.player.teleport(g + Vector3(1.2, 0.05, 0.0), PI * 0.5)
-	game.item.place_on_ground(g)
+	if str(game.info.goal_type) == "spot":
+		var f: Vector3 = game.info.goal_facing
+		var sz: Vector3 = game.info.spot_size
+		game.player.teleport(g + f * (sz.z * 0.5 + 0.9) + Vector3(0, 0.05, 0), atan2(f.x, f.z))
+		game.item.place_on_ground(g, atan2(-f.x, -f.z))
+	else:
+		game.player.teleport(g + Vector3(1.2, 0.05, 0.0), PI * 0.5)
+		game.item.place_on_ground(g)
 	await _wait_sec(2.2)
 	await _snap(tag + "_celebrate")
 	await _wait_sec(3.5)
