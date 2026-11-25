@@ -9,8 +9,8 @@ func _ready() -> void:
 	if args.size() > 0:
 		out = args[0]
 	DirAccess.make_dir_recursive_absolute(out)
-	await _vehicle_shots(7, "v7")
-	await _vehicle_shots(1, "v1")
+	await _interior_shots(3, "i3")
+	await _interior_shots(8, "i8")
 	get_tree().quit()
 
 
@@ -112,6 +112,29 @@ func _vehicle_shots(id: int, tag: String) -> void:
 	await _wait_sec(0.3)
 	await _snap(tag + "_vehicle")
 	cam.queue_free()
+	game.queue_free()
+	await _wait(5)
+
+
+## Bina içi: merdiven, sahanlık, daire kapısı, koridor, oda (oyuncu kamerasıyla).
+func _interior_shots(id: int, tag: String) -> void:
+	var game := Game.new()
+	game.setup(id)
+	add_child(game)
+	await _wait_sec(1.0)
+	var wps: Array = game.info.waypoints
+	var n := wps.size()
+	var picks := {"stairs": 1, "landing": 2, "aptdoor": n - 4, "corridor": n - 3, "roomdoor": n - 2, "room": n - 1}
+	for k: String in picks:
+		var i: int = picks[k]
+		var a: Vector3 = wps[maxi(i - 1, 0)]
+		var b: Vector3 = wps[i]
+		var d := b - a
+		d.y = 0
+		var yaw := atan2(-d.x, -d.z) if d.length() > 0.1 else 0.0
+		_tp(game, b + Vector3(0, 0.05, 0) - d.normalized() * 0.6, yaw)
+		await _wait_sec(1.2)
+		await _snap(tag + "_" + k)
 	game.queue_free()
 	await _wait(5)
 
