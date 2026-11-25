@@ -508,16 +508,18 @@ func _row_pipes(x0: float, x1: float, z: float) -> void:
 ## Çelik bobin sırası: yan yatmış bobinler takozlarda, üstlerinde kasalar.
 func _row_coils(x0: float, x1: float, z: float) -> void:
 	var r := 1.15
-	var x := x0 + r + 0.15
 	var axis := Basis(Vector3.RIGHT, PI * 0.5)
-	while x < x1 - 0.3:
-		var c := Vector3(minf(x, x1 - r - 0.1), r + 0.15, z)
+	# Bobinler sıranın iki ucuna kadar eşit aralıkla dizilir (uçta görünmez duvar kalmaz)
+	var span := maxf(0.0, (x1 - x0) - 2.0 * r - 0.2)
+	var cnt := int(ceil(span / (2.0 * r + 0.4))) + 1
+	var pitch := span / maxf(1.0, cnt - 1.0)
+	for ci in cnt:
+		var c := Vector3(x0 + r + 0.1 + ci * pitch, r + 0.15, z)
 		b.batch.add_cylinder(c, r, 1.6, Color("9aa3ab"), axis, MMET)
 		b.batch.add_cylinder(c, r * 0.4, 1.62, Color("3a3f45"), axis, MMET)
 		for dz: float in [-0.5, 0.5]:
 			b.batch.add_cylinder(c + Vector3(0, 0, dz), r + 0.02, 0.06, Color("1f5fa8"), axis, MPA)
 		b.batch.add_box(Vector3(c.x, 0.1, z), Vector3(2.2, 0.2, 1.8), Color("8a6a4a"), MW)
-		x += r * 2.0 + 0.4
 	b.collider_mm(Vector3(x0, 0, z - BARRIER_T * 0.5), Vector3(x1, 2.0 * r + 0.15, z + BARRIER_T * 0.5))
 	# Bobinlerin arkasında üst üste kasalar (sırayı yükseltir, görüşü keser)
 	var cx := x0 + 0.9

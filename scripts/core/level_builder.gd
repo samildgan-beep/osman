@@ -529,7 +529,11 @@ func _motorbike(p: Vector3, yaw: float) -> void:
 	batch.add_box_xform(Transform3D(b, hc + b * Vector3(0.1, -0.02, 0.0)), Vector3(0.06, 0.12, 0.24), Color("2b2d42"), MG)
 	batch.add_sphere(hc + b * Vector3(0.0, 0.04, 0.0), 0.162, Color("d62828"), MPA, Vector3(0.35, 0.7, 1.0))
 	# Çarpışma: motosikletin içinden geçilmesin (eşya çarparsa hasar alır)
-	_shape_box(Transform3D(Basis(Vector3.UP, yaw), p + Vector3(0, 0.65, 0)), Vector3(1.95, 1.3, 0.55))
+	# Görüntüye oturan üç parça: gövde + tekerlekler, gidon, teslimat kutusu
+	var cb := Basis(Vector3.UP, yaw)
+	_shape_box(Transform3D(cb, p + cb * Vector3(0.025, 0.45, 0.0)), Vector3(1.95, 0.9, 0.4))
+	_shape_box(Transform3D(cb, p + cb * Vector3(0.52, 1.1, 0.0)), Vector3(0.22, 0.4, 0.9))
+	_shape_box(Transform3D(cb, p + cb * Vector3(-0.72, 1.15, 0.0)), Vector3(0.48, 0.5, 0.48))
 
 
 # ================================================================ sokak
@@ -1995,11 +1999,12 @@ func _entrance_turkish(ew: float, eh: float) -> void:
 	batch.add_box(Vector3(0, eh + 0.24, -WT - 0.015), Vector3(ew, 0.3, 0.02), C_GLASS, MG)
 	batch.add_box(Vector3(0, eh + 0.24, -WT - 0.03), Vector3(0.04, 0.3, 0.02), C_ALU, MMET)
 	batch.add_box(Vector3(0, eh + 0.41, -WT - 0.02), Vector3(ew + 0.16, 0.05, 0.05), C_ALU, MMET)
-	# İçeri açık iki kanat (telli cam). İnce çarpışma: kanat kenarlarına çarpılabilir.
+	# Dışarı açık iki kanat (telli cam): holün içini ve merdiven şeridini kapatmaz.
+	# İnce çarpışma: kanat kenarlarına çarpılabilir.
 	var leaf_w := half - 0.04
 	for sgn: float in [-1.0, 1.0]:
 		var lx := sgn * (half - 0.03)
-		var lc := Vector3(lx, eh * 0.5 - 0.02, leaf_w * 0.5 + 0.02)
+		var lc := Vector3(lx, eh * 0.5 - 0.02, -(WT + 0.02 + leaf_w * 0.5))
 		batch.add_box(lc, Vector3(0.045, eh - 0.06, leaf_w), C_ALU, MMET)
 		batch.add_box(lc + Vector3(-sgn * 0.025, 0.15, 0), Vector3(0.006, eh - 0.6, leaf_w - 0.12), Color("bcd6e0"), MG)
 		batch.add_box(lc + Vector3(-sgn * 0.05, -0.1, leaf_w * 0.3), Vector3(0.03, 0.03, 0.3), Color("c9ccce"), MMET)

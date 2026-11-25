@@ -11,6 +11,7 @@ func _ready() -> void:
 	DirAccess.make_dir_recursive_absolute(out)
 	await _menu_shots()
 	await _follow_shots(1, "f1")
+	await _follow_shots(3, "f3")
 	for fid in [16, 17, 18, 19, 20]:
 		await _factory_shots(fid, "fa%d" % fid)
 	get_tree().quit()

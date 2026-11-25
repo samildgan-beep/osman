@@ -186,7 +186,40 @@ func _update_slope_comp(delta: float) -> void:
 				dir = dir.normalized()
 				var rise := -nrm.dot(dir) / nrm.y
 				target = clampf(rise * absf(local.z), -0.7, 0.9)
+		# İleriye bakış: eşyanın altında basamak varsa (oyuncu henüz düz zemindeyken bile)
+		# eşya önceden yükselir; alt kenarı basamağa takılmaz.
+		if not item.is_back_carry():
+			target = maxf(target, _ground_lift())
 	slope_comp = lerpf(slope_comp, target, 1.0 - exp(-6.0 * delta))
+
+
+## Eşyanın altındaki en yüksek zemin (basamak) için gereken yükselme; yoksa 0.
+func _ground_lift() -> float:
+	if item == null:
+		return 0.0
+	var h := _local_hold()
+	var local: Vector3 = h.local
+	var ext := DamageModel.rotated_half_extents(h.basis, item.half)
+	var pb := player.global_basis.orthonormalized()
+	var center: Vector3 = player.global_position + pb * Vector3(local.x, 0.0, local.z)
+	var feet: float = player.global_position.y
+	var bottom: float = feet + local.y - ext.y
+	var space := player.get_world_3d().direct_space_state
+	var along := pb.z
+	var across := pb.x
+	var ground := -INF
+	# Eşyanın boyunca ve iki ucunun 35 cm ötesinde (bir sonraki basamağın rıhtına takılmasın)
+	for k: float in [-1.0, -0.5, 0.0, 0.5, 1.0, 1.5, -1.5]:
+		for s: float in [-0.8, 0.0, 0.8]:
+			var reach := k * ext.z if absf(k) <= 1.0 else signf(k) * (ext.z + 0.35)
+			var p := center + along * reach + across * (s * ext.x)
+			var q := PhysicsRayQueryParameters3D.create(Vector3(p.x, bottom + 0.6, p.z), Vector3(p.x, feet - 0.3, p.z), Config.LAYER_STEPS | Config.LAYER_WORLD, [item.get_rid(), player.get_rid()])
+			var hit := space.intersect_ray(q)
+			if not hit.is_empty():
+				ground = maxf(ground, float(hit.position.y))
+	if ground < feet + 0.05:
+		return 0.0
+	return clampf(ground + 0.1 - bottom, 0.0, 0.9)
 
 
 ## Eşyayı hedefe doğru hareket ettirir. Sonuç: {"lag", "rot_blocked"}

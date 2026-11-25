@@ -149,6 +149,13 @@ Tüm hız, ağırlık, hasar, dayanıklılık, kamera ve puan eşikleri `scripts
 godot --headless --fixed-fps 60 --path . res://tests/run_tests.tscn
 ```
 `--fixed-fps 60` fizik adımlarını beklemeden çalıştırır (sonuç aynı, birkaç saniyede biter).
+
+Görünmeyen engel denetimi (gerçek görüntü motoru gerekir; Linux'ta `xvfb-run` ile):
+```
+godot --rendering-driver opengl3 --fixed-fps 60 --path . res://tests/collision_audit.tscn
+```
+Her bölümdeki tüm çarpışma şekillerini görünür modellerle karşılaştırır, oyuncuyu ve eşyayı yol
+boyunca ilerletir; yüzeyinde görünür model olmayan bir engel bulursa raporlar (0 = temiz).
 Hasar formülleri, veri doğrulama, bozuk kayıt dosyaları, 20 bölümün kurulumu (her yol noktasında zemin ve
 oyuncuya yetecek boşluk var mı), oynanış testleri (eşya al, yürü, döndür, bırak, yerleştir, birinci şahıs,
 ezilme) ve fabrika labirentlerini dev eşyayla baştan sona geçen otomatik pilot çalışır.

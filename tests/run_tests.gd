@@ -24,6 +24,7 @@ func _ready() -> void:
 	await _test_spot_placement()
 	await _test_home_speed()
 	await _test_first_person()
+	await _test_stair_entry()
 	await _test_factory_gate()
 	await _test_factory_maze()
 	for fid in [16, 17, 18, 19, 20]:
@@ -335,6 +336,55 @@ func _test_free_look() -> void:
 	check(off < 0.2, "BACK ile kamera arkaya dönüyor")
 	game.queue_free()
 	await get_tree().process_frame
+
+
+## Merdiven başı: oyuncu henüz düz zemindeyken eşyanın alt kenarı basamaklara takılmamalı
+## (eşya önceden yükselir). Her apartman bölümünde kendi eşyasıyla ara sahanlığa kadar çıkılır.
+func _test_stair_entry() -> void:
+	section("Merdiven başı (eşya basamağa takılmaz)")
+	for id in range(1, 16):
+		var game := Game.new()
+		game.setup(id)
+		add_child(game)
+		for i in 10:
+			await get_tree().physics_frame
+		await _grab_item(game)
+		var p := game.player
+		var it := game.item
+		# Oyuncunun yapacağı gibi: uzun kenar ileri; uzun boylu eşya (gardırop) alçak merdiven
+		# tavanı için yatırılır. Sırttaki eşya dik kalır.
+		var hb := Basis(Vector3.UP, PI * 0.5) if it.half.x > it.half.z + 0.01 else Basis()
+		if it.half.y * 2.0 > 1.2 and not it.is_back_carry():
+			hb = Basis(Vector3.RIGHT, -PI * 0.5)
+		p.carry.hold_basis = hb
+		var wps: Array = game.info.waypoints.duplicate()
+		# Holün içinde, merdiven şeridinin hizasından başla (uzun eşya çapraz girmesin)
+		wps[0] = Vector3(wps[1].x, 0.0, minf(wps[1].z - 1.2, 0.6))
+		p.teleport(Vector3(wps[0]) + Vector3(0, 0.05, 0), PI)   # +Z: merdivene bakar
+		it.global_transform = p.carry.target_transform()
+		it.grace = 1.0
+		for i in 5:
+			await get_tree().physics_frame
+		var idx := 1
+		for frame in 1500:
+			p.stamina = Config.STAMINA_MAX
+			var d: Vector3 = Vector3(wps[idx]) - p.global_position
+			d.y = 0.0
+			if d.length() < 0.6:
+				idx += 1
+				if idx > 2:
+					break
+				continue
+			if p.global_position.y > float(wps[2].y) - 0.3:
+				break
+			var diff := wrapf(atan2(-d.x, -d.z) - p.get_yaw(), -PI, PI)
+			game.input.move = Vector2(clampf(-diff * 3.0, -1.0, 1.0), 0.8 if absf(diff) < 0.3 else 0.0)
+			await get_tree().physics_frame
+		game.input.move = Vector2.ZERO
+		check(p.global_position.y > float(wps[2].y) - 0.3, "bölüm %d (%s): merdivenden ara sahanlığa çıkıldı (y=%.2f)" % [id, it.data.name, p.global_position.y])
+		check(p.is_holding(), "bölüm %d: eşya elde" % id)
+		game.queue_free()
+		await get_tree().process_frame
 
 
 ## Fabrika labirenti: sıralar yolu gerçekten kapatır ama dev eşya her açıklıktan geçebilir.
