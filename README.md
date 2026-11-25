@@ -53,7 +53,12 @@ Masaüstünde fare ile dokunmatik taklit edilir (sol tık = parmak). Klavye kıs
 - **Sesler:** neşeli döngüsel müzik (davul, bas, akor, marimba melodisi), 4 çeşit adım sesi, tok çarpma, ahşap
   çatırtısı, cam kırılması, sürtünme. `audio/<ad>.ogg` (veya .wav/.mp3) koyarak herhangi bir sesi gerçek kayıtla
   değiştirebilirsin: `music, step0..step3, thud, bump, crack, shatter, scrape, success, fail, meow...`
-- **18 bölüm**: koli → TV → büyük TV/cam sehpa → koltuk → gardırop → **çamaşır makinesi** → buzdolabı (sırtta)
+- **20 bölüm**: koli → TV → büyük TV/cam sehpa → koltuk → gardırop → **çamaşır makinesi** → buzdolabı (sırtta, 15. bölüm)
+- **16–20: Absürt fabrika (GIANT GOODS CO.)** — adam tek başına dev bir fabrika salonunda kendi boyunun
+  **5 katı** lastik ördek, **7 katı** cıvata ve oyuncak ayı, **10 katı** kurşun kalem ve buzdolabı taşır.
+  Salonun ortasındaki kapı eşyadan alçak/dar: eşyayı yatırıp ya da çevirip geçir, sonra tekrar dikip
+  dev küvete, sergi standına, hediye kutusuna, deftere ya da dev mutfağa yerleştir. Konveyörler, kasa
+  yığınları, variller, forklift, köprülü vinç ve absürt tabelalar ("DAYS WITHOUT A GIANT ACCIDENT: 0")
 - **Üç hedef türü:** `door` (daire kapısına teslim et), `room` (eve girip odaya taşı),
   `spot` (eşyayı tam yerine, iki dolabın/komodinin arasına, ön yüzü odaya bakacak şekilde yerleştir — hayalet görüntü yol gösterir).
   1–5. bölümler kapıya/odaya teslim; **6. bölümden itibaren her bölümde eve girip eşyayı yerine koymak gerekir**
@@ -138,7 +143,7 @@ Tüm hız, ağırlık, hasar, dayanıklılık, kamera ve puan eşikleri `scripts
 ```
 godot --headless --path . res://tests/run_tests.tscn
 ```
-Hasar formülleri, veri doğrulama, bozuk kayıt dosyaları, 18 bölümün kurulumu (her yol noktasında zemin ve
+Hasar formülleri, veri doğrulama, bozuk kayıt dosyaları, 20 bölümün kurulumu (her yol noktasında zemin ve
 oyuncuya yetecek boşluk var mı) ve kısa bir oynanış testi (eşya al, yürü, döndür, bırak) çalışır.
 Çıkış kodu 0 ise tüm testler geçmiştir. Testler kayıt dosyana dokunmaz.
 

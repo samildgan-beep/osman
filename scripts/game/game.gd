@@ -188,6 +188,10 @@ func _spawn_camera() -> void:
 	# Serbest bakışta kameranın gezebileceği alan: sokak + bina + çatının biraz üstü
 	var b: AABB = info.block_aabb
 	cam.bounds = AABB(Vector3(-38.0, -0.3, -38.0), Vector3(76.0, b.end.y + 8.0, 66.0))
+	if info.has("cam_scale"):
+		# Fabrika: dev salon, dev eşya: kamera uzaktan bakar, serbest bakış salonla sınırlı
+		cam.set_view_scale(float(info.cam_scale))
+		cam.bounds = b.grow(1.0)
 
 
 func _build_ui() -> void:

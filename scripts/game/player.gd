@@ -261,7 +261,9 @@ func _can_pick() -> bool:
 		return false
 	var d := level_item.global_position - global_position
 	var reach := Config.PICKUP_RANGE + maxf(level_item.half.x, level_item.half.z)
-	return Vector2(d.x, d.z).length() < reach and d.y > -1.0 and d.y < 2.2
+	# Yükseklik: eşyanın alt kenarı uzanılabilir olmalı (dev eşyaların merkezi çok yukarıda)
+	var ext := DamageModel.rotated_half_extents(level_item.global_basis.orthonormalized(), level_item.half)
+	return Vector2(d.x, d.z).length() < reach and d.y + ext.y > -1.0 and d.y - ext.y < 2.2
 
 
 func _nearest_door() -> SwingDoor:

@@ -191,6 +191,8 @@ func grip_points() -> Array:
 		return [mid - right * (w + 0.015), mid + right * (w + 0.015)]
 	# Geniş eşya: yakın kenarın altından tut
 	var base := c - fwd * (ext.z - 0.05) - Vector3.UP * (ext.y * 0.7)
+	# Dev eşya: eller insan boyunda kalır (eşya yukarı doğru uzanır)
+	base.y = minf(base.y, player.global_position.y + 1.45)
 	return [base - right * 0.28, base + right * 0.28]
 
 

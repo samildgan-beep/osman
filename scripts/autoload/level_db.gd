@@ -62,7 +62,8 @@ func sanitize_level(src: Dictionary, index: int) -> Dictionary:
 		errors.append("bölüm %d: geçersiz hedef %s" % [index, goal])
 		goal = "room"
 	L.goal = goal
-	L.building = "modern" if str(src.get("building", "turkish")) == "modern" else "turkish"
+	var bld := str(src.get("building", "turkish"))
+	L.building = bld if bld in ["modern", "factory"] else "turkish"
 	L.theme = clampi(_int(src.get("theme"), (index - 1) % 6), 0, 5)
 	L.steps = clampi(_int(src.get("steps"), 8), 4, 12)
 	L.rise = clampf(_num(src.get("rise"), 0.175), 0.12, 0.2)
@@ -119,6 +120,10 @@ func sanitize_level(src: Dictionary, index: int) -> Dictionary:
 			elif at == "landing":
 				fl = clampi(fl, 1, L.floors)
 			L.obstacles.append({"type": t, "at": at, "floor": fl, "side": 1 if _int(o.get("side"), 1) >= 0 else -1})
+	if L.building == "factory":
+		L.factory = sanitize_factory(src.get("factory", {}), ItemDB.get_item(item_id))
+		L.obstacles = []
+		L.goal = "spot"
 	L.par_time = clampf(_num(src.get("par_time"), 120.0), 20.0, 3600.0)
 	L.tutorial = bool(src.get("tutorial", false)) if src.get("tutorial", false) is bool else false
 	var tips: Array = []
@@ -129,6 +134,31 @@ func sanitize_level(src: Dictionary, index: int) -> Dictionary:
 				tips.append(t)
 	L.tips = tips
 	return L
+
+
+const FACTORY_DECORS := ["tub", "pedestal", "gift", "desk", "kitchen"]
+
+
+## Fabrika salonu: eşya her durumda sığacak şekilde sınırlanır.
+## Salon tavanı eşyanın dik boyundan, kapı ise eşyanın en küçük iki kesitinden büyük olmalı
+## (eşya uygun açıyla — yatırılarak ya da çevrilerek — kapıdan geçebilsin).
+static func sanitize_factory(f, item: Dictionary) -> Dictionary:
+	if not (f is Dictionary):
+		f = {}
+	var size: Vector3 = item.get("size", Vector3.ONE)
+	var dims := [size.x, size.y, size.z]
+	dims.sort()
+	var tallest: float = dims[2]
+	var gate := _pair(f.get("gate"), Vector2(dims[1] + 2.0, dims[2] + 2.0))
+	var out := {
+		"length": clampf(_num(f.get("length"), 50.0), maxf(30.0, tallest * 3.0), 120.0),
+		"width": clampf(_num(f.get("width"), 26.0), maxf(16.0, tallest + 6.0), 60.0),
+		"height": clampf(_num(f.get("height"), 16.0), tallest + 2.5, 40.0),
+		"decor": str(f.get("decor", "pedestal")) if str(f.get("decor", "")) in FACTORY_DECORS else "pedestal",
+	}
+	# Kapı: en dar kesitten geniş, ikinci kesitten yüksek; salonu aşamaz
+	out.gate = Vector2(clampf(gate.x, dims[0] + 1.2, out.width - 4.0), clampf(gate.y, dims[1] + 1.2, out.height - 1.0))
+	return out
 
 
 static func _num(v, def: float) -> float:

@@ -24,6 +24,7 @@ func _ready() -> void:
 	await _test_spot_placement()
 	await _test_home_speed()
 	await _test_first_person()
+	await _test_factory_gate()
 	await _test_audio()
 	GameState.from_dict(backup)
 	print("")
@@ -97,7 +98,7 @@ func _test_item_db() -> void:
 func _test_level_db() -> void:
 	section("Bölüm verisi")
 	check(LevelDB.errors.is_empty(), "levels.json hatasız olmalı: %s" % str(LevelDB.errors))
-	check(LevelDB.count() == 18, "18 bölüm")
+	check(LevelDB.count() == 20, "20 bölüm")
 	var goals := {}
 	for L in LevelDB.all_levels():
 		goals[str(L.goal)] = true
@@ -107,18 +108,33 @@ func _test_level_db() -> void:
 	var lb := LevelBuilder.new()
 	lb.L = LevelDB.get_level(1)
 	check(not lb._is_big_item(), "küçük eşyada kurye motosikleti")
-	for big_id in [7, 11, 13, 16]:
+	for big_id in [7, 11, 13, 15]:
 		lb.L = LevelDB.get_level(big_id)
 		check(lb._is_big_item(), "bölüm %d: büyük eşyada kamyonet" % big_id)
 	for L in LevelDB.all_levels():
 		if int(L.id) > 5:
 			check(str(L.goal) == "spot", "bölüm %d: 5. bölümden sonra eve girip eşya yerine konur" % int(L.id))
 	check(LevelDB.get_level(7).building == "modern", "modern apartman da kullanılıyor")
+	# 16–20: absürt fabrika; eşya oyuncu boyunun 5 / 7 / 10 katı
+	var factors := {16: 5.0, 17: 7.0, 18: 7.0, 19: 10.0, 20: 10.0}
+	for fid: int in factors:
+		var FL := LevelDB.get_level(fid)
+		var fit := ItemDB.get_item(str(FL.item))
+		var fsz: Vector3 = fit.size
+		check(FL.building == "factory", "bölüm %d fabrikada" % fid)
+		check(maxf(fsz.x, maxf(fsz.y, fsz.z)) >= 1.8 * float(factors[fid]) - 0.01, "bölüm %d: eşya boyunun %d katı" % [fid, int(factors[fid])])
+	check(LevelDB.get_level(15).item == "buzdolabi", "buzdolabı apartmanın son bölümünde")
 	for L in LevelDB.all_levels():
 		var id := int(L.id)
 		var item := ItemDB.get_item(str(L.item))
 		var dims := [item.size.x, item.size.y, item.size.z]
 		dims.sort()
+		if L.building == "factory":
+			var fc: Dictionary = L.factory
+			var g2: Vector2 = fc.gate
+			check(dims[0] < g2.x - 0.5 and dims[1] < g2.y - 0.5, "bölüm %d: dev eşya uygun açıyla kapıdan geçebilir" % id)
+			check(dims[2] < float(fc.height) - 2.0, "bölüm %d: dev eşya salonda dik durabilir" % id)
+			continue
 		# Eşyanın en küçük kesiti kapılardan geçebilmeli (en uygun açıyla).
 		check(dims[0] < L.apt_door.x - 0.02 and dims[1] < L.apt_door.y, "bölüm %d: eşya daire kapısından geçebilmeli" % id)
 		check(dims[0] < L.room.door.x - 0.02 and dims[1] < L.room.door.y, "bölüm %d: eşya oda kapısından geçebilmeli" % id)
@@ -190,7 +206,8 @@ func _test_level_builds() -> void:
 		var foot := minf(item.size.x, item.size.z)
 		check(g.size.x > foot and g.size.z > foot, "bölüm %d: hedef alan eşyadan büyük" % int(L.id))
 		check(info.waypoints.size() >= 6, "bölüm %d: yol noktaları" % int(L.id))
-		check(absf(g.position.y - int(L.floors) * float(info.floor_height)) < 0.01, "bölüm %d: hedef doğru katta" % int(L.id))
+		var want_y := 0.0 if L.building == "factory" else int(L.floors) * float(info.floor_height)
+		check(absf(g.position.y - want_y) < 0.01, "bölüm %d: hedef doğru katta" % int(L.id))
 		check(info.has("npc_pos") and info.has("npc_yaw"), "bölüm %d: ev sahibi konumu" % int(L.id))
 		if str(L.goal) == "spot":
 			var facing: Vector3 = info.goal_facing
@@ -317,6 +334,45 @@ func _test_free_look() -> void:
 	await get_tree().process_frame
 
 
+## Fabrika: dik duran dev cıvata kapıdan geçmez; yatırılınca geçer, hasar almaz.
+func _test_factory_gate() -> void:
+	section("Fabrika: dev eşya kapıdan")
+	var game := Game.new()
+	game.setup(17)
+	add_child(game)
+	for i in 20:
+		await get_tree().physics_frame
+	await _grab_item(game)
+	check(game.player.is_holding(), "dev cıvata kaldırılıyor")
+	var f: Dictionary = game.info.factory
+	var gz: float = float(f.length) * 0.5
+	var gate: Vector2 = f.gate
+	var ext := DamageModel.rotated_half_extents(game.player.carry.hold_basis, game.item.half)
+	check(ext.y * 2.0 > gate.y, "dik dururken kapıdan yüksek (%.1f > %.1f)" % [ext.y * 2.0, gate.y])
+	# Yatır: ileri doğru 90° (eşya boylu boyunca önde uzanır)
+	game.player.carry.hold_basis = Basis(Vector3.RIGHT, -PI * 0.5)
+	ext = DamageModel.rotated_half_extents(game.player.carry.hold_basis, game.item.half)
+	check(ext.y * 2.0 + 0.1 < gate.y and ext.x * 2.0 < gate.x, "yatınca kapıya sığıyor")
+	var start := Vector3(0, 0.05, gz - ext.z * 2.0 - 3.0)
+	game.player.teleport(start, PI)
+	game.item.global_transform = game.player.carry.target_transform()
+	game.item.grace = 1.0
+	for i in 10:
+		await get_tree().physics_frame
+	var dur0: float = game.item.durability
+	for i in 900:
+		game.input.move = Vector2(0, 1)
+		await get_tree().physics_frame
+		if game.player.global_position.z > gz + 2.0:
+			break
+	game.input.move = Vector2.ZERO
+	check(game.player.global_position.z > gz + 2.0, "taşıyıcı kapıdan geçti (z=%.1f)" % game.player.global_position.z)
+	check(game.player.is_holding(), "eşya hâlâ elde")
+	check(game.item.durability > dur0 - 3.0, "kapıdan geçerken hasar yok (%.1f)" % game.item.durability)
+	game.queue_free()
+	await get_tree().process_frame
+
+
 ## Birinci şahıs: kamera gözde, kafa dönerken gövde/eller/eşya sabit; LOOK ile üçüncü şahsa dönülür.
 func _test_first_person() -> void:
 	section("Birinci şahıs")
@@ -428,7 +484,7 @@ func _test_crush() -> void:
 	section("Yorulma ve ezilme")
 	# Ağır eşya (buzdolabı): güç bitince taşıyıcı ezilir
 	var game := Game.new()
-	game.setup(16)
+	game.setup(15)
 	add_child(game)
 	for i in 30:
 		await get_tree().physics_frame

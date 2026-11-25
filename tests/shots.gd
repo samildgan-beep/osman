@@ -9,8 +9,8 @@ func _ready() -> void:
 	if args.size() > 0:
 		out = args[0]
 	DirAccess.make_dir_recursive_absolute(out)
-	await _fp_shots(10, "fp10")
-	await _fp_shots(3, "fp3")
+	for fid in [16, 17, 18, 19, 20]:
+		await _factory_shots(fid, "fa%d" % fid)
 	get_tree().quit()
 
 
@@ -164,6 +164,41 @@ func _fp_shots(id: int, tag: String) -> void:
 		await _wait_sec(0.5)
 		await _snap(tag + "_" + k)
 	game.set_first_person(false)
+	game.queue_free()
+	await _wait(5)
+
+
+## Fabrika: başlangıç (eşya elde), üstten genel görünüm, hedef dekoru.
+func _factory_shots(id: int, tag: String) -> void:
+	var game := Game.new()
+	game.setup(id)
+	add_child(game)
+	await _wait_sec(1.0)
+	await _snap(tag + "_start")
+	var p := game.player
+	var to_item := game.item.global_position - p.global_position
+	to_item.y = 0
+	p.teleport(game.item.global_position - to_item.normalized() * (1.0 + game.item.half.z) + Vector3(0, 0.05 - game.item.global_position.y, 0), atan2(-to_item.x, -to_item.z))
+	await _wait_sec(0.3)
+	game.input.press("interact")
+	await _wait_sec(1.5)
+	await _snap(tag + "_holding")
+	var cam := Camera3D.new()
+	cam.fov = 60.0
+	add_child(cam)
+	var f: Dictionary = game.info.factory
+	var D: float = f.length
+	cam.global_position = Vector3(float(f.width) * 0.45, float(f.height) * 0.85, D * 0.12)
+	cam.look_at(Vector3(0, 2.0, D * 0.55))
+	cam.make_current()
+	await _wait_sec(0.4)
+	await _snap(tag + "_overview")
+	var g: Vector3 = game.info.goal_center
+	cam.global_position = g + Vector3(6.0, float(f.height) * 0.5, -float(game.info.spot_size.z) - 12.0)
+	cam.look_at(g + Vector3(0, 3.0, 0))
+	await _wait_sec(0.3)
+	await _snap(tag + "_goal")
+	cam.queue_free()
 	game.queue_free()
 	await _wait(5)
 

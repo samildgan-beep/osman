@@ -87,6 +87,14 @@ func _build_visual() -> void:
 				cm.radial_segments = 24
 				mi.mesh = cm
 				mi.rotation = Vector3(PI * 0.5, 0, 0)
+			"cyl_y", "cone_y":
+				# Dikey silindir / yukarı bakan koni: size = [çap, yükseklik, çap]
+				var cy := CylinderMesh.new()
+				cy.top_radius = 0.0 if str(p.shape) == "cone_y" else psize.x * 0.5
+				cy.bottom_radius = psize.x * 0.5
+				cy.height = psize.y
+				cy.radial_segments = 24
+				mi.mesh = cy
 			"sphere":
 				var sm := SphereMesh.new()
 				sm.radius = 0.5

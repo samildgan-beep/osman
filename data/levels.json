@@ -1,5 +1,5 @@
 {
-	"_aciklama": "Bölüm tanımları. building: turkish (eski Türk apartmanı, HİCRET APARTMANI) | modern (renkli tuğla apartman). goal: door (daire kapısına teslim), room (odaya taşı), spot (tam yerine, ön yüz odaya bakacak şekilde yerleştir; 6. bölümden itibaren tüm bölümler spot: eve girip eşyayı yerine koymak gerekir). theme: 0-5 renk teması. Ölçüler metre. corridor.turn: none | left | right. Engeller: cat, lamp, shoe_rack, plant, door, boxes. at: hall, flightA, flightB, mid, landing (floor ile), corridor, corridor2, room.",
+	"_aciklama": "Bölüm tanımları. building: turkish (eski Türk apartmanı, HİCRET APARTMANI) | modern (renkli tuğla apartman) | factory (16–20: dev eşyalar fabrikası; factory = {length, width, height, gate: [genişlik, yükseklik], decor: tub|pedestal|gift|desk|kitchen}). goal: door (daire kapısına teslim), room (odaya taşı), spot (tam yerine, ön yüz odaya bakacak şekilde yerleştir; 6. bölümden itibaren tüm bölümler spot: eve girip eşyayı yerine koymak gerekir). theme: 0-5 renk teması. Ölçüler metre. corridor.turn: none | left | right. Engeller: cat, lamp, shoe_rack, plant, door, boxes. at: hall, flightA, flightB, mid, landing (floor ile), corridor, corridor2, room.",
 	"levels": [
 		{
 			"id": 1, "name": "First Day", "building": "turkish", "subtitle": "Bring the box up to the 1st floor door.",
@@ -156,48 +156,55 @@
 			"tips": ["Rest on the landings before you run out of stamina."]
 		},
 		{
-			"id": 15, "name": "Wash & Go", "building": "modern", "subtitle": "Three floors. Lamps, boxes and an open door.",
-			"item": "camasir", "floors": 3, "goal": "spot", "theme": 2,
-			"stair_width": 1.1, "steps": 8, "rise": 0.175, "tread": 0.28, "landing": 1.6, "gap": 0.3, "ceiling": 2.3,
-			"entrance": [1.4, 2.3], "apt_door": [0.95, 2.1],
-			"corridor": {"length": 3.5, "width": 1.3, "turn": "right", "turn_length": 3.0},
-			"room": {"width": 4.0, "depth": 4.0, "door": [0.95, 2.1]},
-			"obstacles": [{"type": "lamp", "at": "landing", "floor": 1}, {"type": "boxes", "at": "landing", "floor": 2, "side": 1}, {"type": "door", "at": "corridor2", "side": -1}],
-			"par_time": 360,
-			"tips": ["Plan your rests: one on every landing."]
-		},
-		{
-			"id": 16, "name": "Cold Cargo", "building": "turkish", "subtitle": "Fridge on your back. Install it in the kitchen.",
-			"item": "buzdolabi", "floors": 2, "goal": "spot", "theme": 3,
-			"stair_width": 1.25, "steps": 8, "rise": 0.175, "tread": 0.29, "landing": 1.7, "gap": 0.3, "ceiling": 2.5,
-			"entrance": [1.5, 2.3], "apt_door": [1.0, 2.1],
-			"corridor": {"length": 3.0, "width": 1.4, "turn": "none", "turn_length": 0},
-			"room": {"width": 4.0, "depth": 4.0, "door": [1.0, 2.1]},
-			"obstacles": [],
-			"par_time": 250,
-			"tips": ["Back the fridge into its slot so the door faces the room.", "If your stamina runs out, the fridge falls!", "REST puts it down so you can catch your breath.", "Carrying on your back narrows your view."]
-		},
-		{
-			"id": 17, "name": "Steep & Narrow", "building": "turkish", "subtitle": "Steep steps, three floors. Fridge goes in the kitchen.",
-			"item": "buzdolabi", "floors": 3, "goal": "spot", "theme": 4,
+			"id": 15, "name": "Cold Cargo", "building": "turkish", "subtitle": "Fridge on your back, steep stairs. Install it in the kitchen.",
+			"item": "buzdolabi", "floors": 3, "goal": "spot", "theme": 2,
 			"stair_width": 1.0, "steps": 8, "rise": 0.185, "tread": 0.27, "landing": 1.55, "gap": 0.3, "ceiling": 2.4,
 			"entrance": [1.4, 2.3], "apt_door": [0.95, 2.1],
 			"corridor": {"length": 3.0, "width": 1.3, "turn": "left", "turn_length": 3.0},
 			"room": {"width": 4.0, "depth": 4.0, "door": [0.95, 2.1]},
 			"obstacles": [{"type": "cat", "at": "flightA", "floor": 2}, {"type": "plant", "at": "landing", "floor": 1, "side": 1}],
-			"par_time": 340,
-			"tips": ["Walk backwards into the kitchen slot so the fridge door faces the room."]
+			"par_time": 360,
+			"tips": ["If your stamina runs out, the fridge falls on you!", "REST puts it down so you can catch your breath.", "Back the fridge into its slot so the door faces the room."]
 		},
 		{
-			"id": 18, "name": "Final Stop", "building": "turkish", "subtitle": "Fourth floor. Are you a true mover?",
-			"item": "buzdolabi", "floors": 4, "goal": "spot", "theme": 5,
-			"stair_width": 1.0, "steps": 8, "rise": 0.185, "tread": 0.27, "landing": 1.5, "gap": 0.3, "ceiling": 2.3,
-			"entrance": [1.4, 2.3], "apt_door": [0.92, 2.1],
-			"corridor": {"length": 3.5, "width": 1.3, "turn": "right", "turn_length": 3.0},
-			"room": {"width": 4.0, "depth": 4.0, "door": [0.92, 2.1]},
-			"obstacles": [{"type": "cat", "at": "flightB", "floor": 1}, {"type": "cat", "at": "flightA", "floor": 3}, {"type": "lamp", "at": "landing", "floor": 2}, {"type": "boxes", "at": "landing", "floor": 3, "side": 1}, {"type": "door", "at": "corridor2", "side": -1}, {"type": "shoe_rack", "at": "corridor", "side": 1}],
-			"par_time": 480,
-			"tips": ["Last level! Plan a rest on every landing."]
+			"id": 16, "name": "Rubber Ducky", "building": "factory", "subtitle": "Welcome to the Giant Goods Factory. This duck is five times your height!",
+			"item": "dev_ordek", "floors": 1, "goal": "spot", "theme": 0,
+			"factory": {"length": 50, "width": 26, "height": 14, "gate": [8.0, 11.0], "decor": "tub"},
+			"obstacles": [],
+			"par_time": 150,
+			"tips": ["You are tiny. The duck is not.", "Use TOP or 1P to see around giant objects.", "Drop it in the giant bathtub, beak facing forward."]
+		},
+		{
+			"id": 17, "name": "Bolt From the Blue", "building": "factory", "subtitle": "Seven times your height. Lay it down to fit through the gate.",
+			"item": "dev_civata", "floors": 1, "goal": "spot", "theme": 1,
+			"factory": {"length": 55, "width": 28, "height": 16, "gate": [7.0, 8.0], "decor": "pedestal"},
+			"obstacles": [],
+			"par_time": 190,
+			"tips": ["The gate is lower than the bolt: swipe up/down to tip it over.", "Stand it back up on the display stand."]
+		},
+		{
+			"id": 18, "name": "Teddy XXL", "building": "factory", "subtitle": "A huggable giant. Turn it sideways to squeeze through the gate.",
+			"item": "dev_ayi", "floors": 1, "goal": "spot", "theme": 2,
+			"factory": {"length": 55, "width": 30, "height": 16, "gate": [7.0, 15.0], "decor": "gift"},
+			"obstacles": [],
+			"par_time": 190,
+			"tips": ["The bear is wider than the gate: rotate it a quarter turn.", "Teddy goes into the giant gift box, face first."]
+		},
+		{
+			"id": 19, "name": "Mega Pencil", "building": "factory", "subtitle": "Ten times your height. Mind the ceiling!",
+			"item": "dev_kalem", "floors": 1, "goal": "spot", "theme": 3,
+			"factory": {"length": 70, "width": 30, "height": 22, "gate": [6.0, 9.0], "decor": "desk"},
+			"obstacles": [],
+			"par_time": 240,
+			"tips": ["Lay the pencil down to pass the gate, then stand it up again.", "The sharp tip (top) is fragile."]
+		},
+		{
+			"id": 20, "name": "Fridge of Doom", "building": "factory", "subtitle": "The final boss: a fridge ten times your height.",
+			"item": "dev_buzdolabi", "floors": 1, "goal": "spot", "theme": 4,
+			"factory": {"length": 70, "width": 34, "height": 22, "gate": [10.0, 13.0], "decor": "kitchen"},
+			"obstacles": [],
+			"par_time": 300,
+			"tips": ["It's heavy: if your stamina runs out, it falls on you!", "Tip it over to pass the gate, rest, then stand it up in the giant kitchen."]
 		}
 	]
 }

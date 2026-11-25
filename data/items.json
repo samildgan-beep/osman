@@ -1,5 +1,5 @@
 {
-	"_aciklama": "Eşya tanımları. size = [genişlik X, yükseklik Y, derinlik Z] metre. Yüzler: front(-Z), back(+Z), left(-X), right(+X), top(+Y), bottom(-Y). parts: görünüm parçaları; shape = box | cyl_z (Z ekseninde silindir, size = [çap, çap, kalınlık]) | sphere. carry: hands veya back.",
+	"_aciklama": "Eşya tanımları. size = [genişlik X, yükseklik Y, derinlik Z] metre. Yüzler: front(-Z), back(+Z), left(-X), right(+X), top(+Y), bottom(-Y). parts: görünüm parçaları; shape = box | cyl_z (Z ekseninde silindir, size = [çap, çap, kalınlık]) | cyl_y / cone_y (dikey silindir / yukarı bakan koni, size = [çap, yükseklik, çap]) | sphere. carry: hands veya back.",
 	"items": [
 		{
 			"id": "kutu",
@@ -162,6 +162,132 @@
 				{"shape": "box", "pos": [0.24, -0.65, -0.33], "size": [0.03, 0.2, 0.02], "color": "#9aa3a8"},
 				{"shape": "box", "pos": [-0.15, 0.6, -0.325], "size": [0.12, 0.08, 0.006], "color": "#ffcc33"},
 				{"shape": "box", "pos": [-0.05, 0.45, -0.325], "size": [0.1, 0.1, 0.006], "color": "#ff6f91"}
+			]
+		},
+		{
+			"id": "dev_ordek",
+			"name": "Giant Rubber Duck",
+			"description": "Five times your height. Squeaky. Suspiciously light.",
+			"size": [6.0, 9.0, 8.0],
+			"weight": 22,
+			"fragility": 0.6,
+			"fragile_faces": {},
+			"carry": "hands",
+			"parts": [
+				{"shape": "sphere", "pos": [0, -1.8, 0.4], "size": [6.0, 5.4, 7.2], "color": "#ffd23f"},
+				{"shape": "sphere", "pos": [0, -0.6, 3.3], "size": [2.6, 2.2, 1.4], "color": "#ffd23f"},
+				{"shape": "sphere", "pos": [2.55, -1.6, 0.6], "size": [0.8, 2.6, 3.6], "color": "#f5c518"},
+				{"shape": "sphere", "pos": [-2.55, -1.6, 0.6], "size": [0.8, 2.6, 3.6], "color": "#f5c518"},
+				{"shape": "sphere", "pos": [0, 1.9, -1.4], "size": [4.4, 4.4, 4.2], "color": "#ffd23f"},
+				{"shape": "sphere", "pos": [0, 1.3, -3.4], "size": [2.4, 0.8, 1.2], "color": "#ff8c1a"},
+				{"shape": "sphere", "pos": [1.0, 2.6, -3.1], "size": [0.9, 1.0, 0.5], "color": "#ffffff"},
+				{"shape": "sphere", "pos": [-1.0, 2.6, -3.1], "size": [0.9, 1.0, 0.5], "color": "#ffffff"},
+				{"shape": "sphere", "pos": [1.0, 2.6, -3.33], "size": [0.45, 0.55, 0.3], "color": "#1b1b1b"},
+				{"shape": "sphere", "pos": [-1.0, 2.6, -3.33], "size": [0.45, 0.55, 0.3], "color": "#1b1b1b"},
+				{"shape": "sphere", "pos": [0, 4.05, -1.2], "size": [1.2, 0.6, 1.0], "color": "#ff8c1a"}
+			]
+		},
+		{
+			"id": "dev_civata",
+			"name": "Giant Bolt",
+			"description": "Seven times your height. Do not drop it on your toes.",
+			"size": [4.6, 12.6, 4.6],
+			"weight": 34,
+			"fragility": 0.4,
+			"fragile_faces": {},
+			"carry": "hands",
+			"parts": [
+				{"shape": "cyl_y", "pos": [0, -1.2, 0], "size": [2.6, 10.2, 2.6], "color": "#b8bec6"},
+				{"shape": "cyl_y", "pos": [0, -5.9, 0], "size": [2.9, 0.24, 2.9], "color": "#9aa2ab"},
+				{"shape": "cyl_y", "pos": [0, -5.1, 0], "size": [2.9, 0.24, 2.9], "color": "#9aa2ab"},
+				{"shape": "cyl_y", "pos": [0, -4.3, 0], "size": [2.9, 0.24, 2.9], "color": "#9aa2ab"},
+				{"shape": "cyl_y", "pos": [0, -3.5, 0], "size": [2.9, 0.24, 2.9], "color": "#9aa2ab"},
+				{"shape": "cyl_y", "pos": [0, -2.7, 0], "size": [2.9, 0.24, 2.9], "color": "#9aa2ab"},
+				{"shape": "cyl_y", "pos": [0, -1.9, 0], "size": [2.9, 0.24, 2.9], "color": "#9aa2ab"},
+				{"shape": "cyl_y", "pos": [0, -1.1, 0], "size": [2.9, 0.24, 2.9], "color": "#9aa2ab"},
+				{"shape": "cyl_y", "pos": [0, -0.3, 0], "size": [2.9, 0.24, 2.9], "color": "#9aa2ab"},
+				{"shape": "cyl_y", "pos": [0, 0.5, 0], "size": [2.9, 0.24, 2.9], "color": "#9aa2ab"},
+				{"shape": "cyl_y", "pos": [0, 1.3, 0], "size": [2.9, 0.24, 2.9], "color": "#9aa2ab"},
+				{"shape": "cyl_y", "pos": [0, 2.1, 0], "size": [2.9, 0.24, 2.9], "color": "#9aa2ab"},
+				{"shape": "cyl_y", "pos": [0, 2.9, 0], "size": [2.9, 0.24, 2.9], "color": "#9aa2ab"},
+				{"shape": "cyl_y", "pos": [0, 5.1, 0], "size": [4.6, 2.4, 4.6], "color": "#8d959e"},
+				{"shape": "cyl_y", "pos": [0, 6.15, 0], "size": [3.6, 0.3, 3.6], "color": "#c7cdd4"},
+				{"shape": "cyl_y", "pos": [0, -6.15, 0], "size": [2.2, 0.3, 2.2], "color": "#c7cdd4"},
+				{"shape": "box", "pos": [0, 5.1, -2.28], "size": [1.2, 0.5, 0.06], "color": "#ff8c1a"}
+			]
+		},
+		{
+			"id": "dev_ayi",
+			"name": "Giant Teddy Bear",
+			"description": "Seven times your height. Soft, huggable, enormous.",
+			"size": [8.0, 12.6, 6.0],
+			"weight": 18,
+			"fragility": 0.5,
+			"fragile_faces": {},
+			"carry": "hands",
+			"parts": [
+				{"shape": "sphere", "pos": [0, -2.4, 0.3], "size": [6.4, 7.2, 5.4], "color": "#b5793f"},
+				{"shape": "sphere", "pos": [0, -2.4, -2.2], "size": [3.8, 4.6, 1.2], "color": "#e8c39e"},
+				{"shape": "sphere", "pos": [3.15, -1.0, -0.6], "size": [1.6, 4.2, 1.8], "color": "#b5793f"},
+				{"shape": "sphere", "pos": [-3.15, -1.0, -0.6], "size": [1.6, 4.2, 1.8], "color": "#b5793f"},
+				{"shape": "sphere", "pos": [1.9, -4.7, -0.8], "size": [2.4, 3.2, 2.6], "color": "#b5793f"},
+				{"shape": "sphere", "pos": [-1.9, -4.7, -0.8], "size": [2.4, 3.2, 2.6], "color": "#b5793f"},
+				{"shape": "sphere", "pos": [1.9, -5.2, -2.0], "size": [1.6, 1.6, 0.3], "color": "#e8c39e"},
+				{"shape": "sphere", "pos": [-1.9, -5.2, -2.0], "size": [1.6, 1.6, 0.3], "color": "#e8c39e"},
+				{"shape": "sphere", "pos": [0, 3.4, 0], "size": [5.6, 5.2, 5.0], "color": "#b5793f"},
+				{"shape": "sphere", "pos": [2.3, 5.6, 0.2], "size": [1.8, 1.8, 1.0], "color": "#b5793f"},
+				{"shape": "sphere", "pos": [-2.3, 5.6, 0.2], "size": [1.8, 1.8, 1.0], "color": "#b5793f"},
+				{"shape": "sphere", "pos": [2.3, 5.6, -0.3], "size": [1.0, 1.0, 0.4], "color": "#e8c39e"},
+				{"shape": "sphere", "pos": [-2.3, 5.6, -0.3], "size": [1.0, 1.0, 0.4], "color": "#e8c39e"},
+				{"shape": "sphere", "pos": [0, 2.6, -2.3], "size": [2.4, 1.8, 1.4], "color": "#e8c39e"},
+				{"shape": "sphere", "pos": [0, 3.0, -2.95], "size": [0.8, 0.6, 0.4], "color": "#2b1a10"},
+				{"shape": "sphere", "pos": [1.1, 4.1, -2.35], "size": [0.6, 0.7, 0.35], "color": "#1b1b1b"},
+				{"shape": "sphere", "pos": [-1.1, 4.1, -2.35], "size": [0.6, 0.7, 0.35], "color": "#1b1b1b"},
+				{"shape": "box", "pos": [0, 0.8, -2.25], "size": [2.6, 0.9, 0.4], "color": "#e63946"},
+				{"shape": "sphere", "pos": [0, 0.8, -2.5], "size": [0.7, 0.7, 0.3], "color": "#c1121f"}
+			]
+		},
+		{
+			"id": "dev_kalem",
+			"name": "Giant Pencil",
+			"description": "Ten times your height. Sharpened. Please don't poke the ceiling.",
+			"size": [2.0, 18.0, 2.0],
+			"weight": 26,
+			"fragility": 0.5,
+			"fragile_faces": {"top": 2.0},
+			"carry": "hands",
+			"parts": [
+				{"shape": "cyl_y", "pos": [0, -0.6, 0], "size": [2.0, 13.0, 2.0], "color": "#ffd23f"},
+				{"shape": "cyl_y", "pos": [0, -0.6, 0], "size": [2.03, 0.25, 2.03], "color": "#e0a800"},
+				{"shape": "cyl_y", "pos": [0, 3.4, 0], "size": [2.03, 0.25, 2.03], "color": "#e0a800"},
+				{"shape": "box", "pos": [0, -1.5, -1.0], "size": [0.5, 4.0, 0.04], "color": "#1b5e20"},
+				{"shape": "cyl_y", "pos": [0, -7.7, 0], "size": [2.06, 1.3, 2.06], "color": "#c0c4c8"},
+				{"shape": "cyl_y", "pos": [0, -7.4, 0], "size": [2.1, 0.12, 2.1], "color": "#9aa2ab"},
+				{"shape": "cyl_y", "pos": [0, -8.0, 0], "size": [2.1, 0.12, 2.1], "color": "#9aa2ab"},
+				{"shape": "cyl_y", "pos": [0, -8.7, 0], "size": [1.95, 0.6, 1.95], "color": "#ff8fab"},
+				{"shape": "cone_y", "pos": [0, 7.4, 0], "size": [2.0, 2.6, 2.0], "color": "#e8c39e"},
+				{"shape": "cone_y", "pos": [0, 8.55, 0], "size": [0.72, 0.9, 0.72], "color": "#2b2b2b"}
+			]
+		},
+		{
+			"id": "dev_buzdolabi",
+			"name": "Giant Fridge",
+			"description": "Ten times your height. The final boss of moving day.",
+			"size": [6.4, 18.0, 6.4],
+			"weight": 58,
+			"fragility": 0.8,
+			"fragile_faces": {"front": 1.5},
+			"carry": "hands",
+			"parts": [
+				{"shape": "box", "pos": [0, 0, 0], "size": [6.4, 18.0, 6.4], "color": "#eef1f4"},
+				{"shape": "box", "pos": [0, 3.6, -3.205], "size": [6.2, 0.1, 0.02], "color": "#c9ced4"},
+				{"shape": "box", "pos": [-2.6, 6.6, -3.3], "size": [0.32, 3.2, 0.18], "color": "#9aa2ab"},
+				{"shape": "box", "pos": [-2.6, 0.6, -3.3], "size": [0.32, 4.0, 0.18], "color": "#9aa2ab"},
+				{"shape": "box", "pos": [1.4, -1.5, -3.215], "size": [1.4, 1.9, 0.03], "color": "#ffffff"},
+				{"shape": "box", "pos": [1.4, -0.8, -3.23], "size": [0.5, 0.5, 0.03], "color": "#e63946"},
+				{"shape": "box", "pos": [0.6, 6.2, -3.215], "size": [0.9, 0.9, 0.03], "color": "#2e86c1"},
+				{"shape": "box", "pos": [2.0, 7.0, -3.215], "size": [0.7, 0.7, 0.03], "color": "#ffd23f"},
+				{"shape": "box", "pos": [0, -8.8, -3.0], "size": [6.0, 0.4, 0.5], "color": "#4a5560"}
 			]
 		}
 	]

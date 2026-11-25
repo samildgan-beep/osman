@@ -39,6 +39,7 @@ var _orbit_hold := 0.0
 var view_locked := false
 # Birinci şahıs: kamera gözde; kafa (fp_yaw/fp_pitch) gövdeden bağımsız döner
 var first_person := false
+var view_scale := 1.0      # dev fabrika salonunda kamera uzaklıkları bu oranla büyür
 var fp_yaw := 0.0
 var fp_pitch := 0.0
 
@@ -82,7 +83,7 @@ func orbit(px: Vector2) -> void:
 func zoom(amount: float) -> void:
 	if amount == 0.0 or first_person:
 		return
-	dist = clampf(dist * (1.0 - amount), Config.CAM_DIST_MIN, Config.CAM_DIST_MAX)
+	dist = clampf(dist * (1.0 - amount), Config.CAM_DIST_MIN, Config.CAM_DIST_MAX * view_scale)
 	_anim_active = false
 
 
@@ -101,11 +102,11 @@ func preset(view: String) -> void:
 	view_locked = view != "back"
 	match view:
 		"back":
-			_start_anim(py, deg_to_rad(Config.CAM_PITCH_DEFAULT), Config.CAM_DIST_DEFAULT)
+			_start_anim(py, deg_to_rad(_default_pitch_deg()), Config.CAM_DIST_DEFAULT * view_scale)
 		"top":
-			_start_anim(py, deg_to_rad(-82.0), 7.5)
+			_start_anim(py, deg_to_rad(-82.0), 7.5 * view_scale * 1.4 if view_scale > 1.0 else 7.5)
 		"side":
-			_start_anim(py + PI * 0.5, deg_to_rad(-14.0), 5.0)
+			_start_anim(py + PI * 0.5, deg_to_rad(-14.0), 5.0 * view_scale)
 	AudioManager.play("click", -8.0)
 
 
@@ -115,6 +116,18 @@ func _start_anim(y: float, p: float, d: float) -> void:
 	_anim_yaw = yaw + wrapf(y - yaw, -PI, PI)
 	_anim_pitch = p
 	_anim_dist = d
+
+
+## Büyük mekân (fabrika) için kamera ölçeği: varsayılan uzaklık ve eğim artar.
+func set_view_scale(s: float) -> void:
+	view_scale = clampf(s, 1.0, 4.0)
+	dist = Config.CAM_DIST_DEFAULT * view_scale
+	_cur_dist = dist
+	pitch = deg_to_rad(_default_pitch_deg())
+
+
+func _default_pitch_deg() -> float:
+	return Config.CAM_PITCH_DEFAULT - 8.0 * (view_scale - 1.0)
 
 
 ## Birinci şahıs modunu aç/kapat. Açıkken kafa gizlenir (görüşü kapatmasın), bakış ortalanır.

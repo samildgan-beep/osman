@@ -58,13 +58,17 @@ func all_ids() -> Array:
 
 
 ## Ham sözlüğü doğrulanmış eşya kaydına çevirir. Kurtarılamazsa boş sözlük döner.
+const MAX_SIZE := 20.0
+
+
 func sanitize_item(src: Dictionary) -> Dictionary:
 	var id = src.get("id", "")
 	if not (id is String) or id.strip_edges() == "":
 		errors.append("id eksik")
 		return {}
 	var size := _vec3(src.get("size"), Vector3(0.5, 0.5, 0.5))
-	size = Vector3(clampf(size.x, 0.05, 4.0), clampf(size.y, 0.05, 4.0), clampf(size.z, 0.05, 4.0))
+	# Fabrika bölümlerindeki dev eşyalar 20 m'ye kadar çıkabilir
+	size = Vector3(clampf(size.x, 0.05, MAX_SIZE), clampf(size.y, 0.05, MAX_SIZE), clampf(size.z, 0.05, MAX_SIZE))
 	var faces := {}
 	var ff = src.get("fragile_faces", {})
 	if ff is Dictionary:
@@ -83,7 +87,7 @@ func sanitize_item(src: Dictionary) -> Dictionary:
 			if psize.x <= 0.0 or psize.y <= 0.0 or psize.z <= 0.0:
 				continue
 			var shape := str(p.get("shape", "box"))
-			if not (shape in ["box", "cyl_z", "sphere"]):
+			if not (shape in ["box", "cyl_z", "cyl_y", "cone_y", "sphere"]):
 				shape = "box"
 			parts.append({
 				"shape": shape,

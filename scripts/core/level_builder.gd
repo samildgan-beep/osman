@@ -145,6 +145,8 @@ func build(level: Dictionary, parent: Node3D) -> Dictionary:
 	steps_body.collision_mask = 0
 	root.add_child(steps_body)
 	info = {"obstacles": [], "lights": [], "waypoints": [], "labels": []}
+	if str(L.get("building", "")) == "factory":
+		return _build_factory_level()
 
 	_derive()
 	var mat := _building_material()
@@ -168,6 +170,20 @@ func build(level: Dictionary, parent: Node3D) -> Dictionary:
 	info.top_floor_y = F * H
 	info.kill_y = -6.0
 	info.ceiling = eff_ceil
+	return info
+
+
+## Absürt fabrika bölümü (16–20): sokak/merdiven/daire yerine dev bir fabrika salonu.
+func _build_factory_level() -> Dictionary:
+	FactoryBuilder.new().build(self)
+	glow.build(root, _glow_material(), "Glow", false)
+	ceil_batch.build(root, _ceiling_material(), "Ceiling", false)
+	props.build(root, _props_material(), "Props")
+	info.anchors = anchors
+	info.floor_height = 1000.0   # tek kat: yön okunda "kat" yazmasın
+	info.top_floor_y = 0.0
+	info.kill_y = -6.0
+	info.ceiling = float(L.factory.height)
 	return info
 
 
